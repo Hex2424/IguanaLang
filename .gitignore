@@ -48,5 +48,7 @@
 .tmp_versions/
 modules.order
 Module.symvers
+build/*
+.vscode/*
 Mkfile.old
 dkms.conf
