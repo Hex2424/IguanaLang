@@ -1,5 +1,5 @@
 /**
- * @file separator.h
+ * @file global_config.h
  *
  * MORE INFO ABOUT THE FILE'S CONTENTS
  *
@@ -11,16 +11,14 @@
  * @date 2022-09-05
  */
 
-#ifndef UTILITY_SEPERATOR_SEPARATOR_H
-#define UTILITY_SEPERATOR_SEPARATOR_H
+#ifndef UTILITY_GLOBAL_CONFIG_GLOBAL_CONFIG_H_
+#define UTILITY_GLOBAL_CONFIG_GLOBAL_CONFIG_H_
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
-
-void Separator_getSeparatedWords(const char* codeString, const size_t length);
+#define LOG_ENABLED 1
 
 
 
 
-#endif
+
+
+#endif // UTILITY_GLOBAL_CONFIG_GLOBAL_CONFIG_H_

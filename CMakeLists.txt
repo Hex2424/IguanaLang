@@ -5,6 +5,8 @@ set(PROJECT_STRING "Iguana")
 set(SRC 
 utility/main.c
 utility/separator/separator.c
+utility/tokenizer/tokenizer.c
+utility/logger/logger.c
 )
 
 cmake_minimum_required(VERSION 3.3)

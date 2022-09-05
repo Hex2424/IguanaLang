@@ -1,5 +1,5 @@
 /**
- * @file separator.h
+ * @file token.h
  *
  * MORE INFO ABOUT THE FILE'S CONTENTS
  *
@@ -11,16 +11,22 @@
  * @date 2022-09-05
  */
 
-#ifndef UTILITY_SEPERATOR_SEPARATOR_H
-#define UTILITY_SEPERATOR_SEPARATOR_H
+#ifndef UTILITY_TOKENIZER_TOKEN_TOKEN_H
+#define UTILITY_TOKENIZER_TOKEN_TOKEN_H
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
+// #include <stdbool.h>
+// #include <stdint.h>
+// #include <stdlib.h>
 
-void Separator_getSeparatedWords(const char* codeString, const size_t length);
+#include "token_database/token_types.h"
 
+typedef struct
+{
+    TokenType_t tokenType;
+    char* valueString;
+}Token_t;
 
+typedef Token_t* TokenHandler_t;
 
 
 #endif
