@@ -26,7 +26,6 @@
 
 static const char* TAG = "TOKENIZER";
 
-
 ////////////////////////////////
 // PRIVATE METHODS
 

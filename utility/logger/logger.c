@@ -46,30 +46,35 @@ static inline void logData_(const char* TAG, const char* colorString, const char
 
 void Log_d(const char* TAG, const char* expression, ...)
 {
-    COLOR_PRINT_MACRO(LIGHT_WHITE);
+    #if VERBOSE_LEVEL > 2
+        COLOR_PRINT_MACRO(LIGHT_WHITE);
+    #endif
 }
 
 void Log_e(const char* TAG, const char* expression, ...)
 {
-    COLOR_PRINT_MACRO(LIGHT_RED);
+    #if VERBOSE_LEVEL > 0
+        COLOR_PRINT_MACRO(LIGHT_RED);
+    #endif
 }
 
 void Log_i(const char* TAG, const char* expression, ...)
 {
-    COLOR_PRINT_MACRO(LIGHT_BLUE);
+    #if VERBOSE_LEVEL > 2
+        COLOR_PRINT_MACRO(LIGHT_BLUE);
+    #endif
 }
 
 void Log_w(const char* TAG, const char* expression, ...)
 {
-    COLOR_PRINT_MACRO(YELLOW);
+    #if VERBOSE_LEVEL > 1
+        COLOR_PRINT_MACRO(YELLOW);
+    #endif
 }
 
 static inline void logData_(const char* TAG, const char* colorString, const char* expression, va_list args)
 {
-    #if LOG_ENABLED
-
-        printf("%s(%s)-> ", colorString, TAG);
-        vprintf(expression, args);
-        printf("%s\n", END);
-    #endif
+    printf("%s(%s)-> ", colorString, TAG);
+    vprintf(expression, args);
+    printf("%s\n", END);
 }

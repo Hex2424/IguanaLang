@@ -14,7 +14,15 @@
 #ifndef UTILITY_GLOBAL_CONFIG_GLOBAL_CONFIG_H_
 #define UTILITY_GLOBAL_CONFIG_GLOBAL_CONFIG_H_
 
-#define LOG_ENABLED 1
+
+/**
+ * @brief Setting up development logging verbose level
+ * 0 - (no verbose)
+ * 1 - (ERROR)
+ * 2 - (ERROR / WARN)
+ * 3 - (INFO / DEBUG / ERROR / WARN)
+ */
+#define VERBOSE_LEVEL 3
 
 
 
