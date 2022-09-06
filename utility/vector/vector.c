@@ -154,12 +154,26 @@ void Vector_fit(VectorHandler_t object)
  */
 bool Vector_destroy(VectorHandler_t object)
 {
+    size_t idx;
     NULL_GUARD(object, ERROR, VECTOR_NULL_PRINT);
 
     if(object->expandable == NULL)
     {
         Log_e(TAG, "Passed wrong pointer for vector destruction");
         return ERROR;
+    }
+
+    
+    for(idx = 0; idx < object->currentSize; idx++)
+    {
+        if(object->expandable[idx] != NULL)
+        {
+            free(object->expandable[idx]);
+        }else
+        {
+            Log_w(TAG, "Vector allocation number:%d cannot be allocated due NULL", idx);
+        }
+        
     }
 
     free(object->expandable);

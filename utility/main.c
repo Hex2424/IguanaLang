@@ -10,13 +10,39 @@
  *
  * @date 2022-09-04
  */
-
+#include "logger/logger.h"
 #include "separator/separator.h"
+
+////////////////////////////////
+// DEFINES
+
+
+////////////////////////////////
+// PRIVATE CONSTANTS
+static const char* TAG = "MAIN";
+
+////////////////////////////////
+// PRIVATE TYPES
+
+
+////////////////////////////////
+// PRIVATE METHODS
+
+
+////////////////////////////////
+// IMPLEMENTATION
+
+
+
 
 int main(int argc, char const *argv[])
 {
-    const char word[] = "int:32 main() {};;";
-    Separator_getSeparatedWords(word, sizeof(word));
+    const char word[] = "int:32 main() \n {};;";
+    if(!Separator_getSeparatedWords(word, sizeof(word)))
+    {
+        Log_e(TAG, "Seperator failed to parse: %s", word);
+        return -1;
+    }
     
     return 0;
 }

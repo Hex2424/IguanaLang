@@ -61,7 +61,14 @@ bool Separator_getSeparatedWords(const char *codeString, const size_t length)
     }
 
     tokenCount = tokenize_(codeString, codeString + length, &vector);
-    printf("%d", (int)tokenCount);
+    Log_i(TAG, "Token Count: %d", (int)tokenCount);
+
+    if(!Vector_destroy(&vector))
+    {
+        Log_e(TAG, "Failed to destroy vector");
+        return ERROR;
+    }
+
     return SUCCESS;
 }
 
@@ -128,7 +135,7 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
                     Log_e(TAG, "token is null");
                 }
 
-                Log_i(TAG, "token: %d %s", token->tokenType, token->valueString);
+                Log_d(TAG, "token: %d %s", token->tokenType, token->valueString);
                 Vector_append(vectorHandle, token);
                 // Vector_print(vectorHandle);
                 existWordBuild = 0;
