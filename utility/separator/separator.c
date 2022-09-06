@@ -69,12 +69,13 @@ bool Separator_getSeparatedWords(const char *codeString, const size_t length)
 static const size_t tokenize_(const char *begginingIterator, const char *maxIterator, VectorHandler_t vectorHandle)
 {
     char *currentIterator; // TODO: if possible push to register
+    char *wordIterator;
     bool breakTag;
     int existWordBuild;
     size_t overallLength;
     size_t tokenCount;
 
-    overallLength = maxIterator - begginingIterator;
+    wordIterator = begginingIterator;
     existWordBuild = 0;
     tokenCount = 0;
 
@@ -120,7 +121,7 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
                 tokenCount++;
 
                 TokenHandler_t token;
-                token = Tokenizer_wordToCorrespondingToken(currentIterator - existWordBuild, existWordBuild);
+                token = Tokenizer_wordToCorrespondingToken(wordIterator, existWordBuild);
 
                 if(token == NULL)
                 {
@@ -131,6 +132,7 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
                 Vector_append(vectorHandle, token);
                 // Vector_print(vectorHandle);
                 existWordBuild = 0;
+                wordIterator = currentIterator;
             }
         }
 
