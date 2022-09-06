@@ -16,7 +16,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "../logger/logger.h"
-
+#include "../misc/safety_macros.h"
 
 ////////////////////////////////
 // DEFINES
@@ -38,27 +38,20 @@ static bool handleUnknownType_(TokenHandler_t tokenHandle, const char* expressio
 TokenHandler_t Tokenizer_wordToCorrespondingToken(const char *seperation, const size_t length)
 {
     int bindingLinePos;
+    size_t bindingTableCount;
     TokenHandler_t tokenHandler;
     
-
-    if(seperation == NULL)
-    {
-        Log_e(TAG, "Got NULL Seperation Object for parsing %d", 5);
-        return NULL;
-    }
+    NULL_GUARD(seperation, NULL, Log_e(TAG, "Got NULL Seperation Object for parsing %d", 5));
 
     tokenHandler = malloc(sizeof(Token_t)); // dynamic allocation, must deallocate afterwards
 
-    if(tokenHandler == NULL)
-    {
-        Log_e(TAG, "Failed to allocate token object, heap issue %d", 5);
-        return NULL;
-    }
+    ALLOC_CHECK(tokenHandler, NULL);
 
+    bindingTableCount = (sizeof(bindingsTable_) / sizeof(BindingType_t));
 
-    for(bindingLinePos = 0; bindingLinePos < (sizeof(bindingsTable_) / sizeof(BindingType_t)); bindingLinePos++)
+    for(bindingLinePos = 0; bindingLinePos < bindingTableCount; bindingLinePos++)
     {
-        if(strcmp(seperation, bindingsTable_[bindingLinePos].expression) == 0)
+        if(memcmp(seperation, bindingsTable_[bindingLinePos].expression, length) == 0)
         {
 
             tokenHandler->tokenType = bindingsTable_[bindingLinePos].type;
@@ -87,11 +80,7 @@ static bool handleUnknownType_(TokenHandler_t tokenHandle, const char* expressio
     
     tokenHandle->valueString = malloc(expressionSize);
 
-    if(tokenHandle->valueString == NULL)
-    {
-        Log_e(TAG, "Failed to allocare value string, heap issue");
-        return false;
-    }
+    ALLOC_CHECK(tokenHandle->valueString, false);
 
     memcpy(tokenHandle->valueString, expression, expressionSize);
 

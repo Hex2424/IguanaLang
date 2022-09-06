@@ -14,6 +14,8 @@
 
 #include "separator.h"
 #include "../tokenizer/tokenizer.h"
+#include "../vector/vector.h"
+#include "../logger/logger.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -24,6 +26,7 @@
 ////////////////////////////////
 // PRIVATE CONSTANTS
 
+static const char* TAG = "SEPARATOR";
 typedef uint64_t MAX_TOKENS;
 typedef uint64_t MAX_CODE_LENGTH;
 
@@ -36,28 +39,34 @@ static const char allowedNamingSymbols_[] = "qwertyuiopasdfghjklzxcvbnmQWERTYUIO
 // PRIVATE METHODS
 
 static const size_t calculateTokens_(const char *begginingIterator, const char *maxIterator);
+static const size_t tokenize_(const char *begginingIterator, const char *maxIterator, VectorHandler_t vectorHandle);
 
 ////////////////////////////////
 // IMPLEMENTATION
 
 
 
-void Separator_getSeparatedWords(const char *codeString, const size_t length)
+bool Separator_getSeparatedWords(const char *codeString, const size_t length)
 {
     size_t tokenCount;
-    tokenCount = calculateTokens_(codeString, codeString + length);
+    Vector_t vector;
+    InitialSettings_t settings;
+    settings.initialSize = length / 2;
+    settings.expandableConstant = (1.0f / 3.0f);
+
+    if(!Vector_create(&vector, &settings))
+    {
+        Log_e(TAG, "Failed to create vector object");
+        return ERROR;
+    }
+
+    tokenCount = tokenize_(codeString, codeString + length, &vector);
     printf("%d", (int)tokenCount);
+    return SUCCESS;
 }
 
 
-/**
- * @brief Private method for calculating how many tokens exist in code string
- *
- * @param[in] codeString
- *
- * @return MAX_TOKENS
- */
-static const size_t calculateTokens_(const char *begginingIterator, const char *maxIterator)
+static const size_t tokenize_(const char *begginingIterator, const char *maxIterator, VectorHandler_t vectorHandle)
 {
     char *currentIterator; // TODO: if possible push to register
     bool breakTag;
@@ -109,7 +118,18 @@ static const size_t calculateTokens_(const char *begginingIterator, const char *
             if (existWordBuild != 0)
             {
                 tokenCount++;
-                Tokenizer_wordToCorrespondingToken(currentIterator - existWordBuild, overallLength);
+
+                TokenHandler_t token;
+                token = Tokenizer_wordToCorrespondingToken(currentIterator - existWordBuild, existWordBuild);
+
+                if(token == NULL)
+                {
+                    Log_e(TAG, "token is null");
+                }
+
+                Log_i(TAG, "token: %d %s", token->tokenType, token->valueString);
+                Vector_append(vectorHandle, token);
+                // Vector_print(vectorHandle);
                 existWordBuild = 0;
             }
         }
