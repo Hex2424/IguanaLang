@@ -21,7 +21,7 @@ typedef struct
 {
     VariableObjectHandle_t* variables;
     MethodObjectHandle_t* methods;
-
+    ClassObjectHandle_t* insiderClasses;
 }ClassScopeObject_t;
 
 typedef ClassScopeObject_t* ClassScopeObjectHandle_t;
