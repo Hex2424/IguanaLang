@@ -44,7 +44,8 @@ static const BindingType_t bindingsTable_[] =
         {"(", BRACKET_ROUND_START},
         {")", BRACKET_ROUND_END},
         {">", ARROW_RIGHT},
-        {"@", NOTATION}
+        {"@", NOTATION},
+        {"class", CLASS_DECLARATION}
     };
 
 

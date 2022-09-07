@@ -49,10 +49,9 @@ bool Compiler_compile(const char* codeString, const size_t length)
         Log_e(TAG, "Seperator failed to parse: %s", codeString);
         return ERROR;
     }
-
+    Vector_fit(&tokensVector);
     
-
-
+    Vector_print(&tokensVector);
 
     if(!Vector_destroy(&tokensVector))
     {

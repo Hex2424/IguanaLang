@@ -44,6 +44,7 @@ typedef enum TokenType
     COMMA,               // ,
     ARROW_LEFT,          // <
     NOTATION,            // @
+    CLASS_DECLARATION    // class
 } TokenType_t;
 
 #endif

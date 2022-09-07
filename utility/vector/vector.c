@@ -119,7 +119,7 @@ bool Vector_append(VectorHandler_t object, const void* dataObject)
         {
             newSize += INITIAL_SIZE_DEFAULT;
         }
-        object->expandable = realloc(object->expandable, newSize);
+        object->expandable = realloc(object->expandable, newSize * sizeof(void*));
 
         ALLOC_CHECK(object->expandable, ERROR);
         
@@ -142,7 +142,9 @@ bool Vector_append(VectorHandler_t object, const void* dataObject)
 void Vector_fit(VectorHandler_t object)
 {
     NULL_GUARD(object,, VECTOR_NULL_PRINT);
-    object->expandable = realloc(object->expandable, object->currentSize);
+    object->expandable = realloc(object->expandable, object->currentSize * sizeof(void*));
+    ALLOC_CHECK(object->expandable,);
+    object->availableSize = 0;
 }
 
 

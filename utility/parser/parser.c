@@ -1,5 +1,5 @@
 /**
- * @file main.c
+ * @file parser.c
  *
  * MORE INFO ABOUT THE FILE'S CONTENTS
  *
@@ -8,17 +8,17 @@
  *
  * @author Markas Vielavičius (markas.vielavicius@bytewall.com)
  *
- * @date 2022-09-04
+ * @date 2022-09-07
  */
-#include "compiler/compiler.h"
-#include <stdio.h>
+#include "parser.h"
+
 ////////////////////////////////
 // DEFINES
 
 
 ////////////////////////////////
 // PRIVATE CONSTANTS
-static const char* TAG = "MAIN";
+
 
 ////////////////////////////////
 // PRIVATE TYPES
@@ -31,24 +31,7 @@ static const char* TAG = "MAIN";
 ////////////////////////////////
 // IMPLEMENTATION
 
-
-
-
-int main(int argc, char const *argv[])
+bool Parser_parseTokens(VectorHandler_t tokenList)
 {
-    FILE* igFile;
-    char buffer[1024];
-
-    igFile = fopen("../test.ig", "r");
-
-    fseek(igFile, 0L, SEEK_END);
-    int sz = ftell(igFile);
-
-    fseek(igFile, 0L, SEEK_SET);
-    fread(buffer, 1, sizeof(buffer), igFile);
-    printf("%d", sz);
-
-    // const char word[] = "int:32 main() \n {};;";
-
-    return Compiler_compile(buffer, sz);
+    // nothing for now
 }

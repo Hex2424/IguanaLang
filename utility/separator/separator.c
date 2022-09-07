@@ -110,9 +110,10 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
         }
 
         while (
-            *currentIterator == ' ' ||
+            *currentIterator == ' '  ||
             *currentIterator == '\n' ||
-            *currentIterator == '\r')
+            *currentIterator == '\r' ||
+            *currentIterator == '\t')
         {
             breakTag = true;
             currentIterator++;
