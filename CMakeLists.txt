@@ -8,6 +8,7 @@ utility/separator/separator.c
 utility/tokenizer/tokenizer.c
 utility/logger/logger.c
 utility/vector/vector.c
+utility/compiler/compiler.c
 )
 
 cmake_minimum_required(VERSION 3.3)

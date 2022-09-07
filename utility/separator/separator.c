@@ -45,29 +45,29 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
 // IMPLEMENTATION
 
 
-
-bool Separator_getSeparatedWords(const char *codeString, const size_t length)
+/**
+ * @brief Public method for seperating code into identifying tokens
+ * 
+ * @param codeString[in]    code buffer
+ * @param length[in]        code buffer length
+ * @param vector[out]       vector pointer for filling tokens
+ * @return Success state
+ */
+bool Separator_getSeparatedWords(const char *codeString, const size_t length, VectorHandler_t vector)
 {
     size_t tokenCount;
-    Vector_t vector;
     InitialSettings_t settings;
     settings.initialSize = length / 2;
     settings.expandableConstant = (1.0f / 3.0f);
 
-    if(!Vector_create(&vector, &settings))
+    if(!Vector_create(vector, &settings))
     {
         Log_e(TAG, "Failed to create vector object");
         return ERROR;
     }
 
-    tokenCount = tokenize_(codeString, codeString + length, &vector);
+    tokenCount = tokenize_(codeString, codeString + length, vector);
     Log_i(TAG, "Token Count: %d", (int)tokenCount);
-
-    if(!Vector_destroy(&vector))
-    {
-        Log_e(TAG, "Failed to destroy vector");
-        return ERROR;
-    }
 
     return SUCCESS;
 }

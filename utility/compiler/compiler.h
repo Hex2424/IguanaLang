@@ -1,5 +1,5 @@
 /**
- * @file separator.h
+ * @file compiler.h
  *
  * MORE INFO ABOUT THE FILE'S CONTENTS
  *
@@ -8,19 +8,15 @@
  *
  * @author Markas Vielavičius (markas.vielavicius@bytewall.com)
  *
- * @date 2022-09-05
+ * @date 2022-09-07
  */
+#ifndef UTILITY_COMPILER_COMPILER_H_
+#define UTILITY_COMPILER_COMPILER_H_
 
-#ifndef UTILITY_SEPERATOR_SEPARATOR_H
-#define UTILITY_SEPERATOR_SEPARATOR_H
-#include "../vector/vector.h"
-#include <stdbool.h>
-#include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
-bool Separator_getSeparatedWords(const char* codeString, const size_t length, VectorHandler_t vector);
+bool Compiler_compile(const char* codeString, const size_t length);
 
 
-
-
-#endif
+#endif // UTILITY_COMPILER_COMPILER_H_
