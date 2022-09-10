@@ -14,18 +14,30 @@
 #ifndef UTILITY_PARSER_STRUCTURES_CLASS_CLASS_H_
 #define UTILITY_PARSER_STRUCTURES_CLASS_CLASS_H_
 
-#include "class_scope/class_scope.h"
-#include "../variable/variable.h"
+#include"../method/method.h"
+#include "../object_type/object_type.h"
 
 
-typedef struct
+typedef struct Class ClassObject_t;
+typedef struct ClassScope ClassScopeObject_t;
+
+typedef ClassObject_t* ClassObjectHandle_t;
+typedef ClassScopeObject_t* ClassScopeObjectHandle_t;
+
+struct Class
+{
+    VariableObjectHandle_t* variables;
+    MethodObjectHandle_t* methods;
+    ClassObjectHandle_t* insiderClasses;
+};
+
+
+struct ClassScope
 {
     Accessibility_t accessType;
     VariableObjectHandle_t* parameters;
     ClassScopeObjectHandle_t body;
 
-}ClassObject_t;
-
-typedef ClassObject_t* ClassObjectHandle_t;
+};
 
 #endif // UTILITY_PARSER_STRUCTURES_CLASS_CLASS_H_
