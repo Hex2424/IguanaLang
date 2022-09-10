@@ -36,19 +36,11 @@ static const char* TAG = "MAIN";
 
 int main(int argc, char const *argv[])
 {
-    FILE* igFile;
-    char buffer[1024];
+    // if(argc < 2)
+    // {
+    //     printf("Need provide files for compilation\n");
+    //     return 0;
+    // }
 
-    igFile = fopen("../test.ig", "r");
-
-    fseek(igFile, 0L, SEEK_END);
-    int sz = ftell(igFile);
-
-    fseek(igFile, 0L, SEEK_SET);
-    fread(buffer, 1, sizeof(buffer), igFile);
-    printf("%d", sz);
-
-    // const char word[] = "int:32 main() \n {};;";
-
-    return Compiler_compile(buffer, sz);
+    return Compiler_compile("../test.ig");
 }

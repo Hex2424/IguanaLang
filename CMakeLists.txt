@@ -10,6 +10,7 @@ utility/logger/logger.c
 utility/vector/vector.c
 utility/compiler/compiler.c
 utility/parser/parser.c
+utility/file_reader/file_reader.c
 )
 
 cmake_minimum_required(VERSION 3.3)

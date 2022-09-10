@@ -1,5 +1,5 @@
 /**
- * @file compiler.h
+ * @file file_reader.h
  *
  * MORE INFO ABOUT THE FILE'S CONTENTS
  *
@@ -8,15 +8,17 @@
  *
  * @author Markas Vielavičius (markas.vielavicius@bytewall.com)
  *
- * @date 2022-09-07
+ * @date 2022-09-10
  */
-#ifndef UTILITY_COMPILER_COMPILER_H_
-#define UTILITY_COMPILER_COMPILER_H_
-
-#include <stdlib.h>
-#include <stdbool.h>
-
-bool Compiler_compile(const char* filePath);
 
 
-#endif // UTILITY_COMPILER_COMPILER_H_
+#ifndef UTILITY_FILE_READER_FILE_READER_H_
+#define UTILITY_FILE_READER_FILE_READER_H_
+#include "stdlib.h"
+
+
+size_t FileReader_readToBuffer(const char* fileName, char** buffer);
+
+
+
+#endif // UTILITY_FILE_READER_FILE_READER_H_
