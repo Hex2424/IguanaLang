@@ -50,6 +50,7 @@ bool Vector_create(VectorHandler_t object, const InitialSettingsHandler_t initia
     NULL_GUARD(object, ERROR, VECTOR_NULL_PRINT);
 
     object->currentSize = 0;
+    object->containsVectors = false;
 
     if(object->currentSize != 0)
     {
@@ -71,6 +72,7 @@ bool Vector_create(VectorHandler_t object, const InitialSettingsHandler_t initia
         ALLOC_CHECK(object->expandable, ERROR);
 
         object->availableSize = initialSettings->initialSize;
+        object->containsVectors = initialSettings->containsVectors;
 
         if(initialSettings->expandableConstant != 0)
         {
@@ -154,23 +156,30 @@ void Vector_fit(VectorHandler_t object)
  * @param object[in / out] pointer to vector structure 
  * @return Success state
  */
-bool Vector_destroy(VectorHandler_t object)
+bool Vector_destroy(VectorHandler_t vector)
 {
     size_t idx;
-    NULL_GUARD(object, ERROR, VECTOR_NULL_PRINT);
+    NULL_GUARD(vector, ERROR, VECTOR_NULL_PRINT);
 
-    if(object->expandable == NULL)
+    if(vector->expandable == NULL)
     {
         Log_e(TAG, "Passed wrong pointer for vector destruction");
         return ERROR;
     }
 
     
-    for(idx = 0; idx < object->currentSize; idx++)
+    for(idx = 0; idx < vector->currentSize; idx++)
     {
-        if(object->expandable[idx] != NULL)
+        void* object = (void*) vector->expandable[idx];
+
+        if(object != NULL)
         {
-            free(object->expandable[idx]);
+
+            if(vector->containsVectors)
+            {
+                Vector_destroy((VectorHandler_t) object);
+            }
+            free(vector->expandable[idx]);
         }else
         {
             Log_w(TAG, "Vector allocation number:%d cannot be allocated due NULL", idx);
@@ -178,10 +187,11 @@ bool Vector_destroy(VectorHandler_t object)
         
     }
 
-    free(object->expandable);
-    object->availableSize =        0;
-    object->currentSize =          0;
-    object->expandableConstant =   0.0f;
+    free(vector->expandable);
+
+    vector->availableSize =        0;
+    vector->currentSize =          0;
+    vector->expandableConstant =   0.0f;
 
     return SUCCESS;
 }

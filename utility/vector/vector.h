@@ -21,6 +21,7 @@
 
 typedef struct
 {
+    bool containsVectors;
     void** expandable;
     size_t currentSize;
     size_t availableSize;
@@ -32,7 +33,7 @@ typedef struct
 {
     size_t initialSize;
     float expandableConstant;
-    
+    bool containsVectors;
 }InitialSettings_t;
 
 typedef Vector_t* VectorHandler_t;

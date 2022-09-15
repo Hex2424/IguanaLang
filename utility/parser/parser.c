@@ -22,7 +22,7 @@
 
 ////////////////////////////////
 // PRIVATE TYPES
-
+static const char* TAG = "PARSER";
 
 ////////////////////////////////
 // PRIVATE METHODS
@@ -33,5 +33,15 @@
 
 bool Parser_parseTokens(VectorHandler_t tokenList)
 {
-    // nothing for now
+    MainFrame_t root;
+
+    if(!MainFrame_init(&root))
+    {
+        Log_e(TAG, "MainFrame init failed");
+        return ERROR;
+    }
+
+    
+
+    return SUCCESS;
 }
