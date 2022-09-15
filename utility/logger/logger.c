@@ -44,35 +44,74 @@ static inline void logData_(const char* TAG, const char* colorString, const char
 // IMPLEMENTATION
 
 
-void Log_d(const char* TAG, const char* expression, ...)
+/**
+ * @brief Public method for logging DEBUG messages
+ * 
+ * @param[in] TAG               File tag 
+ * @param[in] expression[in]    Expression, works same as printf
+ * @param ...                   Variadic arguments (numbers, strings, chars...) same as in printf
+ */
+void inline Log_d(const char* TAG, const char* expression, ...)
 {
     #if VERBOSE_LEVEL > 2
         COLOR_PRINT_MACRO(LIGHT_WHITE);
     #endif
 }
 
-void Log_e(const char* TAG, const char* expression, ...)
+
+/**
+ * @brief Public method for logging ERROR messages
+ * 
+ * @param[in] TAG               File tag 
+ * @param[in] expression[in]    Expression, works same as printf
+ * @param ...                   Variadic arguments (numbers, strings, chars...) same as in printf
+ */
+void inline Log_e(const char* TAG, const char* expression, ...)
 {
     #if VERBOSE_LEVEL > 0
         COLOR_PRINT_MACRO(LIGHT_RED);
     #endif
 }
 
-void Log_i(const char* TAG, const char* expression, ...)
+
+/**
+ * @brief Public method for logging INFORMATIONAL messages
+ * 
+ * @param[in] TAG               File tag 
+ * @param[in] expression[in]    Expression, works same as printf
+ * @param ...                   Variadic arguments (numbers, strings, chars...) same as in printf
+ */
+void inline Log_i(const char* TAG, const char* expression, ...)
 {
     #if VERBOSE_LEVEL > 2
         COLOR_PRINT_MACRO(LIGHT_BLUE);
     #endif
 }
 
-void Log_w(const char* TAG, const char* expression, ...)
+
+/**
+ * @brief Public method for logging WARNING messages
+ * 
+ * @param[in] TAG               File tag 
+ * @param[in] expression[in]    Expression, works same as printf
+ * @param ...                   Variadic arguments (numbers, strings, chars...) same as in printf
+ */
+void inline Log_w(const char* TAG, const char* expression, ...)
 {
     #if VERBOSE_LEVEL > 1
         COLOR_PRINT_MACRO(YELLOW);
     #endif
 }
 
-static inline void logData_(const char* TAG, const char* colorString, const char* expression, va_list args)
+/**
+ * @brief Public method for logging any type of messages
+ * 
+ * @param[in] TAG           File tag 
+ * @param colorString       String 
+ * @param expression 
+ * @param args 
+ */
+static void logData_(const char* TAG, const char* colorString, const char* expression, va_list args)
 {
     printf("%s(%s)-> ", colorString, TAG);
     vprintf(expression, args);
