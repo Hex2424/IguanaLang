@@ -17,3 +17,4 @@ int:1 method2(int:3 param1, int:4 param2)
 	ss = 5;
 	ss;
 }
+
