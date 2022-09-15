@@ -11,6 +11,7 @@ utility/vector/vector.c
 utility/compiler/compiler.c
 utility/parser/parser.c
 utility/file_reader/file_reader.c
+utility/parser/structures/main_frame/main_frame.c
 )
 
 cmake_minimum_required(VERSION 3.3)

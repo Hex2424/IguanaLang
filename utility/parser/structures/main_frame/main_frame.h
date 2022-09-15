@@ -13,7 +13,10 @@
 
 #ifndef UTILITY_PARSER_STRUCTURES_MAIN_FRAME_MAINFRAME_H_
 #define UTILITY_PARSER_STRUCTURES_MAIN_FRAME_MAINFRAME_H_
-#include "../class/class.h"
+#include "../variable/variable.h"
+#include "../method/method.h"
+#include "../../../vector/vector.h"
+
 
 typedef struct
 {
@@ -26,13 +29,20 @@ typedef ImportObject_t* ImportObjectHandle_t;
 
 typedef struct
 {
-    ImportObjectHandle_t* imports;
-    ClassObjectHandle_t* classes;
+    VectorHandler_t imports;
+    VectorHandler_t classVariables;
+    VectorHandler_t methods;
+
+    // ImportObjectHandle_t* imports;
+    // VariableObjectHandle_t* classVariables;
+    // MethodObjectHandle_t* methods;
     
 }MainFrame_t;
 
 typedef MainFrame_t* MainFrameHandle_t;
 
 
+bool MainFrame_destroy(MainFrameHandle_t handle);
+bool MainFrame_init(MainFrameHandle_t handle);
 
 #endif // UTILITY_PARSER_STRUCTURES_MAIN_FRAME_MAINFRAME_H_

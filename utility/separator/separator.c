@@ -59,6 +59,7 @@ bool Separator_getSeparatedWords(const char *codeString, const size_t length, Ve
     InitialSettings_t settings;
     settings.initialSize = length / 2;
     settings.expandableConstant = (1.0f / 3.0f);
+    settings.containsVectors = false; 
 
     if(!Vector_create(vector, &settings))
     {
