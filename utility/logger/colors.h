@@ -6,7 +6,7 @@
  * @copyright This file is a part of the project beelang and is distributed under MIT license which
  * should have been included with the project. If not see: https://choosealicense.com/licenses/mit/
  *
- * @author Markas Vielavičius (markas.vielavicius@bytewall.com)
+ * @author jorisb
  *
  * @date 2022-09-05
  */
@@ -14,31 +14,34 @@
 #ifndef UTILITY_LOGGER_COLORS_H_
 #define UTILITY_LOGGER_COLORS_H_
 
+typedef const char* color_t;
+#define color static color_t
 
-static const char* BLACK = "\033[0;30m";
-static const char* RED = "\033[0;31m";
-static const char* GREEN = "\033[0;32m";
-static const char* BROWN = "\033[0;33m";
-static const char* BLUE = "\033[0;34m";
-static const char* PURPLE = "\033[0;35m";
-static const char* CYAN = "\033[0;36m";
-static const char* LIGHT_GRAY = "\033[0;37m";
-static const char* DARK_GRAY = "\033[1;30m";
-static const char* LIGHT_RED = "\033[1;31m";
-static const char* LIGHT_GREEN = "\033[1;32m";
-static const char* YELLOW = "\033[1;33m";
-static const char* LIGHT_BLUE = "\033[1;34m";
-static const char* LIGHT_PURPLE = "\033[1;35m";
-static const char* LIGHT_CYAN = "\033[1;36m";
-static const char* LIGHT_WHITE = "\033[1;37m";
-static const char* BOLD = "\033[1m";
-static const char* FAINT = "\033[2m";
-static const char* ITALIC = "\033[3m";
-static const char* UNDERLINE = "\033[4m";
-static const char* BLINK = "\033[5m";
-static const char* NEGATIVE = "\033[7m";
-static const char* CROSSED = "\033[9m";
-static const char* END = "\033[0m";
+
+color BLACK = "\033[0;30m";
+color RED = "\033[0;31m";
+color GREEN = "\033[0;32m";
+color BROWN = "\033[0;33m";
+color BLUE = "\033[0;34m";
+color PURPLE = "\033[0;35m";
+color CYAN = "\033[0;36m";
+color LIGHT_GRAY = "\033[0;37m";
+color DARK_GRAY = "\033[1;30m";
+color LIGHT_RED = "\033[1;31m";
+color LIGHT_GREEN = "\033[1;32m";
+color YELLOW = "\033[1;33m";
+color LIGHT_BLUE = "\033[1;34m";
+color LIGHT_PURPLE = "\033[1;35m";
+color LIGHT_CYAN = "\033[1;36m";
+color LIGHT_WHITE = "\033[1;37m";
+color BOLD = "\033[1m";
+color FAINT = "\033[2m";
+color ITALIC = "\033[3m";
+color UNDERLINE = "\033[4m";
+color BLINK = "\033[5m";
+color NEGATIVE = "\033[7m";
+color CROSSED = "\033[9m";
+color END = "\033[0m";
 
 
 
