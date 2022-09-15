@@ -34,7 +34,13 @@ static bool handleUnknownType_(TokenHandler_t tokenHandle, const char* expressio
 ////////////////////////////////
 // IMPLEMENTATION
 
-
+/**
+ * @brief Public method for searching token type for specific string
+ * 
+ * @param[in] seperation string 
+ * @param[in] length     string size
+ * @return dynamically allocated token object 
+ */
 TokenHandler_t Tokenizer_wordToCorrespondingToken(const char *seperation, const size_t length)
 {
     int bindingLinePos;
@@ -74,6 +80,14 @@ TokenHandler_t Tokenizer_wordToCorrespondingToken(const char *seperation, const 
     return tokenHandler;
 }
 
+/**
+ * @brief Public method for handling NAMING type
+ * 
+ * @param[out] tokenHandle      pointer to Token object
+ * @param[in] expression        string
+ * @param[in] expressionSize    string size
+ * @return Success type 
+ */
 static bool handleUnknownType_(TokenHandler_t tokenHandle, const char* expression, const size_t expressionSize)
 {
     tokenHandle->tokenType = NAMING;

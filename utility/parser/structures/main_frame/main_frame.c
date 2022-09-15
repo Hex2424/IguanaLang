@@ -32,6 +32,9 @@ static const char* TAG = "MAIN_FRAME";
 ////////////////////////////////
 // PRIVATE METHODS
 
+static Vector_t imports;
+static Vector_t variables;
+static Vector_t methods;
 
 ////////////////////////////////
 // IMPLEMENTATION
@@ -40,14 +43,14 @@ static const char* TAG = "MAIN_FRAME";
 /**
  * @brief Public method for initializing mainFrame object
  * 
- * @param handle mainFrame object pointer
- * @return Success state
+ * @param[out] handle   mainFrame object pointer
+ * 
+ * @return              Success state
  */
 bool MainFrame_init(MainFrameHandle_t handle)
 {
-    Vector_t imports, variables, methods;
     InitialSettings_t settings;
-    
+
     settings.initialSize = 5;
     settings.expandableConstant = 1.0f / 3.0f;
     settings.containsVectors = true;
@@ -70,6 +73,9 @@ bool MainFrame_init(MainFrameHandle_t handle)
         return ERROR;
     }
 
+    handle->imports = &imports;
+    handle->classVariables = &variables;
+    handle->methods = &methods;
 
     return SUCCESS;
 
@@ -78,8 +84,9 @@ bool MainFrame_init(MainFrameHandle_t handle)
 /**
  * @brief Public method for completely destroying contents of maindFrame object
  * 
- * @param handle object pointer to mainFrame
- * @return Success state
+ * @param[out] handle       object pointer to mainFrame
+ * 
+ * @return                  Success state
  */
 bool MainFrame_destroy(MainFrameHandle_t handle)
 {

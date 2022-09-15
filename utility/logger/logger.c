@@ -103,6 +103,7 @@ void inline Log_w(const char* TAG, const char* expression, ...)
     #endif
 }
 
+
 /**
  * @brief Public method for logging any type of messages
  * 

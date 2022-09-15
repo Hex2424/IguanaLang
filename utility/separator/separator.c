@@ -74,6 +74,14 @@ bool Separator_getSeparatedWords(const char *codeString, const size_t length, Ve
 }
 
 
+/**
+ * @brief Public method for converting buffer to corresponding tokens vector list
+ * 
+ * @param[in] begginingIterator start iterator of buffer
+ * @param[in] maxIterator       end iterator of buffer
+ * @param[out] vectorHandle     pointer to tokens vector object
+ * @return token count
+ */
 static const size_t tokenize_(const char *begginingIterator, const char *maxIterator, VectorHandler_t vectorHandle)
 {
     char *currentIterator; // TODO: if possible push to register

@@ -32,10 +32,6 @@ typedef struct
     VectorHandler_t imports;
     VectorHandler_t classVariables;
     VectorHandler_t methods;
-
-    // ImportObjectHandle_t* imports;
-    // VariableObjectHandle_t* classVariables;
-    // MethodObjectHandle_t* methods;
     
 }MainFrame_t;
 

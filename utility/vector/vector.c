@@ -40,9 +40,10 @@ static const char* TAG = "VECTOR";
 /**
  * @brief Public method for initializing Vector object
  * 
- * @param object[in / out] pointer to vector structure
- * @param initialSettings[in] initial advanced vector object settings for manual setup
- * @return Success state
+ * @param[out] object           pointer to vector structure
+ * @param[in] initialSettings   initial advanced vector object settings for manual setup
+ * 
+ * @return                      Success state
  */
 
 bool Vector_create(VectorHandler_t object, const InitialSettingsHandler_t initialSettings)
@@ -103,8 +104,8 @@ bool Vector_create(VectorHandler_t object, const InitialSettingsHandler_t initia
 /**
  * @brief Public method for handling new data pointer adding to existing list
  * 
- * @param object[in / out] pointer to vector structure  
- * @param dataObject[in]   pointer to new data structure
+ * @param[out] object       pointer to vector structure  
+ * @param[in] dataObject    pointer to new data structure
  */
 bool Vector_append(VectorHandler_t object, const void* dataObject)
 {
@@ -139,7 +140,7 @@ bool Vector_append(VectorHandler_t object, const void* dataObject)
 /**
  * @brief Public method for handling shrink to actual size
  * 
- * @param object[in / out] pointer to vector structure 
+ * @param[out] object pointer to vector structure 
  */
 void Vector_fit(VectorHandler_t object)
 {
@@ -153,8 +154,9 @@ void Vector_fit(VectorHandler_t object)
 /**
  * @brief Public method for destroying vector object(deallocating resources)
  * 
- * @param object[in / out] pointer to vector structure 
- * @return Success state
+ * @param[out] object        pointer to vector structure
+ * 
+ * @return                   Success state
  */
 bool Vector_destroy(VectorHandler_t vector)
 {
@@ -200,7 +202,7 @@ bool Vector_destroy(VectorHandler_t vector)
 /**
  * @brief Public method for debugging vector object current settings
  * 
- * @param object[in / out] pointer to vector structure 
+ * @param[out] object pointer to vector structure 
  */
 void Vector_print(VectorHandler_t object)
 {

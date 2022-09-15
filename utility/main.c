@@ -13,27 +13,8 @@
 
 #include "compiler/compiler.h"
 #include <stdio.h>
-////////////////////////////////
-// DEFINES
 
-
-////////////////////////////////
-// PRIVATE CONSTANTS
 static const char* TAG = "MAIN";
-
-////////////////////////////////
-// PRIVATE TYPES
-
-
-////////////////////////////////
-// PRIVATE METHODS
-
-
-////////////////////////////////
-// IMPLEMENTATION
-
-
-
 
 int main(int argc, char const *argv[])
 {
