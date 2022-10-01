@@ -17,6 +17,9 @@
 #include "../vector/vector.h"
 #include "../logger/logger.h"
 #include "structures/main_frame/main_frame.h"
+#include "stdbool.h"
+#include "../tokenizer/token/token.h"
 
-
+bool Parser_initialize();
+bool Parser_parseTokens(const VectorHandler_t tokenList);
 #endif // UTILITY_PARSER_PARSER_H_

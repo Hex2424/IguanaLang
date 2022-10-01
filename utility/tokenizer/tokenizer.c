@@ -97,6 +97,6 @@ static bool handleUnknownType_(TokenHandler_t tokenHandle, const char* expressio
     ALLOC_CHECK(tokenHandle->valueString, false);
 
     memcpy(tokenHandle->valueString, expression, expressionSize);
-
+    
     return true;
 }

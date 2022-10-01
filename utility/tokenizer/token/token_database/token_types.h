@@ -48,5 +48,8 @@ typedef enum TokenType
     LITTERAL             // "
 } TokenType_t;
 
+
+typedef TokenType_t* TokenTypeHandler_t;
+
 #endif
 
