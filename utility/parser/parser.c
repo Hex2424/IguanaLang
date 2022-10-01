@@ -3,7 +3,7 @@
  *
  * MORE INFO ABOUT THE FILE'S CONTENTS
  *
- * @copyright This file is a part of the project beelang and is distributed under MIT license which
+ * @copyright This file is a part of the project Iguana+ and is distributed under MIT license which
  * should have been included with the project. If not see: https://choosealicense.com/licenses/mit/
  *
  * @author Markas Vielavičius (markas.vielavicius@bytewall.com)
@@ -34,6 +34,7 @@ size_t currentTokenPos;
 ////////////////////////////////
 // PRIVATE METHODS
 
+bool isTokenListPosMatchingPattern_(const TokenTypeHandler_t pattern, const size_t patternLength);
 
 ////////////////////////////////
 // IMPLEMENTATION
@@ -83,14 +84,26 @@ bool Parser_parseTokens(const VectorHandler_t tokenVector)
 
     if(isTokenListPosMatchingPattern_(PATTERN_LIBRARY_IMPORT, sizeof(PATTERN_LIBRARY_IMPORT)))
     {
+        // detected object import
+        if(!Vector_append(root.imports, tokens[currentTokenPos + 2].valueString))
+        {
+            Log_e(TAG, "Failed to append library import:%s", tokens[currentTokenPos + 2].valueString);
+            return ERROR;
+        }
 
-        
-
+        currentTokenPos += sizeof(PATTERN_LIBRARY_IMPORT);
 
     }else 
-    if(isTokenListPosMatchingPattern_())
+    if(isTokenListPosMatchingPattern_(PATTERN_VARIABLE_DECLARE, sizeof(PATTERN_VARIABLE_DECLARE)))
     {
+        // detected declared object variable
+        
+    }else
+    {
+        // undetected any token type
 
+        Log_e(TAG, "Unrecognised token:");
+        return ERROR;
     }
     
     // imports
@@ -100,6 +113,8 @@ bool Parser_parseTokens(const VectorHandler_t tokenVector)
 
     return SUCCESS;
 }
+
+
 
 
 bool isTokenListPosMatchingPattern_(const TokenTypeHandler_t pattern, const size_t patternLength)
