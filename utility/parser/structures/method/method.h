@@ -17,11 +17,13 @@
 #include "method_scope/local_scope.h"
 #include "../variable/variable.h"
 #include "../object_type/object_type.h"
+#include "../../../vector/vector.h"
 
 typedef struct
 {
     Accessibility_t accessType;
-    VariableObjectHandle_t* parameters;
+    VariableObjectHandle_t returnVariable;
+    VectorHandler_t parameters;
     LocalScopeObjectHandle_t body;
 
 }MethodObject_t;

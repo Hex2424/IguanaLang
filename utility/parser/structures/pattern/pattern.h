@@ -26,14 +26,16 @@ Pattern_t PATTERN_DECLARE[] =               {INTEGER_TYPE, COLON, NUMBER_VALUE, 
 Pattern_t PATTERN_OBJECT_DECLARATION[] =    {NAMING, NAMING};                                         // example: Object object
 Pattern_t PATTERN_SEMICOLON[] =             {SEMICOLON};                                              // example: ;
 Pattern_t PATTERN_BRACKET_ROUND_START[] =   {BRACKET_ROUND_START};                                    // example: (
-
+Pattern_t PATTERN_COMMA[] =                 {COMMA};                                                  // example: ,
+Pattern_t PATTERN_BRACKET_ROUND_END[] =     {BRACKET_ROUND_END};                                      // example: )
 
 #define PATTERN_LIBRARY_IMPORT_SIZE         TYPE_SIZE_MACRO(PATTERN_LIBRARY_IMPORT)
 #define PATTERN_DECLARE_SIZE                TYPE_SIZE_MACRO(PATTERN_DECLARE)
 #define PATTERN_OBJECT_DECLARATION_SIZE     TYPE_SIZE_MACRO(PATTERN_OBJECT_DECLARATION)
-#define PATTERN_SEMICOLON_SIZE              TYPE_SIZE_MACRO(PATTERN_OBJECT_DECLARATION)
-#define PATTERN_BRACKET_ROUND_START_SIZE    TYPE_SIZE_MACRO(PATTERN_OBJECT_DECLARATION)
-
+#define PATTERN_SEMICOLON_SIZE              TYPE_SIZE_MACRO(PATTERN_SEMICOLON)
+#define PATTERN_BRACKET_ROUND_START_SIZE    TYPE_SIZE_MACRO(PATTERN_BRACKET_ROUND_START)
+#define PATTERN_COMMA_SIZE                  TYPE_SIZE_MACRO(PATTERN_COMMA)
+#define PATTERN_BRACKET_ROUND_END_SIZE      TYPE_SIZE_MACRO(PATTERN_BRACKET_ROUND_END)
 
 
 #endif // UTILITY_PARSER_STRUCTURES_PATTERN_PATTERN_H_

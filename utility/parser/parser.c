@@ -14,7 +14,7 @@
 #include "parser.h"
 #include "../tokenizer/token/token.h"
 #include "structures/pattern/pattern.h"
-
+#include "structures/method/method.h"
 ////////////////////////////////
 // DEFINES
 
@@ -34,15 +34,19 @@ size_t currentTokenPos;
 ////////////////////////////////
 // PRIVATE METHODS
 
-bool isTokenListPosMatchingPattern_(const TokenTypeHandler_t pattern, const size_t patternLength);
+static bool isTokenListPosMatchingPattern_(const TokenTypeHandler_t pattern, const size_t patternLength);
+static inline bool parseDeclaration_(MainFrameHandle_t rootHandle);
+static bool parseMethodParameters_(MethodObjectHandle_t methodObjectHandle);
+static bool handleVariableObjectFill_(VariableObjectHandle_t* variableObjectHandle);
+static bool parseMethod_(MethodObjectHandle_t methodObject, const VariableObjectHandle_t returnVariable);
 
 ////////////////////////////////
 // IMPLEMENTATION
 
 /**
- * @brief Public method for initializing Parser
+ * @brief   Public method for initializing Parser
  * 
- * @return Success State
+ * @return  Success State
  */
 bool Parser_initialize()
 {
@@ -79,12 +83,9 @@ bool Parser_destroy()
 /**
  * @brief Public method used for parsing tokens by provided token list
  * 
- * @param[in] tokenList - file tokens go here 
- * @return Success state
- */ // imports
-    // variables
-    // methods    
-
+ * @param[in] tokenList     file tokens go here 
+ * @return                  Success state
+ */ 
 bool Parser_parseTokens(const VectorHandler_t tokenVector)
 {
     MainFrame_t root;
@@ -116,39 +117,12 @@ bool Parser_parseTokens(const VectorHandler_t tokenVector)
         if(isTokenListPosMatchingPattern_(PATTERN_DECLARE, PATTERN_DECLARE_SIZE))
         {
             // detected declared object variable
-
-            char* content;
-            content = tokens[currentTokenPos + 2]->valueString;
-            printf("%d\n", currentTokenPos);
-
-            if(content == NULL)
+            if(!parseDeclaration_(&root))
             {
-                Log_e(TAG, "Content is null at token parsing");
+                Log_e(TAG, "Failed to parse variable declaration");
                 return ERROR;
             }
 
-            int bitpack = atoi(content); 
-            char* name =  tokens[currentTokenPos + 3]->valueString;
-
-            currentTokenPos += PATTERN_DECLARE_SIZE;
-
-
-            if(isTokenListPosMatchingPattern_(PATTERN_SEMICOLON, PATTERN_SEMICOLON_SIZE))
-            {
-                // detected variable declaration
-                
-                
-            }else
-            if(isTokenListPosMatchingPattern_(PATTERN_BRACKET_ROUND_START, PATTERN_BRACKET_ROUND_START_SIZE))
-            {
-
-            }else
-            {
-                
-            }
-            
-
-            
         }else
         {
             // undetected any token type
@@ -164,9 +138,163 @@ bool Parser_parseTokens(const VectorHandler_t tokenVector)
 }
 
 
+static bool handleVariableObjectFill_(VariableObjectHandle_t* variableObjectHandle)
+{
+    char* content;
+
+    content = tokens[currentTokenPos + 2]->valueString;
+    NULL_GUARD(content, ERROR, Log_e(TAG, "Content is null at token parsing"));
+
+    (*variableObjectHandle) = malloc(sizeof(VariableObject_t));
+    ALLOC_CHECK((*variableObjectHandle), ERROR);
+
+    (*variableObjectHandle)->bitpack = atoi(content);
+    (*variableObjectHandle)->variableName = tokens[currentTokenPos + 3]->valueString;
+
+    return SUCCESS;
+}
+
+/**
+ * @brief Private method for parsing variable type declarations
+ * 
+ * @param[out] rootHandle   handle to root class
+ * @return                  Success State
+ */
+static inline bool parseDeclaration_(MainFrameHandle_t rootHandle)
+{
+    VariableObjectHandle_t variableDeclaration;
+
+    if(!handleVariableObjectFill_(&variableDeclaration))
+    {
+        Log_e(TAG, "Failed to handle VariableObjectFilling");
+        return ERROR;
+    }
+
+    currentTokenPos += PATTERN_DECLARE_SIZE;
+
+    if(isTokenListPosMatchingPattern_(PATTERN_SEMICOLON, PATTERN_SEMICOLON_SIZE))
+    {
+        // detected variable declaration
+
+        if(!Vector_append(rootHandle->classVariables, variableDeclaration))
+        {
+            Log_e(TAG, "Failed to append variableDeclaration: %s", variableDeclaration->variableName);
+            return ERROR;
+        }
+        currentTokenPos += PATTERN_SEMICOLON_SIZE;
+        
+    }else
+    if(isTokenListPosMatchingPattern_(PATTERN_BRACKET_ROUND_START, PATTERN_BRACKET_ROUND_START_SIZE))
+    {
+        // detected method declaration
+        MethodObjectHandle_t methodObject;
+        
+        methodObject = malloc(sizeof(MethodObject_t));
+        ALLOC_CHECK(methodObject, ERROR);
+
+        if(!parseMethod_(methodObject, variableDeclaration))
+        {
+            Log_e(TAG, "Failed to parse method");
+            return ERROR;
+        }
+
+    }else
+    {
+        Log_e(TAG, "Unexpected declaration of %s", tokens[currentTokenPos]->valueString);
+        return ERROR;
+    }
+
+    return SUCCESS;
+}
 
 
-bool isTokenListPosMatchingPattern_(const TokenTypeHandler_t pattern, const size_t patternLength)
+static bool parseMethod_(MethodObjectHandle_t methodObject, const VariableObjectHandle_t returnVariable)
+{
+
+    methodObject->returnVariable = returnVariable;
+    methodObject->parameters = malloc(sizeof(Vector_t));
+    
+    ALLOC_CHECK(methodObject->parameters, ERROR);
+
+    if(!Vector_create(methodObject->parameters, NULL))
+    {
+        Log_e(TAG, "Failed to create vector for parameters of method");
+        return ERROR;
+    }
+
+    currentTokenPos += PATTERN_BRACKET_ROUND_START_SIZE;
+
+    if(!parseMethodParameters_(methodObject))
+    {
+        Log_e(TAG, "Failed to parse method parameters");
+        return ERROR;
+    }
+
+    return SUCCESS;
+}
+
+/**
+ * @brief Private method for parsing method parameters variables
+ * 
+ * @param[out] methodObjectHandle   handle to method object 
+ * @return                          Success state
+ */
+static bool parseMethodParameters_(MethodObjectHandle_t methodObjectHandle)
+{
+    while (true)
+    {
+        if(isTokenListPosMatchingPattern_(PATTERN_DECLARE, PATTERN_DECLARE_SIZE))
+        {
+            VariableObjectHandle_t parameter;
+
+            if(!handleVariableObjectFill_(&parameter))
+            {
+                Log_e(TAG, "Failed to handle parametersFill");
+                return ERROR;
+            }
+
+            if(!Vector_append(methodObjectHandle->parameters, parameter))
+            {
+                Log_e(TAG, "Failed to handle parametersFill");
+                return ERROR;
+            }
+            
+            currentTokenPos += PATTERN_DECLARE_SIZE;
+            
+            if(isTokenListPosMatchingPattern_(PATTERN_COMMA, PATTERN_COMMA_SIZE))
+            {
+                currentTokenPos += PATTERN_COMMA_SIZE;
+                continue; // continuing on next parameter
+            }else
+            if(isTokenListPosMatchingPattern_(PATTERN_BRACKET_ROUND_END, PATTERN_BRACKET_ROUND_END_SIZE))
+            {
+                currentTokenPos += PATTERN_BRACKET_ROUND_END_SIZE;
+                break;
+            }else
+            {
+                Log_e(TAG, "Expected \")\" at the end of method parameters declaration, not a %d", tokens[currentTokenPos]);
+                return ERROR;
+            }
+
+
+        }else
+        {
+            Log_e(TAG, "Unexpected token");
+            return ERROR;
+        }
+    }
+    return SUCCESS;
+    
+}
+
+/**
+ * @brief Private method for recognising pattern of specific expression
+ * 
+ * @param[in] pattern           pattern which to try recognize
+ * @param[in] patternLength     length of pattern
+ * @return                      Success State 
+ */
+static bool isTokenListPosMatchingPattern_(const TokenTypeHandler_t pattern, const size_t patternLength)
 {   
     size_t patternIdx;
     size_t patternTokenPos;
