@@ -30,7 +30,7 @@ static const char* TAG = "TOKENIZER";
 // PRIVATE METHODS
 
 static bool handleUnknownType_(TokenHandler_t tokenHandle, const char* expression, const size_t expressionSize);
-
+static bool isNumber_(const char string[], const size_t expressionSize);
 ////////////////////////////////
 // IMPLEMENTATION
 
@@ -90,13 +90,41 @@ TokenHandler_t Tokenizer_wordToCorrespondingToken(const char *seperation, const 
  */
 static bool handleUnknownType_(TokenHandler_t tokenHandle, const char* expression, const size_t expressionSize)
 {
-    tokenHandle->tokenType = NAMING;
     
+    if(isNumber_(expression, expressionSize))
+    {
+        tokenHandle->tokenType = NUMBER_VALUE;      // incase of integer value
+    }else
+    {
+        tokenHandle->tokenType = NAMING;            // incase of string
+    }
+    
+
     tokenHandle->valueString = malloc(expressionSize + 1); // extra for null terminator \0
 
     ALLOC_CHECK(tokenHandle->valueString, false);
 
     memcpy(tokenHandle->valueString, expression, expressionSize);
     tokenHandle->valueString[expressionSize] = '\0';                // appending null terminator character for easier life
+    return true;
+
+}
+
+/**
+ * @brief Private method to check whether provided string is integer
+ * 
+ * @param[in] string - Char array for check
+ * @param[in] length - length of string
+ * @return Returns whether string is number or not 
+ */
+static bool isNumber_(const char string[], const size_t length)
+{
+    for (size_t i = 0; i < length; i++)
+    {
+        if (isdigit(string[i]) == 0)
+        {
+            return false;
+        }
+    }
     return true;
 }

@@ -81,7 +81,10 @@ bool Parser_destroy()
  * 
  * @param[in] tokenList - file tokens go here 
  * @return Success state
- */
+ */ // imports
+    // variables
+    // methods    
+
 bool Parser_parseTokens(const VectorHandler_t tokenVector)
 {
     MainFrame_t root;
@@ -101,6 +104,7 @@ bool Parser_parseTokens(const VectorHandler_t tokenVector)
         if(isTokenListPosMatchingPattern_(PATTERN_LIBRARY_IMPORT, PATTERN_LIBRARY_IMPORT_SIZE))
         {
             // detected object import
+
             if(!Vector_append(root.imports, tokens[currentTokenPos + 2]->valueString))
             {
                 Log_e(TAG, "Failed to append library import:%s", tokens[currentTokenPos + 2]->valueString);
@@ -108,13 +112,42 @@ bool Parser_parseTokens(const VectorHandler_t tokenVector)
             }
 
             currentTokenPos += PATTERN_LIBRARY_IMPORT_SIZE;
-
-        }else 
-        if(isTokenListPosMatchingPattern_(PATTERN_VARIABLE_DECLARE, PATTERN_VARIABLE_DECLARE_SIZE))
+        }else
+        if(isTokenListPosMatchingPattern_(PATTERN_DECLARE, PATTERN_DECLARE_SIZE))
         {
             // detected declared object variable
 
-            currentTokenPos += PATTERN_VARIABLE_DECLARE_SIZE;
+            char* content;
+            content = tokens[currentTokenPos + 2]->valueString;
+            printf("%d\n", currentTokenPos);
+
+            if(content == NULL)
+            {
+                Log_e(TAG, "Content is null at token parsing");
+                return ERROR;
+            }
+
+            int bitpack = atoi(content); 
+            char* name =  tokens[currentTokenPos + 3]->valueString;
+
+            currentTokenPos += PATTERN_DECLARE_SIZE;
+
+
+            if(isTokenListPosMatchingPattern_(PATTERN_SEMICOLON, PATTERN_SEMICOLON_SIZE))
+            {
+                // detected variable declaration
+                
+                
+            }else
+            if(isTokenListPosMatchingPattern_(PATTERN_BRACKET_ROUND_START, PATTERN_BRACKET_ROUND_START_SIZE))
+            {
+
+            }else
+            {
+                
+            }
+            
+
             
         }else
         {
@@ -126,10 +159,6 @@ bool Parser_parseTokens(const VectorHandler_t tokenVector)
     }
 
     
-    // imports
-    // variables
-    // methods    
-    
 
     return SUCCESS;
 }
@@ -140,8 +169,11 @@ bool Parser_parseTokens(const VectorHandler_t tokenVector)
 bool isTokenListPosMatchingPattern_(const TokenTypeHandler_t pattern, const size_t patternLength)
 {   
     size_t patternIdx;
+    size_t patternTokenPos;
 
-    if (currentTokenPos + (patternLength - 1) > tokensCount)
+    patternTokenPos = currentTokenPos;
+
+    if (patternTokenPos + (patternLength - 1) > tokensCount)
     {
         Log_e(TAG, "Code contains junk at the end");
         return ERROR;
@@ -150,17 +182,14 @@ bool isTokenListPosMatchingPattern_(const TokenTypeHandler_t pattern, const size
 
     while(patternIdx < patternLength)
     {
-        if (tokens[currentTokenPos]->tokenType != pattern[patternIdx])
+        if (tokens[patternTokenPos]->tokenType != pattern[patternIdx])
         {
             return false;
         }
         patternIdx += 1;
-        currentTokenPos += 1;
+        patternTokenPos += 1;
 
     }
 
     return true;
 }
-
-
-
