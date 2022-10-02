@@ -60,6 +60,21 @@ bool Parser_initialize()
     return SUCCESS;
 }
 
+bool Parser_destroy()
+{
+    if(!Vector_destroy(&alreadyCompiledFilePaths_))
+    {
+        Log_e(TAG, "Failed to destroy parser alreadyCompiledFilePaths vector");
+        return ERROR;
+    }
+
+    if(!Vector_destroy(&filePathsToCompile_))
+    {
+        Log_e(TAG, "Failed to destroy parser filePathsToCompile vector");
+        return ERROR;
+    }
+    return SUCCESS;
+}
 
 /**
  * @brief Public method used for parsing tokens by provided token list
@@ -71,7 +86,7 @@ bool Parser_parseTokens(const VectorHandler_t tokenVector)
 {
     MainFrame_t root;
 
-    tokens = tokenVector->expandable;
+    tokens = (TokenHandler_t) tokenVector->expandable;
     tokensCount = tokenVector->currentSize;
     currentTokenPos = 0;
 
@@ -82,7 +97,7 @@ bool Parser_parseTokens(const VectorHandler_t tokenVector)
         return ERROR;
     }
 
-    if(isTokenListPosMatchingPattern_(PATTERN_LIBRARY_IMPORT, sizeof(PATTERN_LIBRARY_IMPORT)))
+    if(isTokenListPosMatchingPattern_(PATTERN_LIBRARY_IMPORT, PATTERN_LIBRARY_IMPORT_SIZE))
     {
         // detected object import
         if(!Vector_append(root.imports, tokens[currentTokenPos + 2].valueString))
@@ -94,9 +109,11 @@ bool Parser_parseTokens(const VectorHandler_t tokenVector)
         currentTokenPos += sizeof(PATTERN_LIBRARY_IMPORT);
 
     }else 
-    if(isTokenListPosMatchingPattern_(PATTERN_VARIABLE_DECLARE, sizeof(PATTERN_VARIABLE_DECLARE)))
+    if(isTokenListPosMatchingPattern_(PATTERN_VARIABLE_DECLARE, PATTERN_VARIABLE_DECLARE_SIZE))
     {
         // detected declared object variable
+        
+
         
     }else
     {

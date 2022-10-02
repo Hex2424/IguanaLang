@@ -13,6 +13,7 @@
 #include "../separator/separator.h"
 #include "../vector/vector.h"
 #include "../file_reader/file_reader.h"
+#include "../parser/parser.h"
 ////////////////////////////////
 // DEFINES
 
@@ -62,6 +63,26 @@ bool Compiler_compile(const char* filePath)
     Vector_fit(&tokensVector);
     
     Vector_print(&tokensVector);
+
+    // initializing parser object
+
+    if(!Parser_initialize())
+    {
+        Log_e(TAG, "Failed to initialize parser");
+        return ERROR;
+    }
+    
+    if(!Parser_parseTokens(&tokensVector))
+    {
+        Log_e(TAG, "Failed to parse tokens");
+        return ERROR;
+    }
+
+    if(!Parser_destroy())
+    {
+        Log_w(TAG, "Failed to deallocate Parser object");
+        return ERROR;
+    }
 
     if(!Vector_destroy(&tokensVector))
     {
