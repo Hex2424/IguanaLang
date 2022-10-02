@@ -27,7 +27,7 @@ static const char* TAG = "PARSER";
 // PRIVATE TYPES
 Vector_t alreadyCompiledFilePaths_;
 Vector_t filePathsToCompile_;
-TokenHandler_t tokens;
+TokenHandler_t* tokens;
 size_t tokensCount;
 size_t currentTokenPos;
 
@@ -86,7 +86,7 @@ bool Parser_parseTokens(const VectorHandler_t tokenVector)
 {
     MainFrame_t root;
 
-    tokens = (TokenHandler_t) tokenVector->expandable;
+    tokens = (TokenHandler_t*) tokenVector->expandable;
     tokensCount = tokenVector->currentSize;
     currentTokenPos = 0;
 
@@ -100,9 +100,9 @@ bool Parser_parseTokens(const VectorHandler_t tokenVector)
     if(isTokenListPosMatchingPattern_(PATTERN_LIBRARY_IMPORT, PATTERN_LIBRARY_IMPORT_SIZE))
     {
         // detected object import
-        if(!Vector_append(root.imports, tokens[currentTokenPos + 2].valueString))
+        if(!Vector_append(root.imports, tokens[currentTokenPos + 2]->valueString))
         {
-            Log_e(TAG, "Failed to append library import:%s", tokens[currentTokenPos + 2].valueString);
+            Log_e(TAG, "Failed to append library import:%s", tokens[currentTokenPos + 2]->valueString);
             return ERROR;
         }
 
@@ -112,14 +112,14 @@ bool Parser_parseTokens(const VectorHandler_t tokenVector)
     if(isTokenListPosMatchingPattern_(PATTERN_VARIABLE_DECLARE, PATTERN_VARIABLE_DECLARE_SIZE))
     {
         // detected declared object variable
-        
+
 
         
     }else
     {
         // undetected any token type
 
-        Log_e(TAG, "Unrecognised token:");
+        Log_e(TAG, "Unrecognised token:%d", tokens[currentTokenPos]->tokenType);
         return ERROR;
     }
     
@@ -147,7 +147,7 @@ bool isTokenListPosMatchingPattern_(const TokenTypeHandler_t pattern, const size
 
     while(patternIdx < patternLength)
     {
-        if (tokens[currentTokenPos].tokenType != pattern[patternIdx])
+        if (tokens[currentTokenPos]->tokenType != pattern[patternIdx])
         {
             return false;
         }

@@ -92,11 +92,11 @@ static bool handleUnknownType_(TokenHandler_t tokenHandle, const char* expressio
 {
     tokenHandle->tokenType = NAMING;
     
-    tokenHandle->valueString = malloc(expressionSize);
+    tokenHandle->valueString = malloc(expressionSize + 1); // extra for null terminator \0
 
     ALLOC_CHECK(tokenHandle->valueString, false);
 
     memcpy(tokenHandle->valueString, expression, expressionSize);
-    
+    tokenHandle->valueString[expressionSize] = '\0';                // appending null terminator character for easier life
     return true;
 }
