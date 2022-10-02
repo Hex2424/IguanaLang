@@ -3,7 +3,7 @@
  *
  * MORE INFO ABOUT THE FILE'S CONTENTS
  *
- * @copyright This file is a part of the project Iguana+ and is distributed under MIT license which
+ * @copyright This file is a part of the project Iguana and is distributed under MIT license which
  * should have been included with the project. If not see: https://choosealicense.com/licenses/mit/
  *
  * @author Markas Vielavičius (markas.vielavicius@bytewall.com)
@@ -146,7 +146,12 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
                 }
 
                 Log_d(TAG, "token: %d %s", token->tokenType, token->valueString);
-                Vector_append(vectorHandle, token);
+
+                if(!Vector_append(vectorHandle, token))
+                {
+                    Log_e(TAG, "Failed to append tokenType:%d", token->tokenType);
+                    return ERROR;
+                }
                 // Vector_print(vectorHandle);
                 existWordBuild = 0;
                 wordIterator = currentIterator;

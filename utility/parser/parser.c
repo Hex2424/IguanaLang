@@ -3,7 +3,7 @@
  *
  * MORE INFO ABOUT THE FILE'S CONTENTS
  *
- * @copyright This file is a part of the project Iguana+ and is distributed under MIT license which
+ * @copyright This file is a part of the project Iguana and is distributed under MIT license which
  * should have been included with the project. If not see: https://choosealicense.com/licenses/mit/
  *
  * @author Markas Vielavičius (markas.vielavicius@bytewall.com)
@@ -96,32 +96,35 @@ bool Parser_parseTokens(const VectorHandler_t tokenVector)
         Vector_destroy(tokenVector);
         return ERROR;
     }
-
-    if(isTokenListPosMatchingPattern_(PATTERN_LIBRARY_IMPORT, PATTERN_LIBRARY_IMPORT_SIZE))
+    while (currentTokenPos < tokensCount)
     {
-        // detected object import
-        if(!Vector_append(root.imports, tokens[currentTokenPos + 2]->valueString))
+        if(isTokenListPosMatchingPattern_(PATTERN_LIBRARY_IMPORT, PATTERN_LIBRARY_IMPORT_SIZE))
         {
-            Log_e(TAG, "Failed to append library import:%s", tokens[currentTokenPos + 2]->valueString);
+            // detected object import
+            if(!Vector_append(root.imports, tokens[currentTokenPos + 2]->valueString))
+            {
+                Log_e(TAG, "Failed to append library import:%s", tokens[currentTokenPos + 2]->valueString);
+                return ERROR;
+            }
+
+            currentTokenPos += PATTERN_LIBRARY_IMPORT_SIZE;
+
+        }else 
+        if(isTokenListPosMatchingPattern_(PATTERN_VARIABLE_DECLARE, PATTERN_VARIABLE_DECLARE_SIZE))
+        {
+            // detected declared object variable
+
+            currentTokenPos += PATTERN_VARIABLE_DECLARE_SIZE;
+            
+        }else
+        {
+            // undetected any token type
+
+            Log_e(TAG, "Unrecognised token:%d", tokens[currentTokenPos]->tokenType);
             return ERROR;
         }
-
-        currentTokenPos += sizeof(PATTERN_LIBRARY_IMPORT);
-
-    }else 
-    if(isTokenListPosMatchingPattern_(PATTERN_VARIABLE_DECLARE, PATTERN_VARIABLE_DECLARE_SIZE))
-    {
-        // detected declared object variable
-
-
-        
-    }else
-    {
-        // undetected any token type
-
-        Log_e(TAG, "Unrecognised token:%d", tokens[currentTokenPos]->tokenType);
-        return ERROR;
     }
+
     
     // imports
     // variables

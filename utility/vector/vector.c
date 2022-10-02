@@ -3,7 +3,7 @@
  *
  * MORE INFO ABOUT THE FILE'S CONTENTS
  *
- * @copyright This file is a part of the project Iguana+ and is distributed under MIT license which
+ * @copyright This file is a part of the project Iguana and is distributed under MIT license which
  * should have been included with the project. If not see: https://choosealicense.com/licenses/mit/
  *
  * @author Markas Vielavičius (markas.vielavicius@bytewall.com)
@@ -134,7 +134,8 @@ bool Vector_append(VectorHandler_t object, const void* dataObject)
         object->currentSize++;
         object->availableSize--;
     }
-    
+
+    return SUCCESS;
 }
 
 /**
