@@ -41,5 +41,5 @@ inline void Shouter_shoutError(const TokenHandler_t tokenHandle, const char* err
 inline void Shouter_shoutExpectedToken(const TokenHandler_t tokenHandle,const TokenType_t tokenTypeExpected)
 {
 
-    Logc_e("%s:%u:%u -> %s \'%d\'",tokenHandle->location.filename,tokenHandle->location.line, tokenHandle->location.column, tokenTypeExpected);
+    Logc_e("%s:%u:%u -> %s \'%d\', found this '%d' -_-",tokenHandle->location.filename, tokenHandle->location.line, tokenHandle->location.column,EXPECTED_TOKEN, tokenTypeExpected, tokenHandle->tokenType);
 }

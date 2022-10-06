@@ -17,6 +17,8 @@
 
 #include "../../tokenizer/token/token.h"
 
+#define EXPECTED_TOKEN "Expected token"
+
 
 void Shouter_shoutError(const TokenHandler_t tokenHandle, const char* errorMessage);
 void Shouter_shoutExpectedToken(const TokenHandler_t tokenHandle, const TokenType_t tokenTypeExpected);

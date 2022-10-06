@@ -63,7 +63,6 @@ bool Vector_create(VectorHandler_t object, const InitialSettingsHandler_t initia
             return ERROR;
         }
     }
-
     if(initialSettings != NULL)
     {
         Log_i(TAG, "Found vector initial settings");

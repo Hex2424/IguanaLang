@@ -113,7 +113,7 @@ bool Parser_parseTokens(const VectorHandler_t tokenVector)
 }
 
 
-static inline bool handleKeywordImport_()
+static inline bool handleKeywordImport_(MainFrame_t rootHandle)
 {
     if(cTokenType == ARROW_LEFT || cTokenType == LITTERAL)                 // detected <
     {
@@ -128,10 +128,7 @@ static inline bool handleKeywordImport_()
             {
                 currentToken++;
 
-                if(cTokenType == SEMICOLON)
-                {
-                    currentToken++;
-                }else
+                if(cTokenType != SEMICOLON)
                 {
                     Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
                 }
