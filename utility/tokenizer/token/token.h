@@ -19,10 +19,23 @@
 // #include <stdlib.h>
 
 #include "token_database/token_types.h"
+#include "stdlib.h"
+
+
+typedef struct // filepath:line:column
+{
+    size_t line; 
+    size_t column;
+    char* filename;
+
+}TokenLocation_T;
+
+
 
 typedef struct
 {
     TokenType_t tokenType;
+    TokenLocation_T location;
     char* valueString;
 }Token_t;
 

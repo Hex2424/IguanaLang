@@ -22,5 +22,5 @@ void Log_d(const char* TAG, const char* expression, ...);
 void Log_e(const char* TAG, const char* expression, ...);
 void Log_i(const char* TAG, const char* expression, ...);
 void Log_w(const char* TAG, const char* expression, ...);
-
+void Logc_e(const char* expression, ...);
 #endif // UTILITY_LOGGER_LOGGER_H_

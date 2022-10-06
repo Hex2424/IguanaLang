@@ -12,6 +12,7 @@ utility/compiler/compiler.c
 utility/parser/parser.c
 utility/file_reader/file_reader.c
 utility/parser/structures/main_frame/main_frame.c
+utility/parser/parser_utilities/compiler_messages.c
 )
 
 cmake_minimum_required(VERSION 3.3)
