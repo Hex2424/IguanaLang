@@ -16,7 +16,7 @@
 #include "structures/pattern/pattern.h"
 #include "structures/method/method.h"
 #include "parser_utilities/compiler_messages.h"
-
+#include "string.h"
 ////////////////////////////////
 // DEFINES
 
@@ -38,8 +38,10 @@ size_t tokensCount;
 ////////////////////////////////
 // PRIVATE METHODS
 
-static inline bool handleKeywordImport_();
+static inline bool handleKeywordImport_(MainFrameHandle_t rootHandle);
+static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle);
 static bool tryParseSequence_(const TokenType_t* pattern,const size_t patternSize);
+static bool assignTokenValue_(char** to, const char* from);
 
 ////////////////////////////////
 // IMPLEMENTATION
@@ -94,7 +96,7 @@ bool Parser_parseTokens(const VectorHandler_t tokenVector)
     tokens = (TokenHandler_t*) tokenVector->expandable;
     tokensCount = tokenVector->currentSize;
     currentToken = tokens;
-
+    endToken = tokens + tokenVector->currentSize;
 
     if(!MainFrame_init(&root))
     {
@@ -102,39 +104,47 @@ bool Parser_parseTokens(const VectorHandler_t tokenVector)
         Vector_destroy(tokenVector);
         return ERROR;
     }
-    
-    if(cTokenType == MODULE_IMPORT)     // detected import
+    while (currentToken < endToken)
     {
-        handleKeywordImport_(root);
-    }else
-    if(cTokenType == INTEGER_TYPE)      // detected int keyword
-    {
-        handleKeywordInteger_(root);
-    }
-    currentToken++;
+        if(cTokenType == MODULE_IMPORT)     // detected import
+        {
+            handleKeywordImport_(&root);
+        }else
+        if(cTokenType == INTEGER_TYPE)      // detected int keyword
+        {
+            handleKeywordInteger_(&root);
+        }else
+        {
+            Shouter_shoutUnrecognizedToken(cTokenP);
+        }
+        currentToken++;
 
+    }
 
     return SUCCESS;
 }
 
-static inline bool handleKeywordInteger_(MainFrame_t rootHandle)
+static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle)
 {
-    VariableObject_t variable;
+    VariableObjectHandle_t variable;
+
 
     if(!tryParseSequence_(PATTERN_DECLARE, PATTERN_DECLARE_SIZE))
     {
         return SUCCESS;
     }
+    variable = malloc(sizeof(VariableObject_t));
+    ALLOC_CHECK(variable, ERROR);
 
-    variable.variableName = (*currentToken)->valueString;
-    variable.bitpack = atoi((*(currentToken - 1))->valueString);
-    variable.assignedVariable = NULL;
+    variable->variableName = (*currentToken)->valueString;
+    variable->bitpack = atoi((*(currentToken - 1))->valueString);
+    variable->assignedVariable = NULL;
 
     currentToken++;
 
     if(cTokenType == SEMICOLON)        
     {
-        variable.assignedValue = 0;
+        variable->assignedValue = 0;
     }else
     if(cTokenType == EQUAL)             // checking for assignable declaration
     {
@@ -143,10 +153,17 @@ static inline bool handleKeywordInteger_(MainFrame_t rootHandle)
         {
             NULL_GUARD(cTokenP->valueString, ERROR, Log_e(TAG, "Cannot parse token value cause its NULL"));
 
-            variable.assignedValue = atoll(cTokenP->valueString);
+            variable->assignedValue = atoll(cTokenP->valueString);
             currentToken++;
 
-            if(cTokenType != SEMICOLON)
+            if(cTokenType == SEMICOLON)
+            {
+                if(!Vector_append(rootHandle->classVariables, variable))
+                {
+                    Log_e(TAG, "Failed to append new class variable");
+                    return ERROR;
+                }  
+            }else
             {
                 Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
             }
@@ -161,13 +178,31 @@ static inline bool handleKeywordInteger_(MainFrame_t rootHandle)
     {
         
 
-
     }else
     {
         Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
     }
 
+    return SUCCESS;
+
 }
+
+static inline bool parseMethod_(MainFrame_t root)
+{
+    // MethodObject_t method;
+    
+    // if(!parseMethodParameters_(&method))
+    // {
+
+    // }
+}
+
+
+// static bool parseMethodParameters_(MethodObjectHandle_t methodHandle)
+// {
+
+// }
+
 
 static bool tryParseSequence_(const TokenType_t* pattern,const size_t patternSize)
 {
@@ -184,19 +219,44 @@ static bool tryParseSequence_(const TokenType_t* pattern,const size_t patternSiz
             {
                 Shouter_shoutExpectedToken(cTokenP, pattern[patternIdx]);
             }
-            return ERROR;
+            return false;
         }
         
     }
-    return SUCCESS;
+    return true;
 
 
 }
 
 
-
-static inline bool handleKeywordImport_(MainFrame_t rootHandle)
+/**
+ * @brief Private method for copying and doing malloc manually from token value
+ * 
+ * @param[out] to   Pointer to Pointer which all bytes will be coppied also being allocated dynamically
+ * @param[in] from  Pointer from which all bytes will be coppied
+ * @return          Success state
+ */
+static bool assignTokenValue_(char** to, const char* from)
 {
+    *to = malloc(strlen(from));     // recopying token value
+    ALLOC_CHECK(to, ERROR);
+    if(strcpy(*to, from) == NULL)
+    {
+        Log_e(TAG, "For some reason couldn't copy from token value");
+        return ERROR;
+    }
+
+    return SUCCESS;
+}
+
+
+static inline bool handleKeywordImport_(MainFrameHandle_t rootHandle)
+{
+    ImportObjectHandle_t importObject;
+
+    importObject = malloc(sizeof(ImportObject_t));
+    ALLOC_CHECK(importObject, ERROR);
+
     currentToken++;
     if(cTokenType == ARROW_LEFT || cTokenType == LITTERAL)                 // detected <
     {
@@ -205,6 +265,12 @@ static inline bool handleKeywordImport_(MainFrame_t rootHandle)
 
         if(cTokenType == NAMING)
         {
+            if(!assignTokenValue_(&importObject->name, cTokenP->valueString))
+            {
+                Log_e(TAG, "Couldn't assign value from token");
+                return ERROR;
+            }
+
             currentToken++;
             
             if(cTokenType == ARROW_LEFT || cTokenType == LITTERAL)
@@ -214,7 +280,16 @@ static inline bool handleKeywordImport_(MainFrame_t rootHandle)
                 if(cTokenType != SEMICOLON)
                 {
                     Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
+                }else
+                {
+                    if(!Vector_append(rootHandle->imports, importObject))
+                    {
+                        Log_e(TAG, "Couldn't append libary to vector");
+                        return ERROR;
+                    }
+
                 }
+                
 
             }else
             {
@@ -231,7 +306,7 @@ static inline bool handleKeywordImport_(MainFrame_t rootHandle)
         Shouter_shoutExpectedToken(cTokenP, LITTERAL);
     }
 
-    currentToken++;
+    Log_d(TAG, "Current token \'%d\' after libary parse", cTokenP->tokenType);
 
     return SUCCESS;
 }

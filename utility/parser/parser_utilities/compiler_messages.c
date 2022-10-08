@@ -55,6 +55,19 @@ void Shouter_shoutExpectedToken(const TokenHandler_t tokenHandle,const TokenType
     tokenHandle->tokenType);
 }
 
+
+void Shouter_shoutUnrecognizedToken(const TokenHandler_t tokenHandle)
+{
+
+    Logc_e("%s:%u:%u -> Unrecognized token \'%d\'",
+    tokenHandle->location.filename,
+    tokenHandle->location.line,
+    tokenHandle->location.column,
+    
+    tokenHandle->tokenType);
+}
+
+
 void Shouter_shoutForgottenToken(const TokenHandler_t tokenHandle,const TokenType_t forgottenToken)
 {
 
