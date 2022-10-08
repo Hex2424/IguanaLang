@@ -128,7 +128,6 @@ static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle)
 {
     VariableObjectHandle_t variable;
 
-
     if(!tryParseSequence_(PATTERN_DECLARE, PATTERN_DECLARE_SIZE))
     {
         return SUCCESS;
@@ -140,7 +139,6 @@ static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle)
     variable->bitpack = atoi((*(currentToken - 1))->valueString);
     variable->assignedVariable = NULL;
 
-    currentToken++;
 
     if(cTokenType == SEMICOLON)        
     {
@@ -207,10 +205,12 @@ static inline bool parseMethod_(MainFrame_t root)
 static bool tryParseSequence_(const TokenType_t* pattern,const size_t patternSize)
 {
     int patternIdx;
-    for(patternIdx = 0; patternIdx < patternSize; patternIdx++, ++currentToken)
+    for(patternIdx = 0; patternIdx < patternSize; patternIdx++, currentToken++)
     {
+
         if(cTokenType != pattern[patternIdx])
         {
+            // Log_d(TAG, "%d %d", cTokenType,  pattern[patternIdx]);
             if(((patternIdx + 1) < patternSize) && (cTokenType == pattern[patternIdx + 1]))
             {
                 Shouter_shoutForgottenToken(cTokenP, pattern[patternIdx + 1]);
@@ -306,7 +306,7 @@ static inline bool handleKeywordImport_(MainFrameHandle_t rootHandle)
         Shouter_shoutExpectedToken(cTokenP, LITTERAL);
     }
 
-    Log_d(TAG, "Current token \'%d\' after libary parse", cTokenP->tokenType);
+    // Log_d(TAG, "Current token \'%d\' after libary parse", cTokenP->tokenType);
 
     return SUCCESS;
 }

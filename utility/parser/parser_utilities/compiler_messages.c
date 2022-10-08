@@ -72,7 +72,7 @@ void Shouter_shoutUnrecognizedToken(const TokenHandler_t tokenHandle)
 void Shouter_shoutForgottenToken(const TokenHandler_t tokenHandle,const TokenType_t forgottenToken)
 {
 
-    Logc_e("%s:%u:%u -> Forgotten token: \'%d\'",
+    Logc_e("%s:%u:%u -> Forgotten token: \'%s\'",
     tokenHandle->location.filename,
     tokenHandle->location.line,
     tokenHandle->location.column,
