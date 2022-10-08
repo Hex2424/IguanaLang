@@ -22,5 +22,6 @@
 
 void Shouter_shoutError(const TokenHandler_t tokenHandle, const char* errorMessage);
 void Shouter_shoutExpectedToken(const TokenHandler_t tokenHandle, const TokenType_t tokenTypeExpected);
+void Shouter_shoutForgottenToken(const TokenHandler_t tokenHandle,const TokenType_t forgottenToken);
 
 #endif // UTILITY_PARSER_PARSER_UTILITIES_COMPILER_MESSAGES_H_

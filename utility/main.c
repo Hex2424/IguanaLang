@@ -24,5 +24,5 @@ int main(int argc, char const *argv[])
     //     return 0;
     // }
 
-    return Compiler_compile("../test.ig");
+    return Compiler_compile("../test.i");
 }

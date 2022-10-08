@@ -10,8 +10,17 @@ int:1 method(int:32 param1, int:8 param2)
     
 }
 
+int:32 main()
+{
+    out.print("ssss %d");
+}
+
 int:1 method2(int:32 param1, int:4 param2)
 {
+    guard(true, false);
+
+    Object t;
+
 	when(i -> 32)
     {
         (i > 5) -> 0;

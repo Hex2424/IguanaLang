@@ -32,14 +32,36 @@
 ////////////////////////////////
 // IMPLEMENTATION
 
-inline void Shouter_shoutError(const TokenHandler_t tokenHandle, const char* errorMessage)
+void Shouter_shoutError(const TokenHandler_t tokenHandle, const char* errorMessage)
 {
 
-    Logc_e("%s:%u:%u -> %s",tokenHandle->location.filename,tokenHandle->location.line, tokenHandle->location.column, errorMessage);
+    Logc_e("%s:%u:%u -> %s",
+    tokenHandle->location.filename,
+    tokenHandle->location.line,
+    tokenHandle->location.column,
+
+    errorMessage);
 }
 
-inline void Shouter_shoutExpectedToken(const TokenHandler_t tokenHandle,const TokenType_t tokenTypeExpected)
+void Shouter_shoutExpectedToken(const TokenHandler_t tokenHandle,const TokenType_t tokenTypeExpected)
 {
 
-    Logc_e("%s:%u:%u -> %s \'%d\', found this '%d' -_-",tokenHandle->location.filename, tokenHandle->location.line, tokenHandle->location.column,EXPECTED_TOKEN, tokenTypeExpected, tokenHandle->tokenType);
+    Logc_e("%s:%u:%u -> %s \'%d\', found this '%d' -_-",
+    tokenHandle->location.filename,
+    tokenHandle->location.line,
+    tokenHandle->location.column,
+    
+    EXPECTED_TOKEN, tokenTypeExpected,
+    tokenHandle->tokenType);
+}
+
+void Shouter_shoutForgottenToken(const TokenHandler_t tokenHandle,const TokenType_t forgottenToken)
+{
+
+    Logc_e("%s:%u:%u -> Forgotten token: \'%d\'",
+    tokenHandle->location.filename,
+    tokenHandle->location.line,
+    tokenHandle->location.column,
+    
+    tokenHandle->tokenType);
 }

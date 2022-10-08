@@ -21,7 +21,8 @@ typedef struct
 {
     char* variableName;
     uint8_t bitpack;
-
+    long long assignedValue;
+    void* assignedVariable;
 }VariableObject_t;
 
 typedef VariableObject_t* VariableObjectHandle_t;

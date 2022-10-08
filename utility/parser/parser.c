@@ -39,6 +39,7 @@ size_t tokensCount;
 // PRIVATE METHODS
 
 static inline bool handleKeywordImport_();
+static bool tryParseSequence_(const TokenType_t* pattern,const size_t patternSize);
 
 ////////////////////////////////
 // IMPLEMENTATION
@@ -102,19 +103,101 @@ bool Parser_parseTokens(const VectorHandler_t tokenVector)
         return ERROR;
     }
     
-    if(cTokenType == MODULE_IMPORT) // detected import
+    if(cTokenType == MODULE_IMPORT)     // detected import
     {
-        currentToken++;
-        handleKeywordImport_();
+        handleKeywordImport_(root);
+    }else
+    if(cTokenType == INTEGER_TYPE)      // detected int keyword
+    {
+        handleKeywordInteger_(root);
     }
+    currentToken++;
 
 
     return SUCCESS;
 }
 
+static inline bool handleKeywordInteger_(MainFrame_t rootHandle)
+{
+    VariableObject_t variable;
+
+    if(!tryParseSequence_(PATTERN_DECLARE, PATTERN_DECLARE_SIZE))
+    {
+        return SUCCESS;
+    }
+
+    variable.variableName = (*currentToken)->valueString;
+    variable.bitpack = atoi((*(currentToken - 1))->valueString);
+    variable.assignedVariable = NULL;
+
+    currentToken++;
+
+    if(cTokenType == SEMICOLON)        
+    {
+        variable.assignedValue = 0;
+    }else
+    if(cTokenType == EQUAL)             // checking for assignable declaration
+    {
+        currentToken++;
+        if(cTokenType = NUMBER_VALUE)   // assignableValue
+        {
+            NULL_GUARD(cTokenP->valueString, ERROR, Log_e(TAG, "Cannot parse token value cause its NULL"));
+
+            variable.assignedValue = atoll(cTokenP->valueString);
+            currentToken++;
+
+            if(cTokenType != SEMICOLON)
+            {
+                Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
+            }
+
+        }else
+        {
+            Shouter_shoutError(cTokenP, "To variable can be assigned constant number or other variable only");
+        }
+
+    }else
+    if(cTokenType == BRACKET_ROUND_START)   // identified method
+    {
+        
+
+
+    }else
+    {
+        Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
+    }
+
+}
+
+static bool tryParseSequence_(const TokenType_t* pattern,const size_t patternSize)
+{
+    int patternIdx;
+    for(patternIdx = 0; patternIdx < patternSize; patternIdx++, ++currentToken)
+    {
+        if(cTokenType != pattern[patternIdx])
+        {
+            if(((patternIdx + 1) < patternSize) && (cTokenType == pattern[patternIdx + 1]))
+            {
+                Shouter_shoutForgottenToken(cTokenP, pattern[patternIdx + 1]);
+                
+            }else
+            {
+                Shouter_shoutExpectedToken(cTokenP, pattern[patternIdx]);
+            }
+            return ERROR;
+        }
+        
+    }
+    return SUCCESS;
+
+
+}
+
+
 
 static inline bool handleKeywordImport_(MainFrame_t rootHandle)
 {
+    currentToken++;
     if(cTokenType == ARROW_LEFT || cTokenType == LITTERAL)                 // detected <
     {
         // standart lib detected
