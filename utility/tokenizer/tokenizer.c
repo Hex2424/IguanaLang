@@ -61,7 +61,8 @@ TokenHandler_t Tokenizer_wordToCorrespondingToken(const char *seperation, const 
         {
 
             tokenHandler->tokenType = bindingsTable_[bindingLinePos].type;
-            tokenHandler->valueString = NULL;
+            tokenHandler->valueString = bindingsTable_[bindingLinePos].expression;
+
             return tokenHandler;
             // Litterals matching, can proceed to Token creation
 

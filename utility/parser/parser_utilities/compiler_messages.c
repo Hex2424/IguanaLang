@@ -12,7 +12,7 @@
  */
 
 #include "compiler_messages.h"
-
+#include "../../tokenizer/token/token_database/token_bindings.h"
 ////////////////////////////////
 // DEFINES
 
@@ -46,25 +46,26 @@ void Shouter_shoutError(const TokenHandler_t tokenHandle, const char* errorMessa
 void Shouter_shoutExpectedToken(const TokenHandler_t tokenHandle,const TokenType_t tokenTypeExpected)
 {
 
-    Logc_e("%s:%u:%u -> %s \'%d\', found this '%d' -_-",
+    Logc_e("%s:%u:%u -> %s \'%s\', found this '%s' -_-",
     tokenHandle->location.filename,
     tokenHandle->location.line,
     tokenHandle->location.column,
     
-    EXPECTED_TOKEN, tokenTypeExpected,
-    tokenHandle->tokenType);
+    EXPECTED_TOKEN, 
+    bindingsTable_[tokenTypeExpected].expression,
+    tokenHandle->valueString);
 }
 
 
 void Shouter_shoutUnrecognizedToken(const TokenHandler_t tokenHandle)
 {
 
-    Logc_e("%s:%u:%u -> Unrecognized token \'%d\'",
+    Logc_e("%s:%u:%u -> Unrecognized token \'%s\'",
     tokenHandle->location.filename,
     tokenHandle->location.line,
     tokenHandle->location.column,
-    
-    tokenHandle->tokenType);
+
+    tokenHandle->valueString);
 }
 
 
@@ -76,5 +77,6 @@ void Shouter_shoutForgottenToken(const TokenHandler_t tokenHandle,const TokenTyp
     tokenHandle->location.line,
     tokenHandle->location.column,
     
+    bindingsTable_[forgottenToken].expression,
     tokenHandle->tokenType);
 }

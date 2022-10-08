@@ -32,7 +32,6 @@ typedef enum TokenType
     BRACKET_ROUND_START, // (
     BRACKET_ROUND_END,   // )
     MODULE_IMPORT,       // import
-    MODULE_NAME,         // # sys
     NOT,                 // !
     EQUAL,               // =
     OPERATOR_PLUS,       // +
