@@ -28,8 +28,9 @@ static const BindingType_t bindingsTable_[] =
     {
         {"int", INTEGER_TYPE},                              
         {";", SEMICOLON},
-        {"{", BRACKET_START},
+        {"", NUMBER_VALUE},
         {"", NAMING},
+        {"{", BRACKET_START},
         {"}", BRACKET_END},
         {":", COLON},
         {">", ARROW_RIGHT},

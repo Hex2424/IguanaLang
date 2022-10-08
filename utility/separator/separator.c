@@ -91,6 +91,14 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
     size_t overallLength;
     size_t tokenCount;
 
+    size_t currentColumn = 1;
+    size_t currentLine = 0;
+
+    size_t lastLine = 0;
+    size_t lastColumn = 1;
+
+    const char* currentFile = "/home/hex24/Desktop/C_Projects/IguanaLang/test.i";
+
     wordIterator = begginingIterator;
     existWordBuild = 0;
     tokenCount = 0;
@@ -124,8 +132,25 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
             *currentIterator == '\r' ||
             *currentIterator == '\t')
         {
+            currentColumn++;
+            
+            switch (*currentIterator)
+            {
+                case '\n':
+                {
+                    currentLine++;
+                    currentColumn = 1;
+                }break;
+
+                case '\r':
+                {
+                    currentColumn = 1;
+                }break;
+            }
+
             breakTag = true;
             currentIterator++;
+
             if (currentIterator >= maxIterator)
             {
                 break;
@@ -139,6 +164,14 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
 
                 TokenHandler_t token;
                 token = Tokenizer_wordToCorrespondingToken(wordIterator, existWordBuild);
+
+                token->location.column = lastColumn;     // setting up file location settings for debugging errors
+                token->location.line = lastLine;
+                token->location.filename = currentFile;
+
+
+                lastColumn = currentColumn;
+                lastLine = currentLine;
 
                 if(token == NULL)
                 {
