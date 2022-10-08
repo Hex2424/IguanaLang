@@ -13,9 +13,8 @@
 
 #include "parser.h"
 #include "../tokenizer/token/token.h"
-#include "structures/pattern/pattern.h"
-#include "structures/method/method.h"
-#include "parser_utilities/compiler_messages.h"
+#include "parser_utilities/global_parser_utility.h"
+#include "parser_utilities/smaller_parsers/method_parsers.h"
 #include "string.h"
 ////////////////////////////////
 // DEFINES
@@ -128,7 +127,7 @@ static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle)
 {
     VariableObjectHandle_t variable;
 
-    if(!tryParseSequence_(PATTERN_DECLARE, PATTERN_DECLARE_SIZE))
+    if(!ParserUtils_tryParseSequence(&currentToken, PATTERN_DECLARE, PATTERN_DECLARE_SIZE))
     {
         return SUCCESS;
     }
@@ -174,7 +173,7 @@ static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle)
     }else
     if(cTokenType == BRACKET_ROUND_START)   // identified method
     {
-        
+        MethodParser_parseMethod(rootHandle);
 
     }else
     {
@@ -183,70 +182,6 @@ static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle)
 
     return SUCCESS;
 
-}
-
-static inline bool parseMethod_(MainFrame_t root)
-{
-    // MethodObject_t method;
-    
-    // if(!parseMethodParameters_(&method))
-    // {
-
-    // }
-}
-
-
-// static bool parseMethodParameters_(MethodObjectHandle_t methodHandle)
-// {
-
-// }
-
-
-static bool tryParseSequence_(const TokenType_t* pattern,const size_t patternSize)
-{
-    int patternIdx;
-    for(patternIdx = 0; patternIdx < patternSize; patternIdx++, currentToken++)
-    {
-
-        if(cTokenType != pattern[patternIdx])
-        {
-            // Log_d(TAG, "%d %d", cTokenType,  pattern[patternIdx]);
-            if(((patternIdx + 1) < patternSize) && (cTokenType == pattern[patternIdx + 1]))
-            {
-                Shouter_shoutForgottenToken(cTokenP, pattern[patternIdx + 1]);
-                
-            }else
-            {
-                Shouter_shoutExpectedToken(cTokenP, pattern[patternIdx]);
-            }
-            return false;
-        }
-        
-    }
-    return true;
-
-
-}
-
-
-/**
- * @brief Private method for copying and doing malloc manually from token value
- * 
- * @param[out] to   Pointer to Pointer which all bytes will be coppied also being allocated dynamically
- * @param[in] from  Pointer from which all bytes will be coppied
- * @return          Success state
- */
-static bool assignTokenValue_(char** to, const char* from)
-{
-    *to = malloc(strlen(from));     // recopying token value
-    ALLOC_CHECK(to, ERROR);
-    if(strcpy(*to, from) == NULL)
-    {
-        Log_e(TAG, "For some reason couldn't copy from token value");
-        return ERROR;
-    }
-
-    return SUCCESS;
 }
 
 
@@ -265,7 +200,7 @@ static inline bool handleKeywordImport_(MainFrameHandle_t rootHandle)
 
         if(cTokenType == NAMING)
         {
-            if(!assignTokenValue_(&importObject->name, cTokenP->valueString))
+            if(!ParserUtils_assignTokenValue(&importObject->name, cTokenP->valueString))
             {
                 Log_e(TAG, "Couldn't assign value from token");
                 return ERROR;
