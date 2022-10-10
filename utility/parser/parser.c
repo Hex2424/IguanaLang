@@ -173,7 +173,8 @@ static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle)
     }else
     if(cTokenType == BRACKET_ROUND_START)   // identified method
     {
-        MethodParser_parseMethod(rootHandle);
+        currentToken++;
+        MethodParser_parseMethod(&currentToken, rootHandle);
 
     }else
     {

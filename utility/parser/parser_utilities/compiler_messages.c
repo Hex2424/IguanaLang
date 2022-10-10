@@ -80,3 +80,4 @@ void Shouter_shoutForgottenToken(const TokenHandler_t tokenHandle,const TokenTyp
     bindingsTable_[forgottenToken].expression,
     tokenHandle->tokenType);
 }
+
