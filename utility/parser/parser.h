@@ -21,6 +21,6 @@
 #include "../tokenizer/token/token.h"
 
 bool Parser_initialize();
-bool Parser_parseTokens(const VectorHandler_t tokenList);
+bool Parser_parseTokens(MainFrameHandle_t root, const VectorHandler_t tokenVector);
 bool Parser_destroy();
 #endif // UTILITY_PARSER_PARSER_H_

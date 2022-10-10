@@ -14,6 +14,8 @@
 #include "../vector/vector.h"
 #include "../file_reader/file_reader.h"
 #include "../parser/parser.h"
+#include "../generator/generator.h"
+
 ////////////////////////////////
 // DEFINES
 
@@ -46,6 +48,7 @@ bool Compiler_compile(const char* filePath)
     Vector_t tokensVector;
     char* codeString;
     size_t length;
+    MainFrame_t root;
 
     length = FileReader_readToBuffer(filePath, &codeString);
     if(length == -1)
@@ -72,11 +75,14 @@ bool Compiler_compile(const char* filePath)
         return ERROR;
     }
     
-    if(!Parser_parseTokens(&tokensVector))
+    if(!Parser_parseTokens(&root, &tokensVector))
     {
         Log_e(TAG, "Failed to parse tokens");
         return ERROR;
     }
+
+    
+
 
     if(!Parser_destroy())
     {

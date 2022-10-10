@@ -85,19 +85,18 @@ bool Parser_destroy()
 /**
  * @brief Public method used for parsing tokens by provided token list
  * 
+ * @param[out] root         Igauana code AST goes here as main root
  * @param[in] tokenList     file tokens go here 
  * @return                  Success state
  */ 
-bool Parser_parseTokens(const VectorHandler_t tokenVector)
+bool Parser_parseTokens(MainFrameHandle_t root, const VectorHandler_t tokenVector)
 {
-    MainFrame_t root;
-
     tokens = (TokenHandler_t*) tokenVector->expandable;
     tokensCount = tokenVector->currentSize;
     currentToken = tokens;
     endToken = tokens + tokenVector->currentSize;
 
-    if(!MainFrame_init(&root))
+    if(!MainFrame_init(root))
     {
         Log_e(TAG, "MainFrame init failed");
         Vector_destroy(tokenVector);
@@ -107,11 +106,11 @@ bool Parser_parseTokens(const VectorHandler_t tokenVector)
     {
         if(cTokenType == MODULE_IMPORT)     // detected import
         {
-            handleKeywordImport_(&root);
+            handleKeywordImport_(root);
         }else
         if(cTokenType == INTEGER_TYPE)      // detected int keyword
         {
-            handleKeywordInteger_(&root);
+            handleKeywordInteger_(root);
         }else
         {
             Shouter_shoutUnrecognizedToken(cTokenP);
@@ -119,7 +118,7 @@ bool Parser_parseTokens(const VectorHandler_t tokenVector)
         currentToken++;
 
     }
-
+    Log_i(TAG, "Compiling completed with %d errors", Shouter_getErrorCount());
     return SUCCESS;
 }
 

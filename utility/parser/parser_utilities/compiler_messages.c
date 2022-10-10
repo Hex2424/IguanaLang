@@ -23,11 +23,11 @@
 
 ////////////////////////////////
 // PRIVATE TYPES
-
+uint32_t errorCount = 0;
 
 ////////////////////////////////
 // PRIVATE METHODS
-
+void incrementErrorCount_();
 
 ////////////////////////////////
 // IMPLEMENTATION
@@ -41,19 +41,20 @@ void Shouter_shoutError(const TokenHandler_t tokenHandle, const char* errorMessa
     tokenHandle->location.column,
 
     errorMessage);
+    incrementErrorCount_();
 }
 
 void Shouter_shoutExpectedToken(const TokenHandler_t tokenHandle,const TokenType_t tokenTypeExpected)
 {
 
-    Logc_e("%s:%u:%u -> %s \'%s\', found this '%s' -_-",
+    Logc_e("%s:%u:%u -> Expected token \'%s\', found this '%s' -_-",
     tokenHandle->location.filename,
     tokenHandle->location.line,
     tokenHandle->location.column,
     
-    EXPECTED_TOKEN, 
     bindingsTable_[tokenTypeExpected].expression,
     tokenHandle->valueString);
+    incrementErrorCount_();
 }
 
 
@@ -66,6 +67,7 @@ void Shouter_shoutUnrecognizedToken(const TokenHandler_t tokenHandle)
     tokenHandle->location.column,
 
     tokenHandle->valueString);
+    incrementErrorCount_();
 }
 
 
@@ -79,5 +81,21 @@ void Shouter_shoutForgottenToken(const TokenHandler_t tokenHandle,const TokenTyp
     
     bindingsTable_[forgottenToken].expression,
     tokenHandle->tokenType);
+
+    incrementErrorCount_();
 }
 
+inline void Shouter_resetErrorCount()
+{
+    errorCount = 0;
+}
+
+inline uint32_t Shouter_getErrorCount()
+{
+    return errorCount;
+}
+
+inline void incrementErrorCount_()
+{
+    errorCount++;
+}

@@ -16,13 +16,14 @@
 #define UTILITY_PARSER_PARSER_UTILITIES_COMPILER_MESSAGES_H_
 
 #include "../../tokenizer/token/token.h"
-
-#define EXPECTED_TOKEN "Expected token"
+#include "stdint.h"
 
 
 void Shouter_shoutError(const TokenHandler_t tokenHandle, const char* errorMessage);
 void Shouter_shoutExpectedToken(const TokenHandler_t tokenHandle, const TokenType_t tokenTypeExpected);
 void Shouter_shoutForgottenToken(const TokenHandler_t tokenHandle,const TokenType_t forgottenToken);
 void Shouter_shoutUnrecognizedToken(const TokenHandler_t tokenHandle);
+void Shouter_resetErrorCount();
+uint32_t Shouter_getErrorCount();
 
 #endif // UTILITY_PARSER_PARSER_UTILITIES_COMPILER_MESSAGES_H_
