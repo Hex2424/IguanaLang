@@ -5,13 +5,3 @@
 </p>
 
 **Iguana - programming language for objective, readable and memory cheap programming.**
-
-
-## Build
-
-## Running
-
-## Testing
-
-## Syntax
-
