@@ -18,6 +18,6 @@
 #include "stdbool.h"
 #include "../parser/structures/main_frame/main_frame.h"
 
-bool Generator_generateCodeFor(MainFrameHandle_t ast);
+bool Generator_generateCodeFor(const char* iguanaFilePath, const MainFrameHandle_t ast);
 
 #endif // UTILITY_GENERATOR_GENERATOR_H_

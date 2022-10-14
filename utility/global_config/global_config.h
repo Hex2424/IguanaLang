@@ -24,6 +24,11 @@
  */
 #define VERBOSE_LEVEL 3
 
+// OS types
+#define WINDOWS       1
+#define LINUX         2
+
+#define OS            LINUX
 
 
 

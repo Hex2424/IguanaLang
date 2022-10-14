@@ -12,11 +12,20 @@
  */
 #include "generator.h"
 #include "../vector/vector.h"
+#include "stdio.h"
+#include "../global_config/global_config.h"
+#include "string.h"
 
 ////////////////////////////////
 // DEFINES
+#define LINUX_TEMP_FOLDER_PATH      "/tmp"
+#define WINDOWS_TEMP_FOLDER_PATH    "ECHO %Temp%" // get from CMD
 
-
+#if OS == LINUX
+    #define TEMP_PATH                   LINUX_TEMP_FOLDER_PATH
+#elif OS == WINDOWS
+    #define TEMP_PATH                   WINDOWS_TEMP_FOLDER_PATH
+#endif
 ////////////////////////////////
 // PRIVATE CONSTANTS
 
@@ -32,7 +41,24 @@
 ////////////////////////////////
 // IMPLEMENTATION
 
-bool Generator_generateCodeFor(MainFrameHandle_t ast)
+bool Generator_generateCodeFor(const char* relativeIguanaFilePath, const MainFrameHandle_t ast)
 {
+    FILE* cFile;
+    char* cFilename;
+    int iguanaPathLength;
+
+    iguanaPathLength = strlen(relativeIguanaFilePath);
     
+    cFilename = strrchr(relativeIguanaFilePath, '/');    // finding filename start
+    // cFilename[iguanaPathLength - 2] = '.';               // /ssss.c
+    cFilename[iguanaPathLength - 1] = 'c';
+
+    cFile = fopen(cFilename, "r");
+
+}
+
+
+bool getIguanaFileName_()
+{
+
 }
