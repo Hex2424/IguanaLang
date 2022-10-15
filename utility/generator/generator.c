@@ -15,6 +15,7 @@
 #include "stdio.h"
 #include "../global_config/global_config.h"
 #include "string.h"
+#include "../logger/logger.h"
 
 ////////////////////////////////
 // DEFINES
@@ -28,7 +29,7 @@
 #endif
 ////////////////////////////////
 // PRIVATE CONSTANTS
-
+static const char* TAG = "GENERATOR";
 
 ////////////////////////////////
 // PRIVATE TYPES
@@ -37,6 +38,7 @@
 ////////////////////////////////
 // PRIVATE METHODS
 
+bool iguanaPathToCharfilePath_(char* relativeIguanaFilePath, const char cFormatExtension);
 
 ////////////////////////////////
 // IMPLEMENTATION
@@ -45,9 +47,6 @@ bool Generator_generateCodeFor(const char* relativeIguanaFilePath, const MainFra
 {
     FILE* cFile;
     char* cFilename;
-    int iguanaPathLength;
-
-    iguanaPathLength = strlen(relativeIguanaFilePath);
     
     cFilename = strrchr(relativeIguanaFilePath, '/');    // finding filename start
     // cFilename[iguanaPathLength - 2] = '.';               // /ssss.c
@@ -57,8 +56,25 @@ bool Generator_generateCodeFor(const char* relativeIguanaFilePath, const MainFra
 
 }
 
-
-bool getIguanaFileName_()
+/**
+ * @brief Private method for effective file extension changing which are 1 char length
+ * 
+ * e.g: ./filepath/iguana.i --> ./filepath/iguana.c
+ * e.g: ./filepath/iguana.ig --> ./filepath/iguana.c
+ * e.g: ./filepath/iguana.iguana --> ./filepath/iguana.h
+ * 
+ * @param[out] relativeIguanaFilePath   Relative path from main root folder to iguana file which being compiled
+ * @param[in] cFormatExtension          char to replace extension with (must be char and not string)
+ * @return                              Succes state 
+ */
+bool iguanaPathToCharfilePath_(char* relativeIguanaFilePath, const char cFormatExtension)
 {
+    char* pointerDotStart;
 
+    pointerDotStart = strrchr(relativeIguanaFilePath, '.');
+    NULL_GUARD(pointerDotStart, false, Log_e(TAG, "pointer to dot of filename is null"));
+    pointerDotStart[1] = cFormatExtension;
+    pointerDotStart[2] = '\0';
+    return true;
 }
+
