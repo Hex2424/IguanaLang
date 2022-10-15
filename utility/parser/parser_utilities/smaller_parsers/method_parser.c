@@ -41,6 +41,9 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, MainFr
     methodHandle = malloc(sizeof(MethodObject_t));
     ALLOC_CHECK(methodHandle, ERROR);
 
+    methodHandle->methodName = (*(*currentTokenHandle - 2))->valueString;
+    
+
     if(!parseMethodParameters_(currentTokenHandle, methodHandle))
     {
         return ERROR;                         // getting back because parameters parsing failed
@@ -48,6 +51,12 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, MainFr
 
     if(!parseMethodBody_(currentTokenHandle, methodHandle))
     {
+        return ERROR;
+    }
+
+    if(!Vector_append(root->methods, methodHandle))
+    {
+        Log_e(TAG, "Failed to append to method to methods vector");
         return ERROR;
     }
 

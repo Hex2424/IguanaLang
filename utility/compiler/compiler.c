@@ -46,6 +46,7 @@ static const char* TAG = "COMPILER";
 bool Compiler_compile(const char* filePath)
 {
     Vector_t tokensVector;
+    CodeGenerator_t codeGenerator;
     char* codeString;
     size_t length;
     MainFrame_t root;
@@ -74,6 +75,12 @@ bool Compiler_compile(const char* filePath)
         Log_e(TAG, "Failed to initialize parser");
         return ERROR;
     }
+
+    if(!Generator_initialize(&codeGenerator, filePath, &root))
+    {
+        Log_e(TAG, "Failed to initialize code generator");
+        return ERROR;
+    }
     
     if(!Parser_parseTokens(&root, &tokensVector))
     {
@@ -81,7 +88,7 @@ bool Compiler_compile(const char* filePath)
         return ERROR;
     }
 
-    if(!Generator_generateCodeFor(filePath, &root))
+    if(!Generator_generateCode(&codeGenerator))
     {
         Log_e(TAG, "Failed to generate c language code for Iguana file %s", filePath);
         return ERROR;

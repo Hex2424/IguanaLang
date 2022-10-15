@@ -36,11 +36,16 @@ CONST_STRING TYPE_BINDS[] =
     "void"
 };
 
-CONST_SYMBOL BRACKET_START =     '{';
-CONST_SYMBOL BRACKET_END =       '}';
-CONST_SYMBOL SEMICOLON =         ';';
-CONST_SYMBOL END_LINE =          '\n';
-CONST_SYMBOL NULL_TERMINATOR =   '\0';
+CONST_SYMBOL BRACKET_START =        '{';
+CONST_SYMBOL BRACKET_END =          '}';
+CONST_SYMBOL BRACKET_ROUND_START =  '(';
+CONST_SYMBOL BRACKET_ROUND_END =    ')';
+CONST_SYMBOL SEMICOLON =            ';';
+CONST_SYMBOL COMMA =                ',';
+
+CONST_SYMBOL END_LINE =             '\n';
+CONST_SYMBOL NULL_TERMINATOR =      '\0';
+
 // #define CCHAR_SIZE               8
 // #define CSHORT_SIZE              16
 // #define CINT_SIZE                32

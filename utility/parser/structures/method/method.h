@@ -22,6 +22,7 @@
 typedef struct
 {
     Accessibility_t accessType;
+    char* methodName;
     VariableObjectHandle_t returnVariable;
     VectorHandler_t parameters;
     LocalScopeObjectHandle_t body;

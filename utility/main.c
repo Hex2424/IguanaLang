@@ -15,10 +15,13 @@
 #include <stdio.h>
 
 static const char* TAG = "MAIN";
-struct ssss
-{
 
-};
+// inline int variable = 0;
+
+// struct ssss
+// {
+//     /* data */
+// };
 
 int main(int argc, char const *argv[])
 {

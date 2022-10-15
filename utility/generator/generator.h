@@ -17,7 +17,22 @@
 #include "stdint.h"
 #include "stdbool.h"
 #include "../parser/structures/main_frame/main_frame.h"
+#include <stdio.h>
 
-bool Generator_generateCodeFor(const char* iguanaFilePath, const MainFrameHandle_t ast);
+#define FOUT_BUFFER_LENGTH          1024
+
+typedef struct
+{
+    char* relativeIguanaFilePath;
+    char writingbuffer[FOUT_BUFFER_LENGTH];
+    FILE* hFile;
+    FILE* cFile;
+    MainFrameHandle_t ast;
+} CodeGenerator_t;
+
+typedef CodeGenerator_t* CodeGeneratorHandle_t;
+
+bool Generator_initialize(CodeGeneratorHandle_t generator, const char* relativeIguanaFilePath, const MainFrameHandle_t ast);
+bool Generator_generateCode(CodeGeneratorHandle_t generator);
 
 #endif // UTILITY_GENERATOR_GENERATOR_H_
