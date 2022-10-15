@@ -81,8 +81,11 @@ bool Compiler_compile(const char* filePath)
         return ERROR;
     }
 
-    
-
+    if(!Generator_generateCodeFor(filePath, &root))
+    {
+        Log_e(TAG, "Failed to generate c language code for Iguana file %s", filePath);
+        return ERROR;
+    }
 
     if(!Parser_destroy())
     {

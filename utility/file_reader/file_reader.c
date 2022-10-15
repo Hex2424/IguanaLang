@@ -43,15 +43,23 @@ static const char* TAG = "FILE_READER";
  */
 size_t FileReader_readToBuffer(const char* fileName, char** buffer)
 {
-    FILE* igFile;
-    size_t fileSize;
+    FILE* igFile = NULL;
+    size_t fileSize = 0;
 
     igFile = fopen(fileName, "r");
-
+    NULL_GUARD(igFile, -1, Log_e("Failed to open %s", fileName));
+    
     fseek(igFile, 0L, SEEK_END);
     fileSize = ftell(igFile);
 
     Log_i(TAG, "Iguana file: %s size: %d", fileName, fileSize);
+
+    if(fileSize == 0)
+    {
+        Log_e(TAG, "File %s is empty", fileName);
+        return -1;
+    }
+
     *buffer = malloc(fileSize);
     
     ALLOC_CHECK(*buffer, -1);

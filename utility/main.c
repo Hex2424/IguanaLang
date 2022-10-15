@@ -18,11 +18,12 @@ static const char* TAG = "MAIN";
 
 int main(int argc, char const *argv[])
 {
+    char filePathToCompile[] = "../test.i";
     // if(argc < 2)
     // {
     //     printf("Need provide files for compilation\n");
     //     return 0;
     // }
 
-    return Compiler_compile("../test.i");
+    return Compiler_compile(filePathToCompile);
 }
