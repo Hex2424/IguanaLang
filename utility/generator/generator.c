@@ -18,6 +18,8 @@
 #include "../logger/logger.h"
 #include "../randomizer/random.h"
 #include <time.h>
+#include "csyntax_database.h"
+
 ////////////////////////////////
 // DEFINES
 #define LINUX_TEMP_FOLDER_PATH      "/tmp"
@@ -31,22 +33,20 @@
 
 #define FOUT_BUFFER_LENGTH          1024
 #define BYTE_SIZE                   1
-#define UNDERSCORE_SYMBOL           "_"
+
 #define NGUARD_HASH_RANDOM_SIZE     64
+#define BYTE_SIZE_BITS              8
 
 #define GENERATE_GUARD_PART(partName) \
-    fwrite(partName, BYTE_SIZE, sizeof(partName) - 1, hFile); \
+    fprintf(hFile, "%s ",partName); \
     generateNdefGuard_(hFile); \
-    fwrite(MACRO_SEPERATOR, BYTE_SIZE, sizeof(MACRO_SEPERATOR) - 1, hFile)
+    fwrite(&END_LINE, BYTE_SIZE, sizeof(END_LINE), hFile)
 
 ////////////////////////////////
 // PRIVATE CONSTANTS
+
 static const char* TAG =                "GENERATOR";
-static const char NDEF_KEYWORD[] =      "#ifndef ";
-static const char DEF_KEYWORD[] =       "#define ";
-static const char ENDIF_KEYWORD[] =     "#endif ";
-static const char INCLUDE_KEYWORD[] =   "#include";
-static const char MACRO_SEPERATOR[] =   "\n";
+
 ////////////////////////////////
 // PRIVATE TYPES
 
@@ -84,17 +84,44 @@ bool Generator_generateCodeFor(const char* relativeIguanaFilePath, const MainFra
     // writing imports to h file
     for(size_t importIdx = 0; importIdx < ast->imports->currentSize; importIdx++)
     {
+        // TODO: put this to differ method for readability
         ImportObjectHandle_t importObject;
 
         importObject = (ImportObjectHandle_t) ast->imports->expandable[importIdx];
         NULL_GUARD(importObject, ERROR, Log_e(TAG, "Import object from Abstract syntax tree is null"));
         NULL_GUARD(importObject->name, ERROR, Log_e(TAG, "Import name is null"));
 
-        fprintf(hFile, "%s \"%s.h\"\n", INCLUDE_KEYWORD, importObject->name);
+        fprintf(hFile, "%s \"%s.h\"%c", INCLUDE_KEYWORD, importObject->name, END_LINE);
 
     }
+    
+    if(ast->classVariables->currentSize != 0)
+    {
+        // generator for typedef struct{ variables };
+        fprintf(hFile, "%s %s%c", TYPEDEF_KEYWORD, STRUCT_KEYWORD, BRACKET_START);
+        
+        for(size_t variableIdx = 0; variableIdx < ast->classVariables->currentSize; variableIdx++)
+        {
+            VariableObjectHandle_t variable;
+            const char* variableTypeKeywordToUse;
 
-    fprintf(hFile, "%s\n", ENDIF_KEYWORD);
+            variable = ast->classVariables->expandable[variableIdx]; // getting variable by index
+            NULL_GUARD(variable, ERROR, Log_e(TAG, "AST classVariables vector expandable is null"));
+
+
+            if(variable->bitpack != 0)
+            {
+                variableTypeKeywordToUse = TYPE_BINDS[(variable->bitpack - 1)/ BYTE_SIZE_BITS]; 
+
+                // deciding which variable better to use for bitpacked values
+                fprintf(hFile, "%s %s:%d%c", variableTypeKeywordToUse, variable->variableName, variable->bitpack, SEMICOLON);
+            }
+
+        }
+        fprintf(hFile, "%c%c%c", BRACKET_END, SEMICOLON, END_LINE);
+    }
+
+    fprintf(hFile, "%s%c", ENDIF_KEYWORD, END_LINE);
 
     if(fflush(hFile))  // flushing what is left in buffer
     {
@@ -151,7 +178,7 @@ bool iguanaPathToCharfilePath_(char* relativeIguanaFilePath, const char cFormatE
     pointerDotStart = strrchr(relativeIguanaFilePath, '.');
     NULL_GUARD(pointerDotStart, ERROR, Log_e(TAG, "pointer to dot of filename is null"));
     pointerDotStart[1] = cFormatExtension;
-    pointerDotStart[2] = '\0';
+    pointerDotStart[2] = NULL_TERMINATOR;
     return SUCCESS;
 }
 

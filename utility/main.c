@@ -15,6 +15,10 @@
 #include <stdio.h>
 
 static const char* TAG = "MAIN";
+struct ssss
+{
+
+};
 
 int main(int argc, char const *argv[])
 {

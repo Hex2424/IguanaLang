@@ -133,14 +133,21 @@ static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle)
     variable = malloc(sizeof(VariableObject_t));
     ALLOC_CHECK(variable, ERROR);
 
-    variable->variableName = (*currentToken)->valueString;
-    variable->bitpack = atoi((*(currentToken - 1))->valueString);
+    variable->variableName = (*(currentToken - 1))->valueString;
+    variable->bitpack = atoi((*(currentToken - 2))->valueString);
     variable->assignedVariable = NULL;
 
 
     if(cTokenType == SEMICOLON)        
     {
         variable->assignedValue = 0;
+
+        if(!Vector_append(rootHandle->classVariables, variable))
+        {
+            Log_e(TAG, "Failed to append new class variable");
+            return ERROR;
+        }
+        
     }else
     if(cTokenType == EQUAL)             // checking for assignable declaration
     {
