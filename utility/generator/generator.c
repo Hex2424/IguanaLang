@@ -57,21 +57,21 @@ typedef enum
 
 
 }VariableDeclaration_t;
+
 ////////////////////////////////
 // PRIVATE METHODS
 
-static bool iguanaPathToCharfilePath_(char* filepath, const char cFormatExtension);
-static bool generateNdefGuard_(CodeGeneratorHandle_t generator);
-static bool fileWriteImports_(CodeGeneratorHandle_t generator);
-static bool fileWriteClassVariables_(CodeGeneratorHandle_t generator);
-static bool fileWriteVariableDeclaration_(CodeGeneratorHandle_t generator, VariableObjectHandle_t handle, VariableDeclaration_t declareType);
-static bool fileWriteMethods_(CodeGeneratorHandle_t generator);
-static bool initializeFileDescriptorFor_(FILE** descriptor,const char* virtualBuffer, char** path, const char* iguanaFilePath,const char extension);
+static bool iguanaPathToCharfilePath_(char* filepath, const char cFormatExtension); 
+static bool generateNdefGuard_(const CodeGeneratorHandle_t generator);   
+static bool fileWriteImports_(const CodeGeneratorHandle_t generator);    
+static bool fileWriteClassVariables_(const CodeGeneratorHandle_t generator);   
+static bool fileWriteVariableDeclaration_(const FILE* file, const VariableObjectHandle_t handle, const VariableDeclaration_t declareType);    
+static bool fileWriteMethods_(const CodeGeneratorHandle_t generator);    
+static bool initializeFileDescriptorFor_(FILE** descriptor,const char* virtualBuffer, char** path, const char* iguanaFilePath, const char extension);     
+static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator,const MethodObjectHandle_t method);
 
 ////////////////////////////////
 // IMPLEMENTATION
-
-
 
 bool Generator_initialize(CodeGeneratorHandle_t generator, const char* relativeIguanaFilePath, const MainFrameHandle_t ast)
 {
@@ -121,7 +121,7 @@ static bool initializeFileDescriptorFor_(FILE** descriptor,const char* virtualBu
     return SUCCESS;
 }
 
-bool Generator_generateCode(CodeGeneratorHandle_t generator)
+bool Generator_generateCode(const CodeGeneratorHandle_t generator)
 {
 
  // setting virtual buffer for bufferizing file writing (better speed)
@@ -131,6 +131,7 @@ bool Generator_generateCode(CodeGeneratorHandle_t generator)
 
     GENERATE_GUARD_PART(NDEF_KEYWORD);
     GENERATE_GUARD_PART(DEF_KEYWORD);
+
 
     // Generating object imports
 
@@ -181,7 +182,7 @@ bool Generator_generateCode(CodeGeneratorHandle_t generator)
  * @param[in] generator                 Generator for gathering file descriptor where to write 
  * @return                              Success state
  */
-static bool generateNdefGuard_(CodeGeneratorHandle_t generator)
+static bool generateNdefGuard_(const CodeGeneratorHandle_t generator)
 {
     char hash[NGUARD_HASH_RANDOM_SIZE];
     Random_fast_srand(time(NULL));
@@ -195,13 +196,14 @@ static bool generateNdefGuard_(CodeGeneratorHandle_t generator)
     return SUCCESS;
 }
 
-static inline bool fileWriteImports_(CodeGeneratorHandle_t generator)
+static inline bool fileWriteImports_(const CodeGeneratorHandle_t generator)
 {
-    // TODO: put this to differ method for readability
     ImportObjectHandle_t importObject;
 
+    fprintf(generator->cFile, "%s\"%s\"%c", INCLUDE_KEYWORD, generator->hFilePath, END_LINE);
+
     // writing imports to h file
-    for(size_t importIdx = 0; importIdx < generator->ast->imports->currentSize; importIdx++)
+    for(size_t importIdx = 0; importIdx < (generator->ast->imports->currentSize); importIdx++)
     {
         importObject = (ImportObjectHandle_t) generator->ast->imports->expandable[importIdx];
         NULL_GUARD(importObject, ERROR, Log_e(TAG, "Import object from Abstract syntax tree is null"));
@@ -213,7 +215,8 @@ static inline bool fileWriteImports_(CodeGeneratorHandle_t generator)
     return SUCCESS;
 }
 
-static inline bool fileWriteClassVariables_(CodeGeneratorHandle_t generator)
+
+static inline bool fileWriteClassVariables_(const CodeGeneratorHandle_t generator)
 {
 
     if(generator->ast->classVariables->currentSize != 0)
@@ -226,7 +229,7 @@ static inline bool fileWriteClassVariables_(CodeGeneratorHandle_t generator)
             VariableObjectHandle_t variable;
 
             variable = generator->ast->classVariables->expandable[variableIdx];
-            fileWriteVariableDeclaration_(generator, variable, VARIABLE_STRUCT);
+            fileWriteVariableDeclaration_(generator->hFile, variable, VARIABLE_STRUCT);
         }
         fprintf(generator->hFile, "%c%c%c", BRACKET_END, SEMICOLON, END_LINE);
     }
@@ -255,7 +258,7 @@ static bool iguanaPathToCharfilePath_(char* filepath, const char cFormatExtensio
     return SUCCESS;
 }
 
-static bool fileWriteVariableDeclaration_(CodeGeneratorHandle_t generator, VariableObjectHandle_t variable, VariableDeclaration_t declareType)
+static bool fileWriteVariableDeclaration_(const FILE* file,const VariableObjectHandle_t variable,const VariableDeclaration_t declareType)
 {
     char* variableTypeKeywordToUse;
 
@@ -269,17 +272,17 @@ static bool fileWriteVariableDeclaration_(CodeGeneratorHandle_t generator, Varia
         switch (declareType)
         {
             case VARIABLE_STRUCT:
-                fprintf(generator->hFile, "%s %s:%d%c", variableTypeKeywordToUse, variable->variableName, variable->bitpack, SEMICOLON);
+                fprintf(file, "%s %s:%d%c", variableTypeKeywordToUse, variable->variableName, variable->bitpack, SEMICOLON);
                 break;
             
             case VARIABLE_METHOD:
-                fprintf(generator->hFile, "%s %s%c", variableTypeKeywordToUse, variable->variableName, BRACKET_ROUND_START);
+                fprintf(file, "%s %s%c", variableTypeKeywordToUse, variable->variableName, BRACKET_ROUND_START);
                 break;
             case VARIABLE_NORMAL:
-                fprintf(generator->hFile, "%s %s%c", variableTypeKeywordToUse, variable->variableName, SEMICOLON);
+                fprintf(file, "%s %s%c", variableTypeKeywordToUse, variable->variableName, SEMICOLON);
                 break;
             case VARIABLE_PARAMETER:
-                fprintf(generator->hFile, "%s %s", variableTypeKeywordToUse, variable->variableName);
+                fprintf(file, "%s %s", variableTypeKeywordToUse, variable->variableName);
                 break;
 
             default:
@@ -292,7 +295,7 @@ static bool fileWriteVariableDeclaration_(CodeGeneratorHandle_t generator, Varia
 
 
 
-static inline bool fileWriteMethods_(CodeGeneratorHandle_t generator)
+static inline bool fileWriteMethods_(const CodeGeneratorHandle_t generator)
 {
     NULL_GUARD(generator, ERROR, Log_e(TAG, "Generator to method writing passes as null"));
 
@@ -302,7 +305,13 @@ static inline bool fileWriteMethods_(CodeGeneratorHandle_t generator)
         method = (MethodObjectHandle_t) generator->ast->methods->expandable[methodIdx];                                                           // getting method by index
         NULL_GUARD(method, ERROR, Log_e(TAG, "AST methods vector expandable is null"));
 
-        if(!fileWriteVariableDeclaration_(generator, method->returnVariable, VARIABLE_METHOD))
+        if(!fileWriteVariableDeclaration_(generator->hFile, method->returnVariable, VARIABLE_METHOD))
+        {
+            Log_e(TAG, "Failed to write method %s return type", method->methodName);
+            return ERROR;
+        }
+
+        if(!fileWriteVariableDeclaration_(generator->cFile, method->returnVariable, VARIABLE_METHOD))
         {
             Log_e(TAG, "Failed to write method %s return type", method->methodName);
             return ERROR;
@@ -314,21 +323,39 @@ static inline bool fileWriteMethods_(CodeGeneratorHandle_t generator)
             parameter = method->parameters->expandable[paramIdx];
             NULL_GUARD(parameter, ERROR, Log_e(TAG, "AST method %s %d nth is NULL", method->methodName, paramIdx));
 
-            if(!fileWriteVariableDeclaration_(generator, parameter, VARIABLE_PARAMETER))
+            if(!fileWriteVariableDeclaration_(generator->hFile, parameter, VARIABLE_PARAMETER))
             {
                 Log_e(TAG, "Failed to write method %s return type", method->methodName);
                 return ERROR;
             }
+
+            if(!fileWriteVariableDeclaration_(generator->cFile, parameter, VARIABLE_PARAMETER))
+            {
+                Log_e(TAG, "Failed to write method %s return type", method->methodName);
+                return ERROR;
+            }
+
             if((paramIdx + 1) != method->parameters->currentSize)
             {
                 fwrite(&COMMA, BYTE_SIZE, sizeof(COMMA), generator->hFile);
+                fwrite(&COMMA, BYTE_SIZE, sizeof(COMMA), generator->cFile);
             }
+
         }
 
         fprintf(generator->hFile, "%c%c\n", BRACKET_ROUND_END, SEMICOLON);
+        fprintf(generator->cFile, "%c\n", BRACKET_ROUND_END);
+
+        fileWriteMethodBody_(generator, method);
         // fprintf("%s", method->returnVariable)
 
     }
     return SUCCESS;
 
+}
+
+
+static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator,const MethodObjectHandle_t method)
+{
+    fprintf(generator->cFile, "%c%c\n", BRACKET_START, BRACKET_END);
 }

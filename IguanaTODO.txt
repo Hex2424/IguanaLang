@@ -1,0 +1,25 @@
+TODO:
+1. Bitpack variables make working
+2. Bitpacked method params
+3. Bitpacket method returns
+4. On not bitpacked work same fast as c code
+5. Inheritence
+6. Object orientation (File orientation)
+7. Annotation system
+8. C multiple compiler support
+7. C header include support
+8. Inline keyword power
+7. Preprocessor?
+9. Method body things to do
+10. Pointers support
+
+l.c
+utility/main.c
+ 
+ ../l.c
+ 
+ tmp/
+ 
+ ss
+ ss
+ ss
