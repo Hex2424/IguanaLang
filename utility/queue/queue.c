@@ -2,7 +2,7 @@
 /**
  * @file queue.c
  *
- * @copyright This file is a part of the project hivelang and is distributed under MIT license that
+ * @copyright This file is a part of the project IguanaLang and is distributed under MIT license that
  * should have been included with the project. If not, see https://choosealicense.com/licenses/mit/
  *
  * @author jorisb
@@ -11,21 +11,25 @@
  */
 
 #include <queue.h>
-
 #include <assert.h>
 #include <stdlib.h>
 
-struct Queue Queue_create(
-	void)
+
+
+
+bool Queue_create(QueueHandle_t queue)
 {
-	struct Queue queue = {0};
+	if(queue == NULL)
+	{
+		return false;
+	}
+
 	queue.front = NULL;
 	queue.back = NULL;
-	return queue;
+	return true;
 }
 
-void Queue_destroy(
-	struct Queue* const queue)
+void Queue_destroy(Queue_t const queue)
 {
 	// NOTE: using `assert` and not `if`
 	// REASONS:
@@ -34,9 +38,9 @@ void Queue_destroy(
 	//        and debug configuration.
 	assert(queue != NULL);
 
-	for (struct QNode* iterator = queue->front; iterator != NULL;)
+	for (QNodeHandle_t iterator = queue->front; iterator != NULL;)
 	{
-		struct QNode* current = iterator;
+		QNodeHandle_t current = iterator;
 
 		// NOTE: using `assert` and not `if`
 		// REASONS:
@@ -53,9 +57,7 @@ void Queue_destroy(
 	queue->count = 0;
 }
 
-void Queue_enqueue(
-	struct Queue* const queue,
-	void* data)
+void Queue_enqueue(QueueHandle_t const queue, void* data)
 {
 	// NOTE: using `assert` and not `if`
 	// REASONS:
@@ -73,7 +75,7 @@ void Queue_enqueue(
 
 	if (queue->front == NULL)
 	{
-		queue->back = (struct QNode*)malloc(sizeof(struct QNode));
+		queue->back = (QNodeHandle_t)malloc(sizeof(QNode_t));
 
 		// NOTE: using `assert` and not `if`
 		// REASONS:
@@ -85,14 +87,14 @@ void Queue_enqueue(
 		//        and debug configuration.
 		assert(queue->back != NULL);
 
-		struct QNode* node = queue->back;
+		QNodeHandle_t node = queue->back;
 		node->data = data;
 		node->next = NULL;
 		queue->front = queue->back;
 	}
 	else
 	{
-		struct QNode* node = (struct QNode*)malloc(sizeof(struct QNode));
+		QNodeHandle_t node = (QNodeHandle_t)malloc(sizeof(QNode_t));
 
 		// NOTE: using `assert` and not `if`
 		// REASONS:
@@ -113,8 +115,7 @@ void Queue_enqueue(
 	++queue->count;
 }
 
-void* Queue_dequeue(
-	struct Queue* const queue)
+void* Queue_dequeue(QueueHandle_t const queue)
 {
 	// NOTE: using `assert` and not `if`
 	// REASONS:
@@ -128,7 +129,7 @@ void* Queue_dequeue(
 		return NULL;
 	}
 
-	struct QNode* node = queue->front;
+	QNodeHandle_t node = queue->front;
 	queue->front = node->next;
 	void* data = node->data;
 	free(node);
@@ -136,8 +137,7 @@ void* Queue_dequeue(
 	return data;
 }
 
-void* Queue_peek(
-	struct Queue* const queue)
+void* Queue_peek(QueueHandle_t const queue)
 {
 	// NOTE: using `assert` and not `if`
 	// REASONS:
@@ -153,7 +153,7 @@ void* Queue_peek(
 	//        and debug configuration.
 	assert(queue->front != NULL);
 
-	struct QNode* node = queue->front;
+	QNodeHandle_t node = queue->front;
 	void* data = node->data;
 	return data;
 }

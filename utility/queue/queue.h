@@ -10,36 +10,31 @@
  * @date 2022-09-26
  */
 
-#ifndef _QUEUE_H_
-#define _QUEUE_H_
+#ifndef UTILITY_QUEUE_QUEUE_H_
+#define UTILITY_QUEUE_QUEUE_H_
 
-struct QNode
+typedef struct QNode QNode_t;
+typedef QNode_t* QNodeHandle_t;
+
+typedef struct QNode
 {
 	void* data;
-	struct QNode* next;
-};
+	QNodeHandle_t next;
+}QNode_t;
 
-struct Queue
+typedef struct Queue
 {
-	struct QNode* front;
-	struct QNode* back;
+	QNodeHandle_t front;
+	QNodeHandle_t back;
 	signed long long count;
-};
+}Queue_t;
 
-struct Queue Queue_create(
-	void);
+typedef Queue_t* QueueHandle_t;
 
-void Queue_destroy(
-	struct Queue* const queue);
+bool Queue_create();
+void Queue_destroy(QNodeHandle_t const queue);
+void Queue_enqueue(QNodeHandle_t const queue, void* data);
+void* Queue_dequeue(QNodeHandle_t const queue);
+void* Queue_peek(QNodeHandle_t const queue);
 
-void Queue_enqueue(
-	struct Queue* const queue,
-	void* data);
-
-void* Queue_dequeue(
-	struct Queue* const queue);
-
-void* Queue_peek(
-	struct Queue* const queue);
-
-#endif
+#endif // UTILITY_QUEUE_QUEUE_H_
