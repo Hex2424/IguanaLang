@@ -70,3 +70,14 @@ size_t FileReader_readToBuffer(const char* fileName, char** buffer)
     fclose(igFile);
     return fileSize;
 }
+
+
+bool FileReader_destroy(char* codeString)
+{
+    if(codeString == NULL)
+    {
+        return ERROR;
+    }
+    free(codeString);
+    return SUCCESS;
+}

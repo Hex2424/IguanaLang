@@ -14,6 +14,9 @@
 #ifndef UTILITY_MISC_SAFETY_MACROS_H_
 #define UTILITY_MISC_SAFETY_MACROS_H_
 
+#include "stdbool.h"
+
+
 #define SUCCESS                 true
 #define ERROR                   false
 

@@ -123,7 +123,7 @@ static bool initializeFileDescriptorFor_(FILE** descriptor,const char* virtualBu
 
 bool Generator_generateCode(const CodeGeneratorHandle_t generator)
 {
-
+    
  // setting virtual buffer for bufferizing file writing (better speed)
 
     // TODO: error checking of fwrite

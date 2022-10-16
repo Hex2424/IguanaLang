@@ -133,7 +133,7 @@ bool Vector_append(VectorHandler_t object, const void* dataObject)
         object->currentSize++;
         object->availableSize--;
     }
-
+    
     return SUCCESS;
 }
 

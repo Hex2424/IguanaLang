@@ -10,7 +10,7 @@
  * @date 2022-09-26
  */
 
-#include <queue.h>
+#include "queue.h"
 #include <assert.h>
 #include <stdlib.h>
 
@@ -24,12 +24,12 @@ bool Queue_create(QueueHandle_t queue)
 		return false;
 	}
 
-	queue.front = NULL;
-	queue.back = NULL;
+	queue->front = NULL;
+	queue->back = NULL;
 	return true;
 }
 
-void Queue_destroy(Queue_t const queue)
+void Queue_destroy(QueueHandle_t queue)
 {
 	// NOTE: using `assert` and not `if`
 	// REASONS:
@@ -57,7 +57,7 @@ void Queue_destroy(Queue_t const queue)
 	queue->count = 0;
 }
 
-void Queue_enqueue(QueueHandle_t const queue, void* data)
+void Queue_enqueue(QueueHandle_t queue, void* data)
 {
 	// NOTE: using `assert` and not `if`
 	// REASONS:
@@ -115,7 +115,7 @@ void Queue_enqueue(QueueHandle_t const queue, void* data)
 	++queue->count;
 }
 
-void* Queue_dequeue(QueueHandle_t const queue)
+void* Queue_dequeue(QueueHandle_t queue)
 {
 	// NOTE: using `assert` and not `if`
 	// REASONS:
@@ -137,7 +137,7 @@ void* Queue_dequeue(QueueHandle_t const queue)
 	return data;
 }
 
-void* Queue_peek(QueueHandle_t const queue)
+void* Queue_peek(QueueHandle_t queue)
 {
 	// NOTE: using `assert` and not `if`
 	// REASONS:

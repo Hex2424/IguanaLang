@@ -25,12 +25,17 @@ static const char* TAG = "MAIN";
 
 int main(int argc, char const *argv[])
 {
-    char filePathToCompile[] = "../test.i";
+    Compiler_t compiler;
+    char filePathToCompile[] = "../iguanaTestFiles/test.i";
     // if(argc < 2)
     // {
     //     printf("Need provide files for compilation\n");
     //     return 0;
     // }
+    if(!Compiler_initialize(&compiler))
+    {
+        return -1;
+    }
 
-    return Compiler_compile(filePathToCompile);
+    return Compiler_startCompilingProcessOnRoot(&compiler, filePathToCompile);
 }

@@ -1,7 +1,5 @@
-import "mainFrame";
+import "mainframe";
 import "stdio";
-import "out";
-
 
 int:1 ddd = 2;
 int:2 ggg;

@@ -14,11 +14,11 @@
 
 #ifndef UTILITY_FILE_READER_FILE_READER_H_
 #define UTILITY_FILE_READER_FILE_READER_H_
+#include "stdbool.h"
 #include "stdlib.h"
 
-
 size_t FileReader_readToBuffer(const char* fileName, char** buffer);
-
+bool FileReader_destroy(char* codeString);
 
 
 #endif // UTILITY_FILE_READER_FILE_READER_H_

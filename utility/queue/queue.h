@@ -12,6 +12,8 @@
 
 #ifndef UTILITY_QUEUE_QUEUE_H_
 #define UTILITY_QUEUE_QUEUE_H_
+#include "stdint.h"
+#include "stdbool.h"
 
 typedef struct QNode QNode_t;
 typedef QNode_t* QNodeHandle_t;
@@ -22,19 +24,19 @@ typedef struct QNode
 	QNodeHandle_t next;
 }QNode_t;
 
-typedef struct Queue
+typedef struct
 {
 	QNodeHandle_t front;
 	QNodeHandle_t back;
-	signed long long count;
+	uint64_t count;
 }Queue_t;
 
 typedef Queue_t* QueueHandle_t;
 
-bool Queue_create();
-void Queue_destroy(QNodeHandle_t const queue);
-void Queue_enqueue(QNodeHandle_t const queue, void* data);
-void* Queue_dequeue(QNodeHandle_t const queue);
-void* Queue_peek(QNodeHandle_t const queue);
+bool Queue_create(QueueHandle_t queue);
+void Queue_destroy(QueueHandle_t queue);
+void Queue_enqueue(QueueHandle_t queue, void* data);
+void* Queue_dequeue(QueueHandle_t queue);
+void* Queue_peek(QueueHandle_t queue);
 
 #endif // UTILITY_QUEUE_QUEUE_H_

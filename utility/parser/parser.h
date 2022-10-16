@@ -19,8 +19,20 @@
 #include "structures/main_frame/main_frame.h"
 #include "stdbool.h"
 #include "../tokenizer/token/token.h"
+#include "../compiler/compiler.h"
 
-bool Parser_initialize();
-bool Parser_parseTokens(MainFrameHandle_t root, const VectorHandler_t tokenVector);
-bool Parser_destroy();
+typedef struct
+{
+    CompilerHandle_t compiler;
+    char* currentFilePath;
+    char* currentFolderPath;
+    size_t currentFolderPathLength;
+}Parser_t;
+
+typedef Parser_t* ParserHandle_t;
+
+bool Parser_initialize(ParserHandle_t parser);
+bool Parser_parseTokens(ParserHandle_t parser, MainFrameHandle_t root, const VectorHandler_t tokenVector);
+bool Parser_destroy(ParserHandle_t parser);
+
 #endif // UTILITY_PARSER_PARSER_H_

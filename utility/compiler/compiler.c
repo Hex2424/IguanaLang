@@ -16,6 +16,8 @@
 #include "../parser/parser.h"
 #include "../generator/generator.h"
 #include "compiler.h"
+#include "string.h"
+
 ////////////////////////////////
 // DEFINES
 
@@ -26,7 +28,7 @@ static const char* TAG = "COMPILER";
 
 ////////////////////////////////
 // PRIVATE TYPES
-static bool compileFile_(const char* filePath);
+static bool compileFile_(CompilerHandle_t compiler, const char* filePath);
 
 ////////////////////////////////
 // PRIVATE METHODS
@@ -36,20 +38,32 @@ static bool compileFile_(const char* filePath);
 // IMPLEMENTATION
 
 
-/**
- * @brief Public method for compiling Iguana code into binary
- * 
- * @param codeString[in] pointer to code string buffer
- * @param length[in] length of code string buffer
- * @return Success state
- */
-static bool compileFile_(const char* filePath)
+
+static bool compileFile_(CompilerHandle_t compiler, const char* filePath)
 {
     Vector_t tokensVector;
     CodeGenerator_t codeGenerator;
+    Parser_t parser;
     char* codeString;
     size_t length;
     MainFrame_t root;
+
+    parser.compiler = compiler;
+    parser.currentFilePath = filePath;
+    
+
+    // TODO optimize this shit
+    char* lastSlashPointer = strrchr(filePath, '/');
+    if(lastSlashPointer == NULL)
+    {
+        parser.currentFolderPath = "";
+        parser.currentFolderPathLength = 0;
+    }else
+    {
+        parser.currentFolderPath = filePath;
+        parser.currentFolderPathLength = lastSlashPointer - filePath + 1;
+    }
+
 
     // TODO: read directly from file
     length = FileReader_readToBuffer(filePath, &codeString);
@@ -58,7 +72,6 @@ static bool compileFile_(const char* filePath)
         Log_e(TAG, "Error occured in reading path:%s", filePath);
         return ERROR;
     }
-
     
     if(!Separator_getSeparatedWords(codeString, length, &tokensVector))
     {
@@ -71,7 +84,7 @@ static bool compileFile_(const char* filePath)
 
     // initializing parser object
 
-    if(!Parser_initialize())
+    if(!Parser_initialize(&parser))
     {
         Log_e(TAG, "Failed to initialize parser");
         return ERROR;
@@ -82,20 +95,34 @@ static bool compileFile_(const char* filePath)
         Log_e(TAG, "Failed to initialize code generator");
         return ERROR;
     }
-    
-    if(!Parser_parseTokens(&root, &tokensVector))
+
+    if(!Parser_parseTokens(&parser, &root, &tokensVector))
     {
         Log_e(TAG, "Failed to parse tokens");
         return ERROR;
     }
 
+
+    
     if(!Generator_generateCode(&codeGenerator))
     {
         Log_e(TAG, "Failed to generate c language code for Iguana file %s", filePath);
         return ERROR;
     }
 
-    if(!Parser_destroy())
+    if(!Vector_append(&compiler->alreadyCompiledFilePaths, filePath))
+    {
+        Log_e(TAG, "Failed to append an compiled file path");
+        return ERROR;
+    }
+
+    if(!FileReader_destroy(codeString))
+    {
+        Log_e(TAG, "Failed to destroy codeString");
+        return ERROR;
+    }
+
+    if(!Parser_destroy(&parser))
     {
         Log_w(TAG, "Failed to deallocate Parser object");
         return ERROR;
@@ -119,9 +146,9 @@ bool Compiler_initialize(CompilerHandle_t compiler)
         return ERROR;
     }
 
-    if(!Vector_create(&compiler->filePathsToCompile, NULL))
+    if(!Queue_create(&compiler->filePathsToCompile))
     {
-        Log_e(TAG, "Failed to create vector for paths need for compilation file paths");
+        Log_e(TAG, "Failed to create filePathsToCompilerQueue");
         return ERROR;
     }
 
@@ -131,11 +158,27 @@ bool Compiler_initialize(CompilerHandle_t compiler)
 
 bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char* filePath)
 {
-    while (compiler->filePathsToCompile)
+    Queue_enqueue(&compiler->filePathsToCompile, filePath);
+
+    while (true)
     {
-        /* code */
+        char* currentFilePath;
+
+        currentFilePath = Queue_dequeue(&compiler->filePathsToCompile);
+
+        if(currentFilePath == NULL)
+        {
+            break;  // compilation done
+        }
+
+        if(!compileFile_(compiler, currentFilePath))
+        {
+            Log_e(TAG, "Failed to compile %s", currentFilePath);
+            return ERROR;
+        }
     }
-    
+    return SUCCESS;
+
 }
 
 bool Compiler_destroy(CompilerHandle_t compiler)
@@ -146,11 +189,7 @@ bool Compiler_destroy(CompilerHandle_t compiler)
         return ERROR;
     }
 
-    if(!Vector_destroy(&compiler->filePathsToCompile))
-    {
-        Log_e(TAG, "Failed to destroy filePathsToCompile vector");
-        return ERROR;
-    }
+    Queue_destroy(&compiler->filePathsToCompile);
 
     return SUCCESS;
 }

@@ -16,15 +16,25 @@
 #include "parser_utilities/global_parser_utility.h"
 #include "parser_utilities/smaller_parsers/method_parsers.h"
 #include "string.h"
+
 ////////////////////////////////
 // DEFINES
 
 #define cTokenP (*currentToken)
 #define cTokenType cTokenP -> tokenType
-
+#define LONGEST_POSSIBLE_IGUANA_EXTENSION_LENGTH sizeof("iguana")
 ////////////////////////////////
 // PRIVATE CONSTANTS
 static const char* TAG = "PARSER";
+
+
+// Ordering affects speed, the most common should be first element
+const char* allIguanaExtensions[] = 
+{
+    "i",
+    "ig",
+    "iguana"
+};
 
 ////////////////////////////////
 // PRIVATE TYPES
@@ -36,10 +46,11 @@ size_t tokensCount;
 ////////////////////////////////
 // PRIVATE METHODS
 
-static inline bool handleKeywordImport_(MainFrameHandle_t rootHandle);
-static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle);
+static bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t rootHandle);
+static bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_t rootHandle);
 static bool tryParseSequence_(const TokenType_t* pattern,const size_t patternSize);
 static bool assignTokenValue_(char** to, const char* from);
+static bool addLibraryForCompilation_(ParserHandle_t parser, const char* libraryRelativePath);
 
 ////////////////////////////////
 // IMPLEMENTATION
@@ -49,35 +60,13 @@ static bool assignTokenValue_(char** to, const char* from);
  * 
  * @return  Success State
  */
-bool Parser_initialize()
+bool Parser_initialize(ParserHandle_t parser)
 {
-    if(!Vector_create(&alreadyCompiledFilePaths_, NULL))
-    {
-        Log_e(TAG, "Failed to create alreadyCompiledPaths_ vector");
-        return ERROR;
-    }
-
-    if(!Vector_create(&filePathsToCompile_, NULL))
-    {
-        Log_e(TAG, "Failed to create filePathsToCompile_ vector");
-        return ERROR;
-    }
     return SUCCESS;
 }
 
-bool Parser_destroy()
+bool Parser_destroy(ParserHandle_t parser)
 {
-    if(!Vector_destroy(&alreadyCompiledFilePaths_))
-    {
-        Log_e(TAG, "Failed to destroy parser alreadyCompiledFilePaths vector");
-        return ERROR;
-    }
-
-    if(!Vector_destroy(&filePathsToCompile_))
-    {
-        Log_e(TAG, "Failed to destroy parser filePathsToCompile vector");
-        return ERROR;
-    }
     return SUCCESS;
 }
 
@@ -88,7 +77,7 @@ bool Parser_destroy()
  * @param[in] tokenList     file tokens go here 
  * @return                  Success state
  */ 
-bool Parser_parseTokens(MainFrameHandle_t root, const VectorHandler_t tokenVector)
+bool Parser_parseTokens(ParserHandle_t parser, MainFrameHandle_t root, const VectorHandler_t tokenVector)
 {
     tokens = (TokenHandler_t*) tokenVector->expandable;
     tokensCount = tokenVector->currentSize;
@@ -105,11 +94,11 @@ bool Parser_parseTokens(MainFrameHandle_t root, const VectorHandler_t tokenVecto
     {
         if(cTokenType == MODULE_IMPORT)     // detected import
         {
-            handleKeywordImport_(root);
+            handleKeywordImport_(parser, root);
         }else
         if(cTokenType == INTEGER_TYPE)      // detected int keyword
         {
-            handleKeywordInteger_(root);
+            handleKeywordInteger_(parser, root);
         }else
         {
             Shouter_shoutUnrecognizedToken(cTokenP);
@@ -117,11 +106,12 @@ bool Parser_parseTokens(MainFrameHandle_t root, const VectorHandler_t tokenVecto
         currentToken++;
 
     }
+
     Log_i(TAG, "Compiling completed with %d errors", Shouter_getErrorCount());
     return SUCCESS;
 }
 
-static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle)
+static inline bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_t rootHandle)
 {
     VariableObjectHandle_t variable;
 
@@ -191,7 +181,7 @@ static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle)
 }
 
 
-static inline bool handleKeywordImport_(MainFrameHandle_t rootHandle)
+static inline bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t rootHandle)
 {
     ImportObjectHandle_t importObject;
 
@@ -206,9 +196,15 @@ static inline bool handleKeywordImport_(MainFrameHandle_t rootHandle)
 
         if(cTokenType == NAMING)
         {
-            if(!ParserUtils_assignTokenValue(&importObject->name, cTokenP->valueString))
+            // if(!ParserUtils_assignTokenValue(&importObject->name, cTokenP->valueString))
+            // {
+            //     Log_e(TAG, "Couldn't assign value from token");
+            //     return ERROR;
+            // }
+            importObject->name = cTokenP->valueString;
+            if(!addLibraryForCompilation_(parser, importObject->name))
             {
-                Log_e(TAG, "Couldn't assign value from token");
+                Log_e(TAG, "Failed to add library path for paths to compile");
                 return ERROR;
             }
 
@@ -249,5 +245,47 @@ static inline bool handleKeywordImport_(MainFrameHandle_t rootHandle)
 
     // Log_d(TAG, "Current token \'%d\' after libary parse", cTokenP->tokenType);
 
+    return SUCCESS;
+}
+
+static inline bool addLibraryForCompilation_(ParserHandle_t parser, const char* libraryRelativePath)
+{
+    char* newFilePathToCompile;
+    
+    size_t libraryRelativePathLength;
+    FILE* fileToCheck;
+
+    libraryRelativePathLength = strlen(libraryRelativePath);
+
+    newFilePathToCompile = malloc(parser->currentFolderPathLength + libraryRelativePathLength + LONGEST_POSSIBLE_IGUANA_EXTENSION_LENGTH); // .iguana is longest
+    ALLOC_CHECK(newFilePathToCompile, ERROR)
+
+    memcpy(newFilePathToCompile, parser->currentFolderPath, parser->currentFolderPathLength);
+    memcpy(newFilePathToCompile + parser->currentFolderPathLength, libraryRelativePath, libraryRelativePathLength);
+
+    char* endingExtensionPointer = newFilePathToCompile + parser->currentFolderPathLength + libraryRelativePathLength;
+    *endingExtensionPointer = '.'; // adding extension dot
+    endingExtensionPointer++;
+
+    for(uint8_t i = 0; i < sizeof(allIguanaExtensions) / sizeof(char*); i++)
+    {
+
+        uint8_t j;
+        for(j = 0; j < strlen(allIguanaExtensions[i]); j++)
+        {
+            endingExtensionPointer[j] = allIguanaExtensions[i][j]; 
+        }
+
+        fileToCheck = fopen(newFilePathToCompile, "r");
+        if(fileToCheck == NULL)
+        {
+            continue;
+        }else
+        {
+            Queue_enqueue(&parser->compiler->filePathsToCompile, newFilePathToCompile);
+            return SUCCESS;
+        }
+    }
+    Shouter_shoutError(cTokenP, "lib cannot be found");
     return SUCCESS;
 }

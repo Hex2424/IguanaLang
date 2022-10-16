@@ -15,15 +15,13 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+#include "../queue/queue.h"
 #include "../vector/vector.h"
-
-
 
 typedef struct
 {
-
     Vector_t alreadyCompiledFilePaths;
-    Vector_t filePathsToCompile;
+    Queue_t filePathsToCompile;
 
 }Compiler_t;
 
