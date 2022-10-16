@@ -23,10 +23,12 @@
 
 typedef struct
 {
-    char* relativeIguanaFilePath;
-    char writingbuffer[FOUT_BUFFER_LENGTH];
+    char writingBufferH[FOUT_BUFFER_LENGTH];
+    char writingBufferC[FOUT_BUFFER_LENGTH];
     FILE* hFile;
     FILE* cFile;
+    char* hFilePath;
+    char* cFilePath;
     MainFrameHandle_t ast;
 } CodeGenerator_t;
 

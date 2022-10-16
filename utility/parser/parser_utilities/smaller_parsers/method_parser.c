@@ -31,6 +31,8 @@ static const char* TAG = "METHOD_PARSER";
 
 static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodObjectHandle_t methodHandle);
 static bool parseMethodBody_(TokenHandler_t** currentTokenHandle, MethodObjectHandle_t methodHandle);
+static bool parseMethodReturnVariable_(TokenHandler_t** currentTokenHandle, MethodObjectHandle_t methodHandle);
+
 ////////////////////////////////
 // IMPLEMENTATION
 
@@ -40,10 +42,12 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, MainFr
 
     methodHandle = malloc(sizeof(MethodObject_t));
     ALLOC_CHECK(methodHandle, ERROR);
+    // setting up method name
 
-    methodHandle->methodName = (*(*currentTokenHandle - 2))->valueString;
-    
-
+    if(!parseMethodReturnVariable_(currentTokenHandle, methodHandle))
+    {
+        return ERROR;
+    }
     if(!parseMethodParameters_(currentTokenHandle, methodHandle))
     {
         return ERROR;                         // getting back because parameters parsing failed
@@ -61,6 +65,24 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, MainFr
     }
 
 }
+
+static bool parseMethodReturnVariable_(TokenHandler_t** currentTokenHandle, MethodObjectHandle_t methodHandle)
+{
+    VariableObjectHandle_t returnVariable;
+    returnVariable = malloc(sizeof(VariableObject_t));
+    ALLOC_CHECK(returnVariable, ERROR);
+
+    methodHandle->methodName = (*(*currentTokenHandle - 2))->valueString;
+
+    returnVariable->variableName = methodHandle->methodName;
+    returnVariable->bitpack = atoi((*((*currentTokenHandle) - 3))->valueString);
+    returnVariable->assignedValue = 0;
+    returnVariable->assignedVariable = NULL;
+    
+    methodHandle->returnVariable = returnVariable;
+    return SUCCESS;
+}
+
 
 static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodObjectHandle_t methodHandle)
 {
@@ -89,7 +111,7 @@ static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodOb
             }
             
             parameter->variableName = (*((*currentTokenHandle) - 1))->valueString;
-            parameter->bitpack = atoll((*((*currentTokenHandle) - 2))->valueString);
+            parameter->bitpack = atoi((*((*currentTokenHandle) - 2))->valueString);
 
             if(!Vector_append(methodHandle->parameters, parameter))
             {

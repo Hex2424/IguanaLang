@@ -60,12 +60,14 @@ typedef enum
 ////////////////////////////////
 // PRIVATE METHODS
 
-bool iguanaPathToCharfilePath_(CodeGeneratorHandle_t generator, const char cFormatExtension);
-bool generateNdefGuard_(CodeGeneratorHandle_t generator);
-bool fileWriteImports_(CodeGeneratorHandle_t generator);
-bool fileWriteClassVariables_(CodeGeneratorHandle_t generator);
-bool fileWriteVariableDeclaration_(CodeGeneratorHandle_t generator, VariableObjectHandle_t handle, VariableDeclaration_t declareType);
-bool fileWriteMethods_(CodeGeneratorHandle_t generator);
+static bool iguanaPathToCharfilePath_(char* filepath, const char cFormatExtension);
+static bool generateNdefGuard_(CodeGeneratorHandle_t generator);
+static bool fileWriteImports_(CodeGeneratorHandle_t generator);
+static bool fileWriteClassVariables_(CodeGeneratorHandle_t generator);
+static bool fileWriteVariableDeclaration_(CodeGeneratorHandle_t generator, VariableObjectHandle_t handle, VariableDeclaration_t declareType);
+static bool fileWriteMethods_(CodeGeneratorHandle_t generator);
+static bool initializeFileDescriptorFor_(FILE** descriptor,const char* virtualBuffer, char** path, const char* iguanaFilePath,const char extension);
+
 ////////////////////////////////
 // IMPLEMENTATION
 
@@ -77,24 +79,52 @@ bool Generator_initialize(CodeGeneratorHandle_t generator, const char* relativeI
     NULL_GUARD(ast, ERROR, Log_e(TAG, "Abstract syntax tree got passed as NULL"));
 
     generator->ast = ast;
-    generator->relativeIguanaFilePath = relativeIguanaFilePath;
 
+    if(!initializeFileDescriptorFor_(&generator->hFile, generator->writingBufferH, &generator->hFilePath, relativeIguanaFilePath, 'h'))
+    {
+        return ERROR;
+    }
+    
+    if(!initializeFileDescriptorFor_(&generator->cFile, generator->writingBufferC, &generator->cFilePath, relativeIguanaFilePath, 'c'))
+    {
+        return ERROR;
+    }
+
+    return SUCCESS;
+}
+
+
+static bool initializeFileDescriptorFor_(FILE** descriptor,const char* virtualBuffer, char** path, const char* iguanaFilePath,const char extension)
+{
+    uint32_t iguanaFilePathLength;
+    iguanaFilePathLength = strlen(iguanaFilePath);
+    (*path) = malloc(iguanaFilePathLength);
+
+    if(*path == NULL)
+    {
+        Log_e(TAG, "Failed to allocate memory for \".%c\" file paths for ig: %s", extension, iguanaFilePath);
+        return ERROR;
+    }
+
+    strncpy(*path, iguanaFilePath, iguanaFilePathLength);
+
+    if(!iguanaPathToCharfilePath_(*path, extension))
+    {
+        Log_e(TAG, "Failed to change path to \".%c\" format of %s", extension, *path);
+        return ERROR;
+    }
+
+    *descriptor = fopen(*path, "w");
+
+    NULL_GUARD(*descriptor, ERROR, Log_e(TAG, "Failed to open %s",*path));
+    setvbuf(*descriptor, virtualBuffer, _IOFBF, FOUT_BUFFER_LENGTH);
     return SUCCESS;
 }
 
 bool Generator_generateCode(CodeGeneratorHandle_t generator)
 {
 
-    if(!iguanaPathToCharfilePath_(generator, 'h'))
-    {
-        Log_e(TAG, "Failed to change path to h format of %s", generator->relativeIguanaFilePath);
-        return false;
-    }
-    
-    generator->hFile = fopen(generator->relativeIguanaFilePath, "w");
-    NULL_GUARD(generator->hFile, ERROR, Log_e(TAG, "Failed to open %s", generator->relativeIguanaFilePath));
-
-    setvbuf(generator->hFile, generator->writingbuffer, _IOFBF, FOUT_BUFFER_LENGTH); // setting virtual buffer for bufferizing file writing (better speed)
+ // setting virtual buffer for bufferizing file writing (better speed)
 
     // TODO: error checking of fwrite
     // writing ndef guard start
@@ -151,7 +181,7 @@ bool Generator_generateCode(CodeGeneratorHandle_t generator)
  * @param[in] generator                 Generator for gathering file descriptor where to write 
  * @return                              Success state
  */
-bool generateNdefGuard_(CodeGeneratorHandle_t generator)
+static bool generateNdefGuard_(CodeGeneratorHandle_t generator)
 {
     char hash[NGUARD_HASH_RANDOM_SIZE];
     Random_fast_srand(time(NULL));
@@ -165,7 +195,7 @@ bool generateNdefGuard_(CodeGeneratorHandle_t generator)
     return SUCCESS;
 }
 
-inline bool fileWriteImports_(CodeGeneratorHandle_t generator)
+static inline bool fileWriteImports_(CodeGeneratorHandle_t generator)
 {
     // TODO: put this to differ method for readability
     ImportObjectHandle_t importObject;
@@ -183,7 +213,7 @@ inline bool fileWriteImports_(CodeGeneratorHandle_t generator)
     return SUCCESS;
 }
 
-inline bool fileWriteClassVariables_(CodeGeneratorHandle_t generator)
+static inline bool fileWriteClassVariables_(CodeGeneratorHandle_t generator)
 {
 
     if(generator->ast->classVariables->currentSize != 0)
@@ -210,26 +240,26 @@ inline bool fileWriteClassVariables_(CodeGeneratorHandle_t generator)
  * e.g: ./filepath/iguana.ig --> ./filepath/iguana.c
  * e.g: ./filepath/iguana.iguana --> ./filepath/iguana.h
  * 
- * @param[in/out] generator             generator for gathering relative path from main root folder to iguana file which being compiled
+ * @param[out] filepath                 relative path from main root folder to iguana file which being compiled
  * @param[in] cFormatExtension          char to replace extension with (must be char and not string)
  * @return                              Succes state 
  */
-bool iguanaPathToCharfilePath_(CodeGeneratorHandle_t generator, const char cFormatExtension)
+static bool iguanaPathToCharfilePath_(char* filepath, const char cFormatExtension)
 {
     char* pointerDotStart = NULL;
 
-    pointerDotStart = strrchr(generator->relativeIguanaFilePath, '.');
+    pointerDotStart = strrchr(filepath, '.');
     NULL_GUARD(pointerDotStart, ERROR, Log_e(TAG, "pointer to dot of filename is null"));
     pointerDotStart[1] = cFormatExtension;
     pointerDotStart[2] = NULL_TERMINATOR;
     return SUCCESS;
 }
 
-bool fileWriteVariableDeclaration_(CodeGeneratorHandle_t generator, VariableObjectHandle_t variable, VariableDeclaration_t declareType)
+static bool fileWriteVariableDeclaration_(CodeGeneratorHandle_t generator, VariableObjectHandle_t variable, VariableDeclaration_t declareType)
 {
     char* variableTypeKeywordToUse;
 
-    NULL_GUARD(variable, ERROR, Log_e(TAG, "AST classVariables vector expandable is null"));
+    NULL_GUARD(variable, ERROR, Log_e(TAG, "AST variableDeclaration expandable is null"));
 
 
     if(variable->bitpack != 0)
@@ -257,11 +287,12 @@ bool fileWriteVariableDeclaration_(CodeGeneratorHandle_t generator, VariableObje
                 return ERROR;
         }
     }
+    return SUCCESS;
 }
 
 
 
-inline bool fileWriteMethods_(CodeGeneratorHandle_t generator)
+static inline bool fileWriteMethods_(CodeGeneratorHandle_t generator)
 {
     NULL_GUARD(generator, ERROR, Log_e(TAG, "Generator to method writing passes as null"));
 
@@ -277,20 +308,24 @@ inline bool fileWriteMethods_(CodeGeneratorHandle_t generator)
             return ERROR;
         }
 
-        for(size_t paramIdx = 0; paramIdx < method->parameters->currentSize; paramIdx)
+        for(size_t paramIdx = 0; paramIdx < method->parameters->currentSize; paramIdx++)
         {
-            if(!fileWriteVariableDeclaration_(generator, method->returnVariable, VARIABLE_PARAMETER))
+            VariableObjectHandle_t parameter;
+            parameter = method->parameters->expandable[paramIdx];
+            NULL_GUARD(parameter, ERROR, Log_e(TAG, "AST method %s %d nth is NULL", method->methodName, paramIdx));
+
+            if(!fileWriteVariableDeclaration_(generator, parameter, VARIABLE_PARAMETER))
             {
                 Log_e(TAG, "Failed to write method %s return type", method->methodName);
                 return ERROR;
             }
-            if(paramIdx + 1 != method->parameters->currentSize)
+            if((paramIdx + 1) != method->parameters->currentSize)
             {
-                fwrite(COMMA, BYTE_SIZE, sizeof(COMMA), generator->hFile);
+                fwrite(&COMMA, BYTE_SIZE, sizeof(COMMA), generator->hFile);
             }
         }
 
-        fprintf(generator->hFile, "%c%c", BRACKET_ROUND_END, SEMICOLON);
+        fprintf(generator->hFile, "%c%c\n", BRACKET_ROUND_END, SEMICOLON);
         // fprintf("%s", method->returnVariable)
 
     }

@@ -29,10 +29,14 @@ CONST_STRING UNSIGNED_KEYWORD =  "unsigned";
 // IMPORTANT! database order should be from smallest to highest
 CONST_STRING TYPE_BINDS[] = 
 {
-    "char",
-    "int",
-    "short",
-    "long long",
+    "char",         // 0 - 8
+    "short",        // 8 - 16
+    "int",          // 16 - 24
+    "int",          // 24 - 32
+    "long long",    // 32 - 40
+    "long long",    // 40 - 48
+    "long long",    // 48 - 56
+    "long long",    // 56 - 64
     "void"
 };
 
