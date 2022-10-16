@@ -275,6 +275,7 @@ static inline bool addLibraryForCompilation_(ParserHandle_t parser, const char* 
         {
             endingExtensionPointer[j] = allIguanaExtensions[i][j]; 
         }
+        endingExtensionPointer[j] = '\0';
 
         fileToCheck = fopen(newFilePathToCompile, "r");
         if(fileToCheck == NULL)

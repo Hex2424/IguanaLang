@@ -28,7 +28,9 @@ static const char* TAG = "COMPILER";
 
 ////////////////////////////////
 // PRIVATE TYPES
+
 static bool compileFile_(CompilerHandle_t compiler, const char* filePath);
+static bool checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, char* path);
 
 ////////////////////////////////
 // PRIVATE METHODS
@@ -73,7 +75,7 @@ static bool compileFile_(CompilerHandle_t compiler, const char* filePath)
         return ERROR;
     }
     
-    if(!Separator_getSeparatedWords(codeString, length, &tokensVector))
+    if(!Separator_getSeparatedWords(codeString, length, &tokensVector, filePath))
     {
         Log_e(TAG, "Seperator failed to parse: %s", codeString);
         return ERROR;
@@ -103,7 +105,6 @@ static bool compileFile_(CompilerHandle_t compiler, const char* filePath)
     }
 
 
-    
     if(!Generator_generateCode(&codeGenerator))
     {
         Log_e(TAG, "Failed to generate c language code for Iguana file %s", filePath);
@@ -171,11 +172,17 @@ bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char*
             break;  // compilation done
         }
 
+        if(checkIfPathAlreadyCompiled_(compiler, currentFilePath))
+        {
+            continue;
+        }
+
         if(!compileFile_(compiler, currentFilePath))
         {
             Log_e(TAG, "Failed to compile %s", currentFilePath);
             return ERROR;
         }
+        
     }
     return SUCCESS;
 
@@ -192,4 +199,15 @@ bool Compiler_destroy(CompilerHandle_t compiler)
     Queue_destroy(&compiler->filePathsToCompile);
 
     return SUCCESS;
+}
+static inline bool checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, char* path)
+{
+    for(size_t compiledPathIdx = 0; compiledPathIdx < compiler->alreadyCompiledFilePaths.currentSize; compiledPathIdx++)
+    {
+        if(strcmp(compiler->alreadyCompiledFilePaths.expandable[compiledPathIdx], path) == 0)
+        {
+            return true;
+        }
+    }
+    return false;
 }

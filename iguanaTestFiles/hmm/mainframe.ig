@@ -1,4 +1,4 @@
-import "test.i"
+import "../test";
 
 int:1 ddd;
 int:2 ggg;

@@ -18,7 +18,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-bool Separator_getSeparatedWords(const char* codeString, const size_t length, VectorHandler_t vector);
+bool Separator_getSeparatedWords(const char* codeString, const size_t length, VectorHandler_t vector, const char* filePath);
 
 
 

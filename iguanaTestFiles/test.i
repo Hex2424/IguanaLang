@@ -1,5 +1,4 @@
-import "mainframe";
-import "stdio";
+import "hmm/mainframe";
 
 int:1 ddd = 2;
 int:2 ggg;

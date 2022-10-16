@@ -39,7 +39,7 @@ static const char allowedNamingSymbols_[] = "qwertyuiopasdfghjklzxcvbnmQWERTYUIO
 // PRIVATE METHODS
 
 static const size_t calculateTokens_(const char *begginingIterator, const char *maxIterator);
-static const size_t tokenize_(const char *begginingIterator, const char *maxIterator, VectorHandler_t vectorHandle);
+static const size_t tokenize_(const char *begginingIterator, const char *maxIterator, VectorHandler_t vectorHandle,const char* currentFile);
 
 ////////////////////////////////
 // IMPLEMENTATION
@@ -53,7 +53,7 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
  * @param vector[out]       vector pointer for filling tokens
  * @return Success state
  */
-bool Separator_getSeparatedWords(const char *codeString, const size_t length, VectorHandler_t vector)
+bool Separator_getSeparatedWords(const char *codeString, const size_t length, VectorHandler_t vector, const char* filePath)
 {
     size_t tokenCount;
     InitialSettings_t settings;
@@ -67,7 +67,7 @@ bool Separator_getSeparatedWords(const char *codeString, const size_t length, Ve
         return ERROR;
     }
 
-    tokenCount = tokenize_(codeString, codeString + length, vector);
+    tokenCount = tokenize_(codeString, codeString + length, vector, filePath);
     Log_i(TAG, "Token Count: %d", (int)tokenCount);
 
     return SUCCESS;
@@ -82,7 +82,7 @@ bool Separator_getSeparatedWords(const char *codeString, const size_t length, Ve
  * @param[out] vectorHandle     pointer to tokens vector object
  * @return token count
  */
-static const size_t tokenize_(const char *begginingIterator, const char *maxIterator, VectorHandler_t vectorHandle)
+static const size_t tokenize_(const char *begginingIterator, const char *maxIterator, VectorHandler_t vectorHandle,const char* currentFile)
 {
     char *currentIterator; // TODO: if possible push to register
     char *wordIterator;
@@ -96,8 +96,6 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
 
     size_t lastLine = 0;
     size_t lastColumn = 1;
-
-    const char* currentFile = "/home/hex24/Desktop/C_Projects/IguanaLang/test.i";
 
     wordIterator = begginingIterator;
     existWordBuild = 0;
