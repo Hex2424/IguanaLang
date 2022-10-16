@@ -15,7 +15,7 @@
 #include "../file_reader/file_reader.h"
 #include "../parser/parser.h"
 #include "../generator/generator.h"
-
+#include "compiler.h"
 ////////////////////////////////
 // DEFINES
 
@@ -26,7 +26,7 @@ static const char* TAG = "COMPILER";
 
 ////////////////////////////////
 // PRIVATE TYPES
-
+static bool compileFile_(const char* filePath);
 
 ////////////////////////////////
 // PRIVATE METHODS
@@ -43,7 +43,7 @@ static const char* TAG = "COMPILER";
  * @param length[in] length of code string buffer
  * @return Success state
  */
-bool Compiler_compile(const char* filePath)
+static bool compileFile_(const char* filePath)
 {
     Vector_t tokensVector;
     CodeGenerator_t codeGenerator;
@@ -51,6 +51,7 @@ bool Compiler_compile(const char* filePath)
     size_t length;
     MainFrame_t root;
 
+    // TODO: read directly from file
     length = FileReader_readToBuffer(filePath, &codeString);
     if(length == -1)
     {
@@ -106,5 +107,50 @@ bool Compiler_compile(const char* filePath)
         return ERROR;
     }
     
+    return SUCCESS;
+}
+
+
+bool Compiler_initialize(CompilerHandle_t compiler)
+{
+    if(!Vector_create(&compiler->alreadyCompiledFilePaths, NULL))
+    {
+        Log_e(TAG, "Failed to create vector for already compiler file paths");
+        return ERROR;
+    }
+
+    if(!Vector_create(&compiler->filePathsToCompile, NULL))
+    {
+        Log_e(TAG, "Failed to create vector for paths need for compilation file paths");
+        return ERROR;
+    }
+
+    return SUCCESS;
+}
+
+
+bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char* filePath)
+{
+    while (compiler->filePathsToCompile)
+    {
+        /* code */
+    }
+    
+}
+
+bool Compiler_destroy(CompilerHandle_t compiler)
+{
+    if(!Vector_destroy(&compiler->alreadyCompiledFilePaths))
+    {
+        Log_e(TAG, "Failed to destroy alreadyCompiledFilePaths vector");
+        return ERROR;
+    }
+
+    if(!Vector_destroy(&compiler->filePathsToCompile))
+    {
+        Log_e(TAG, "Failed to destroy filePathsToCompile vector");
+        return ERROR;
+    }
+
     return SUCCESS;
 }

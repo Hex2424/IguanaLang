@@ -15,8 +15,23 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+#include "../vector/vector.h"
 
-bool Compiler_compile(const char* filePath);
 
+
+typedef struct
+{
+
+    Vector_t alreadyCompiledFilePaths;
+    Vector_t filePathsToCompile;
+
+}Compiler_t;
+
+typedef Compiler_t* CompilerHandle_t;
+
+
+bool Compiler_initialize(CompilerHandle_t compiler);
+bool Compiler_destroy(CompilerHandle_t compiler);
+bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char* filePath);
 
 #endif // UTILITY_COMPILER_COMPILER_H_

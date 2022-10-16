@@ -28,8 +28,7 @@ static const char* TAG = "PARSER";
 
 ////////////////////////////////
 // PRIVATE TYPES
-Vector_t alreadyCompiledFilePaths_;
-Vector_t filePathsToCompile_;
+
 TokenHandler_t* tokens;
 TokenHandler_t* currentToken;
 TokenHandler_t* endToken;
