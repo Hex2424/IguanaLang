@@ -29,7 +29,7 @@ static const char* TAG = "TOKENIZER";
 ////////////////////////////////
 // PRIVATE METHODS
 
-static bool handleUnknownType_(TokenHandler_t tokenHandle, const char* expression, const size_t expressionSize);
+static bool handleUnknownType_(TokenHandler_t tokenHandle, const char* expression, size_t expressionSize);
 static bool isNumber_(const char string[], const size_t expressionSize);
 ////////////////////////////////
 // IMPLEMENTATION
@@ -89,27 +89,36 @@ TokenHandler_t Tokenizer_wordToCorrespondingToken(const char *seperation, const 
  * @param[in] expressionSize    string size
  * @return Success type 
  */
-static bool handleUnknownType_(TokenHandler_t tokenHandle, const char* expression, const size_t expressionSize)
+static bool handleUnknownType_(TokenHandler_t tokenHandle, const char* expression, size_t expressionSize)
 {
     
     if(isNumber_(expression, expressionSize))
     {
+
         tokenHandle->tokenType = NUMBER_VALUE;      // incase of integer value
+
+    }else if(*expression == '\'' || *expression == '\"')
+    {
+        tokenHandle->tokenType = LITTERAL;
+        expression++;
+        expressionSize -= 2;
     }else
     {
-        tokenHandle->tokenType = NAMING;            // incase of string
+        tokenHandle->tokenType = NAMING; 
     }
-    
 
-    tokenHandle->valueString = malloc(expressionSize + 1); // extra for null terminator \0
+
+    tokenHandle->valueString = malloc(expressionSize + 1);  // extra for null terminator \0
 
     ALLOC_CHECK(tokenHandle->valueString, false);
-
+    
     memcpy(tokenHandle->valueString, expression, expressionSize);
     tokenHandle->valueString[expressionSize] = '\0';                // appending null terminator character for easier life
+
     return true;
 
 }
+
 
 /**
  * @brief Private method to check whether provided string is integer

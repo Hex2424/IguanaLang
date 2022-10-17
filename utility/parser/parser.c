@@ -189,60 +189,35 @@ static inline bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t
     ALLOC_CHECK(importObject, ERROR);
 
     currentToken++;
-    if(cTokenType == ARROW_LEFT || cTokenType == LITTERAL)                 // detected <
+    if(cTokenType == LITTERAL)                 // detected <
     {
         // standart lib detected
         currentToken++;
 
-        if(cTokenType == NAMING)
+        importObject->name = cTokenP->valueString;
+        if(!addLibraryForCompilation_(parser, importObject->name))
         {
-            // if(!ParserUtils_assignTokenValue(&importObject->name, cTokenP->valueString))
-            // {
-            //     Log_e(TAG, "Couldn't assign value from token");
-            //     return ERROR;
-            // }
-            importObject->name = cTokenP->valueString;
-            if(!addLibraryForCompilation_(parser, importObject->name))
+            Log_e(TAG, "Failed to add library path for paths to compile");
+            return ERROR;
+        }
+
+        if(cTokenType != SEMICOLON)
+        {
+            Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
+        }else
+        {
+            if(!Vector_append(rootHandle->imports, importObject))
             {
-                Log_e(TAG, "Failed to add library path for paths to compile");
+                Log_e(TAG, "Couldn't append libary to vector");
                 return ERROR;
             }
 
-            currentToken++;
-            
-            if(cTokenType == ARROW_LEFT || cTokenType == LITTERAL)
-            {
-                currentToken++;
-
-                if(cTokenType != SEMICOLON)
-                {
-                    Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
-                }else
-                {
-                    if(!Vector_append(rootHandle->imports, importObject))
-                    {
-                        Log_e(TAG, "Couldn't append libary to vector");
-                        return ERROR;
-                    }
-
-                }
-                
-
-            }else
-            {
-                Shouter_shoutExpectedToken(cTokenP, LITTERAL);
-            }
-
-        }else
-        {
-            Shouter_shoutError(cTokenP, "Forgot to define module path...");
         }
-        
+ 
     }else
     {
-        Shouter_shoutExpectedToken(cTokenP, LITTERAL);
+        Shouter_shoutError(cTokenP, "Forgot to define module path...");
     }
-
     // Log_d(TAG, "Current token \'%d\' after libary parse", cTokenP->tokenType);
 
     return SUCCESS;

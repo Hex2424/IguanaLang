@@ -87,6 +87,7 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
     char *currentIterator; // TODO: if possible push to register
     char *wordIterator;
     bool breakTag;
+    bool isLiteral;
     int existWordBuild;
     size_t overallLength;
     size_t tokenCount;
@@ -97,6 +98,7 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
     size_t lastLine = 0;
     size_t lastColumn = 1;
 
+    isLiteral = false;
     wordIterator = begginingIterator;
     existWordBuild = 0;
     tokenCount = 0;
@@ -108,6 +110,7 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
         bool prevSymbolExists;
 
         breakTag = false;
+
 
         symbolExists = memchr(allowedNamingSymbols_, *currentIterator, sizeof(allowedNamingSymbols_)) != NULL;
         if (currentIterator != begginingIterator)
@@ -138,6 +141,7 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
                 {
                     currentLine++;
                     currentColumn = 1;
+                    isLiteral = false;
                 }break;
 
                 case '\r':
@@ -158,40 +162,49 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
         {
             if (existWordBuild != 0)
             {
-                tokenCount++;
-
                 TokenHandler_t token;
-                token = Tokenizer_wordToCorrespondingToken(wordIterator, existWordBuild);
 
-                token->location.column = lastColumn;     // setting up file location settings for debugging errors
-                token->location.line = lastLine;
-                token->location.filename = currentFile;
-
-
-                lastColumn = currentColumn;
-                lastLine = currentLine;
-
-                if(token == NULL)
+                if(!isLiteral)
                 {
-                    Log_e(TAG, "token is null");
+                    tokenCount++;
+                    token = Tokenizer_wordToCorrespondingToken(wordIterator, existWordBuild);
+
+                    token->location.column = lastColumn;     // setting up file location settings for debugging errors
+                    token->location.line = lastLine;
+                    token->location.filename = currentFile;
+
+
+                    lastColumn = currentColumn;
+                    lastLine = currentLine;
+
+                    if(token == NULL)
+                    {
+                        Log_e(TAG, "token is null");
+                    }
+
+                    Log_d(TAG, "token: %d %s", token->tokenType, token->valueString);
+
+                    if(!Vector_append(vectorHandle, token))
+                    {
+                        Log_e(TAG, "Failed to append tokenType:%d", token->tokenType);
+                        return ERROR;
+                    }
+                    // Vector_print(vectorHandle);
+                    existWordBuild = 0;
+                    wordIterator = currentIterator;
                 }
 
-                Log_d(TAG, "token: %d %s", token->tokenType, token->valueString);
-
-                if(!Vector_append(vectorHandle, token))
-                {
-                    Log_e(TAG, "Failed to append tokenType:%d", token->tokenType);
-                    return ERROR;
-                }
-                // Vector_print(vectorHandle);
-                existWordBuild = 0;
-                wordIterator = currentIterator;
             }
         }
 
         if (currentIterator < maxIterator)
         {
             existWordBuild++;
+        }
+
+        if(*currentIterator == '\"' || *currentIterator == '\'')
+        {
+            isLiteral = !isLiteral;
         }
     }
 
