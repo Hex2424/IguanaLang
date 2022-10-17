@@ -1,4 +1,5 @@
 import "../test";
+import "../stdio";
 
 int:1 ddd;
 int:2 ggg;

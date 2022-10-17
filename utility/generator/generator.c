@@ -123,7 +123,7 @@ static bool initializeFileDescriptorFor_(FILE** descriptor,const char* virtualBu
 
 bool Generator_generateCode(const CodeGeneratorHandle_t generator)
 {
-    
+
  // setting virtual buffer for bufferizing file writing (better speed)
 
     // TODO: error checking of fwrite
@@ -166,6 +166,12 @@ bool Generator_generateCode(const CodeGeneratorHandle_t generator)
         return ERROR;
     }
 
+    if(fflush(generator->cFile))  // flushing what is left in buffer
+    {
+        Log_e(TAG, "Failed to flush file %s buffer", generator->cFile);
+        return ERROR;
+    }
+
     if(fclose(generator->hFile))
     {
         Log_e(TAG, "Failed to close file %s", generator->hFile);
@@ -200,7 +206,7 @@ static inline bool fileWriteImports_(const CodeGeneratorHandle_t generator)
 {
     ImportObjectHandle_t importObject;
 
-    fprintf(generator->cFile, "%s\"%s\"%c", INCLUDE_KEYWORD, generator->hFilePath, END_LINE);
+    fprintf(generator->cFile, "%s \"%s\"%c", INCLUDE_KEYWORD, generator->hFilePath, END_LINE);
 
     // writing imports to h file
     for(size_t importIdx = 0; importIdx < (generator->ast->imports->currentSize); importIdx++)

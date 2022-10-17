@@ -111,7 +111,7 @@ static bool compileFile_(CompilerHandle_t compiler, const char* filePath)
         return ERROR;
     }
 
-    if(!Vector_append(&compiler->alreadyCompiledFilePaths, filePath))
+    if(!Vector_append(&compiler->alreadyCompiledFilePaths, realpath(filePath, NULL)))
     {
         Log_e(TAG, "Failed to append an compiled file path");
         return ERROR;
@@ -202,9 +202,13 @@ bool Compiler_destroy(CompilerHandle_t compiler)
 }
 static inline bool checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, char* path)
 {
+    char *pathToCheck = realpath(path, NULL);
+
     for(size_t compiledPathIdx = 0; compiledPathIdx < compiler->alreadyCompiledFilePaths.currentSize; compiledPathIdx++)
     {
-        if(strcmp(compiler->alreadyCompiledFilePaths.expandable[compiledPathIdx], path) == 0)
+        // generating absolute paths for better same path checking
+
+        if(strcmp(compiler->alreadyCompiledFilePaths.expandable[compiledPathIdx], pathToCheck) == 0)
         {
             return true;
         }
