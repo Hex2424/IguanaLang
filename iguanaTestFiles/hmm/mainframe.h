@@ -1,10 +1,7 @@
 #ifndef VUMTVXRLTVIYFEJNOOLPCCKIWBEYNXQBBJDMKIWAOICQQPSEVEKNOEEEVINQNNFW
 #define VUMTVXRLTVIYFEJNOOLPCCKIWBEYNXQBBJDMKIWAOICQQPSEVEKNOEEEVINQNNFW
-#include "hmm/mainframe.h"
+#include "../tests.h"
 typedef struct{char ddd:1;char ggg:2;};
-int method(int param1,char param2);
-short hello();
-int main();
-char main2();
-char method2(int param1,char param2);
+char method(char param1,char param2);
+char method2(char param1,char param2);
 #endif

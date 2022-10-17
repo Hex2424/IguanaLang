@@ -192,14 +192,14 @@ static inline bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t
     if(cTokenType == LITTERAL)                 // detected <
     {
         // standart lib detected
-        currentToken++;
-
         importObject->name = cTokenP->valueString;
         if(!addLibraryForCompilation_(parser, importObject->name))
         {
             Log_e(TAG, "Failed to add library path for paths to compile");
             return ERROR;
         }
+        currentToken++;
+
 
         if(cTokenType != SEMICOLON)
         {
