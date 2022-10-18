@@ -29,6 +29,7 @@ typedef struct
     FILE* cFile;
     char* hFilePath;
     char* cFilePath;
+    char* iguanaTmpFolder;
     MainFrameHandle_t ast;
 } CodeGenerator_t;
 

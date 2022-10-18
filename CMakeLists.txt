@@ -16,8 +16,9 @@ utility/parser/parser_utilities/compiler_messages.c
 utility/parser/parser_utilities/smaller_parsers/method_parser.c
 utility/parser/parser_utilities/global_parser_utility.c
 utility/generator/generator.c
-utility/randomizer/random.c
 utility/queue/queue.c
+utility/hash/random/random.c
+utility/hash/hash.c
 )
 
 cmake_minimum_required(VERSION 3.3)

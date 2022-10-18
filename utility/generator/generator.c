@@ -15,7 +15,7 @@
 #include "../global_config/global_config.h"
 #include "string.h"
 #include "../logger/logger.h"
-#include "../randomizer/random.h"
+#include "../hash/hash.h"
 #include <time.h>
 #include "csyntax_database.h"
 
@@ -97,6 +97,9 @@ bool Generator_initialize(CodeGeneratorHandle_t generator, const char* relativeI
 static bool initializeFileDescriptorFor_(FILE** descriptor,const char* virtualBuffer, char** path, const char* iguanaFilePath,const char extension)
 {
     uint32_t iguanaFilePathLength;
+    char* output = malloc(69);
+
+
     iguanaFilePathLength = strlen(iguanaFilePath);
     (*path) = malloc(iguanaFilePathLength);
 
@@ -105,14 +108,29 @@ static bool initializeFileDescriptorFor_(FILE** descriptor,const char* virtualBu
         Log_e(TAG, "Failed to allocate memory for \".%c\" file paths for ig: %s", extension, iguanaFilePath);
         return ERROR;
     }
+    output[0] = '.';
+    output[1] = '/';
 
-    strncpy(*path, iguanaFilePath, iguanaFilePathLength);
-
-    if(!iguanaPathToCharfilePath_(*path, extension))
+    if(!EHash_hash(iguanaFilePath, iguanaFilePathLength, output + 2, 64))
     {
-        Log_e(TAG, "Failed to change path to \".%c\" format of %s", extension, *path);
+        Log_e(TAG, "Failed to hash iguana filepath");
         return ERROR;
     }
+    *path = output;
+    output[66] = '.';
+    output[67] = extension;
+    // *path = "./dksdss.c";
+    // strncpy(*path, iguanaFilePath, iguanaFilePathLength);
+
+
+
+    // if(!iguanaPathToCharfilePath_(*path, extension))
+    // {
+    //     Log_e(TAG, "Failed to change path to \".%c\" format of %s", extension, *path);
+    //     return ERROR;
+    // }
+
+    
 
     *descriptor = fopen(*path, "w");
 
@@ -207,7 +225,7 @@ static inline bool fileWriteImports_(const CodeGeneratorHandle_t generator)
     ImportObjectHandle_t importObject;
 
     fprintf(generator->cFile, "%s \"%s\"%c", INCLUDE_KEYWORD, generator->hFilePath, END_LINE);
-
+    // printf("%s\n",generator->hFilePath);
     // writing imports to h file
     for(size_t importIdx = 0; importIdx < (generator->ast->imports->currentSize); importIdx++)
     {
@@ -215,6 +233,7 @@ static inline bool fileWriteImports_(const CodeGeneratorHandle_t generator)
         NULL_GUARD(importObject, ERROR, Log_e(TAG, "Import object from Abstract syntax tree is null"));
         NULL_GUARD(importObject->name, ERROR, Log_e(TAG, "Import name is null"));
 
+        
         fprintf(generator->hFile, "%s \"%s.h\"%c", INCLUDE_KEYWORD, importObject->name, END_LINE);
 
     }
@@ -243,26 +262,26 @@ static inline bool fileWriteClassVariables_(const CodeGeneratorHandle_t generato
 }
 
 /**
- * @brief Private method for effective file extension changing which are 1 char length
- * 
- * e.g: ./filepath/iguana.i --> ./filepath/iguana.c
- * e.g: ./filepath/iguana.ig --> ./filepath/iguana.c
- * e.g: ./filepath/iguana.iguana --> ./filepath/iguana.h
- * 
- * @param[out] filepath                 relative path from main root folder to iguana file which being compiled
- * @param[in] cFormatExtension          char to replace extension with (must be char and not string)
- * @return                              Succes state 
- */
-static bool iguanaPathToCharfilePath_(char* filepath, const char cFormatExtension)
-{
-    char* pointerDotStart = NULL;
-
-    pointerDotStart = strrchr(filepath, '.');
-    NULL_GUARD(pointerDotStart, ERROR, Log_e(TAG, "pointer to dot of filename is null"));
-    pointerDotStart[1] = cFormatExtension;
-    pointerDotStart[2] = NULL_TERMINATOR;
-    return SUCCESS;
-}
+//  * @brief Private method for effective file extension changing which are 1 char length
+//  * 
+//  * e.g: ./filepath/iguana.i --> ./filepath/iguana.c
+//  * e.g: ./filepath/iguana.ig --> ./filepath/iguana.c
+//  * e.g: ./filepath/iguana.iguana --> ./filepath/iguana.h
+//  * 
+//  * @param[out] filepath                 relative path from main root folder to iguana file which being compiled
+//  * @param[in] cFormatExtension          char to replace extension with (must be char and not string)
+//  * @return                              Succes state 
+//  */
+// static bool iguanaPathToCharfilePath_(char* filepath, const char cFormatExtension)
+// {
+//     char* pointerDotStart = NULL;
+    
+//     pointerDotStart = strrchr(filepath, '.');
+//     NULL_GUARD(pointerDotStart, ERROR, Log_e(TAG, "pointer to dot of filename is null"));
+//     pointerDotStart[1] = cFormatExtension;
+//     pointerDotStart[2] = NULL_TERMINATOR;
+//     return SUCCESS;
+// }
 
 static bool fileWriteVariableDeclaration_(const FILE* file,const VariableObjectHandle_t variable,const VariableDeclaration_t declareType)
 {
