@@ -200,8 +200,10 @@ bool Compiler_destroy(CompilerHandle_t compiler)
 
     return SUCCESS;
 }
+
 static inline bool checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, char* path)
 {
+    // TODO: remove this for optimization reasons
     char *pathToCheck = realpath(path, NULL);
 
     for(size_t compiledPathIdx = 0; compiledPathIdx < compiler->alreadyCompiledFilePaths.currentSize; compiledPathIdx++)

@@ -30,8 +30,7 @@
 
 #define OS            LINUX
 
-
-
-
+#define OBJECT_ID_LENGTH 8              // in bytes
+#define MAX_RETRIES_ID   15
 
 #endif // UTILITY_GLOBAL_CONFIG_GLOBAL_CONFIG_H_

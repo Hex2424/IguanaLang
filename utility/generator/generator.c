@@ -18,6 +18,7 @@
 #include "../hash/hash.h"
 #include <time.h>
 #include "csyntax_database.h"
+#include "../parser/structures/import_object/import_object.h"
 
 ////////////////////////////////
 // DEFINES
@@ -97,7 +98,6 @@ bool Generator_initialize(CodeGeneratorHandle_t generator, const char* relativeI
 static bool initializeFileDescriptorFor_(FILE** descriptor,const char* virtualBuffer, char** path, const char* iguanaFilePath,const char extension)
 {
     uint32_t iguanaFilePathLength;
-    char* output = malloc(69);
 
 
     iguanaFilePathLength = strlen(iguanaFilePath);
@@ -108,17 +108,9 @@ static bool initializeFileDescriptorFor_(FILE** descriptor,const char* virtualBu
         Log_e(TAG, "Failed to allocate memory for \".%c\" file paths for ig: %s", extension, iguanaFilePath);
         return ERROR;
     }
-    output[0] = '.';
-    output[1] = '/';
 
-    if(!EHash_hash(iguanaFilePath, iguanaFilePathLength, output + 2, 64))
-    {
-        Log_e(TAG, "Failed to hash iguana filepath");
-        return ERROR;
-    }
-    *path = output;
-    output[66] = '.';
-    output[67] = extension;
+    
+    
     // *path = "./dksdss.c";
     // strncpy(*path, iguanaFilePath, iguanaFilePathLength);
 
@@ -232,9 +224,10 @@ static inline bool fileWriteImports_(const CodeGeneratorHandle_t generator)
         importObject = (ImportObjectHandle_t) generator->ast->imports->expandable[importIdx];
         NULL_GUARD(importObject, ERROR, Log_e(TAG, "Import object from Abstract syntax tree is null"));
         NULL_GUARD(importObject->name, ERROR, Log_e(TAG, "Import name is null"));
+        NULL_GUARD(importObject->objectId.id, ERROR, Log_e(TAG, "Import object id is null"));
 
-        
-        fprintf(generator->hFile, "%s \"%s.h\"%c", INCLUDE_KEYWORD, importObject->name, END_LINE);
+
+        fprintf(generator->hFile, "%s \"%s.h\"%c", INCLUDE_KEYWORD, importObject->objectId.id, END_LINE);
 
     }
     return SUCCESS;
@@ -378,6 +371,9 @@ static inline bool fileWriteMethods_(const CodeGeneratorHandle_t generator)
     return SUCCESS;
 
 }
+
+
+
 
 
 static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator,const MethodObjectHandle_t method)

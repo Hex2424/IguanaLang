@@ -18,14 +18,6 @@
 #include "../../../vector/vector.h"
 
 
-typedef struct
-{
-    char* name;
-
-}ImportObject_t;
-
-
-typedef ImportObject_t* ImportObjectHandle_t;
 
 typedef struct
 {
