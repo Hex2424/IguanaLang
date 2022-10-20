@@ -196,7 +196,7 @@ static inline bool fileWriteImports_(const CodeGeneratorHandle_t generator)
 {
     ImportObjectHandle_t importObject;
 
-    fprintf(generator->cFile, "%s \"%s.c\"%c", INCLUDE_KEYWORD, generator->hFile, END_LINE);
+    fprintf(generator->cFile, "%s \"%s\"%c", INCLUDE_KEYWORD, generator->hFilePath, END_LINE);
     // printf("%s\n",generator->hFilePath);
     // writing imports to h file
     for(size_t importIdx = 0; importIdx < (generator->ast->imports->currentSize); importIdx++)

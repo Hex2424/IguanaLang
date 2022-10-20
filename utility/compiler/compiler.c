@@ -204,7 +204,7 @@ bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char*
 
 bool Compiler_destroy(CompilerHandle_t compiler)
 {
-    cleanTempFilePaths_(compiler);
+    // cleanTempFilePaths_(compiler);
 
     if(!Vector_destroy(&compiler->alreadyCompiledFilePaths))
     {
