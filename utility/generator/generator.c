@@ -30,7 +30,7 @@
 
 #define GENERATE_GUARD_PART(partName) \
     fprintf(generator->hFile, "%s ",partName); \
-    generateNdefGuard_(generator); \
+    fprintf(generator->hFile, "DEFGUARD_%s",generator->iguanaImport->objectId.id); \
     fwrite(&END_LINE, BYTE_SIZE, sizeof(END_LINE), generator->hFile)
 
 ////////////////////////////////
@@ -72,6 +72,7 @@ bool Generator_initialize(CodeGeneratorHandle_t generator, const ImportObjectHan
     NULL_GUARD(ast, ERROR, Log_e(TAG, "Abstract syntax tree got passed as NULL"));
 
     generator->ast = ast;
+    generator->iguanaImport = iguanaImport;
 
     if(!initializeFileDescriptorFor_(&generator->hFile, generator->writingBufferH, &generator->hFilePath, iguanaImport, 'h'))
     {
@@ -171,27 +172,6 @@ bool Generator_generateCode(const CodeGeneratorHandle_t generator)
     return SUCCESS;
 }
 
-
-/**
- * @brief Private method for generating NDEF guard for repeating libraries
- * 
- * @param[in] generator                 Generator for gathering file descriptor where to write 
- * @return                              Success state
- */
-static bool generateNdefGuard_(const CodeGeneratorHandle_t generator)
-{
-    char hash[NGUARD_HASH_RANDOM_SIZE];
-    Random_fast_srand(time(NULL));
-
-    for(int i = 0; i < NGUARD_HASH_RANDOM_SIZE; i++)
-    {
-        hash[i] = Random_fast_rand() % 25 + 'A';            // making random capital letter
-    }
-
-    fwrite(hash, BYTE_SIZE, sizeof(hash), generator->hFile);
-    return SUCCESS;
-}
-
 static inline bool fileWriteImports_(const CodeGeneratorHandle_t generator)
 {
     ImportObjectHandle_t importObject;
@@ -229,7 +209,7 @@ static inline bool fileWriteClassVariables_(const CodeGeneratorHandle_t generato
             variable = generator->ast->classVariables->expandable[variableIdx];
             fileWriteVariableDeclaration_(generator->hFile, variable, VARIABLE_STRUCT);
         }
-        fprintf(generator->hFile, "%c%c%c", BRACKET_END, SEMICOLON, END_LINE);
+        fprintf(generator->hFile, "%c%s_t%c%c", BRACKET_END, generator->iguanaImport->objectId.id,SEMICOLON, END_LINE);
     }
     return SUCCESS;
 }

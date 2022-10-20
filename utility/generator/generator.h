@@ -33,7 +33,7 @@ typedef struct
     FILE* cFile;
     char hFilePath[CFILES_LENGTH];
     char cFilePath[CFILES_LENGTH];
-    char* iguanaTmpFolder;
+    ImportObjectHandle_t iguanaImport;
     MainFrameHandle_t ast;
 } CodeGenerator_t;
 

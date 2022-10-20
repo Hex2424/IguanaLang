@@ -1,5 +1,3 @@
-import "test";
-
 int:1 ddd = 2;
 int:2 ggg;
 
