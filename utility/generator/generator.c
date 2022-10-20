@@ -91,6 +91,7 @@ static bool initializeFileDescriptorFor_(FILE** descriptor,const char* virtualBu
 {
     memcpy(path, TEMP_PATH, sizeof(TEMP_PATH) - 1);
     memcpy(path + sizeof(TEMP_PATH) - 1, iguanaFilePath->objectId.id, OBJECT_ID_LENGTH);
+    path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH) + 1] = '\0';
     path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH)] = extension;
     path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH) - 1] = '.';
 
@@ -179,6 +180,11 @@ bool Generator_generateCode(const CodeGeneratorHandle_t generator)
         return ERROR;
     }
 
+    if(fclose(generator->cFile))
+    {
+        Log_e(TAG, "Failed to close file %s", generator->hFile);
+        return ERROR;
+    }
     return SUCCESS;
 }
 
@@ -207,7 +213,7 @@ static inline bool fileWriteImports_(const CodeGeneratorHandle_t generator)
 {
     ImportObjectHandle_t importObject;
 
-    fprintf(generator->cFile, "%s \"%s\"%c", INCLUDE_KEYWORD, generator->hFilePath, END_LINE);
+    fprintf(generator->cFile, "%s \"%s.c\"%c", INCLUDE_KEYWORD, generator->hFile, END_LINE);
     // printf("%s\n",generator->hFilePath);
     // writing imports to h file
     for(size_t importIdx = 0; importIdx < (generator->ast->imports->currentSize); importIdx++)

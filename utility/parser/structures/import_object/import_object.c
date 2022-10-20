@@ -60,6 +60,7 @@ bool ImportObject_generateRandomIDForObject(ImportObjectHandle_t importObject)
         {
             importObject->objectId.id[hashIdx] = 'a' + Random_fast_rand() % 26;  // generating random byte
         }
+        importObject->objectId.id[OBJECT_ID_LENGTH] = '\0';
         memcpy(filePathForCheck + (sizeof(TEMP_PATH) - 1), importObject->objectId.id, OBJECT_ID_LENGTH);
 
         filePathForCheck[CFILES_LENGTH - 2] = 'c';

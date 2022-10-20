@@ -34,7 +34,7 @@
 #define MAX_RETRIES_ID                  15
 #define OBJECT_RANDOM_SEED              0
 
-#define LINUX_TEMP_FOLDER_PATH          "/tmp/"
+#define LINUX_TEMP_FOLDER_PATH          "./"
 #define WINDOWS_TEMP_FOLDER_PATH        "ECHO %Temp%" // get from CMD
 
 #if OS == LINUX

@@ -53,7 +53,8 @@ static bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t rootHa
 static bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_t rootHandle);
 static bool tryParseSequence_(const TokenType_t* pattern,const size_t patternSize);
 static bool assignTokenValue_(char** to, const char* from);
-static bool addLibraryForCompilation_(ParserHandle_t parser, ImportObjectHandle_t importObject);
+static bool addLibraryForCompilation_(ParserHandle_t parser, ImportObjectHandle_t* importObject);
+static int checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, ImportObjectHandle_t path);
 
 ////////////////////////////////
 // IMPLEMENTATION
@@ -197,7 +198,7 @@ static inline bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t
         // standart lib detected
         importObject->name = cTokenP->valueString;
 
-        if(!addLibraryForCompilation_(parser, importObject))
+        if(!addLibraryForCompilation_(parser, &importObject))
         {
             Log_e(TAG, "Failed to add library path for paths to compile");
             return ERROR;
@@ -228,20 +229,20 @@ static inline bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t
     return SUCCESS;
 }
 
-static inline bool addLibraryForCompilation_(ParserHandle_t parser, ImportObjectHandle_t importObject)
+static inline bool addLibraryForCompilation_(ParserHandle_t parser, ImportObjectHandle_t* importObject)
 {
     char* newFilePathToCompile;
     
     size_t libraryRelativePathLength;
     FILE* fileToCheck;
 
-    libraryRelativePathLength = strlen(importObject->name);
+    libraryRelativePathLength = strlen((*importObject)->name);
 
     newFilePathToCompile = malloc(parser->currentFolderPathLength + libraryRelativePathLength + LONGEST_POSSIBLE_IGUANA_EXTENSION_LENGTH); // .iguana is longest
     ALLOC_CHECK(newFilePathToCompile, ERROR)
 
     memcpy(newFilePathToCompile, parser->currentFolderPath, parser->currentFolderPathLength);
-    memcpy(newFilePathToCompile + parser->currentFolderPathLength, importObject->name, libraryRelativePathLength);
+    memcpy(newFilePathToCompile + parser->currentFolderPathLength, (*importObject)->name, libraryRelativePathLength);
 
     char* endingExtensionPointer = newFilePathToCompile + parser->currentFolderPathLength + libraryRelativePathLength;
     *endingExtensionPointer = '.'; // adding extension dot
@@ -263,13 +264,39 @@ static inline bool addLibraryForCompilation_(ParserHandle_t parser, ImportObject
             continue;
         }else
         {
-            ImportObject_generateRandomIDForObject(importObject);
-            importObject->realPath = realpath(newFilePathToCompile, NULL);
+            (*importObject)->realPath = realpath(newFilePathToCompile, NULL);
+            
+            int matchedPosition = checkIfPathAlreadyCompiled_(parser->compiler, *importObject);
 
-            Queue_enqueue(&parser->compiler->filePathsToCompile, importObject);
+            if(matchedPosition < 0)
+            {
+                ImportObject_generateRandomIDForObject(*importObject);
+                Queue_enqueue(&parser->compiler->filePathsToCompile, *importObject);
+            }else
+            {
+                *importObject = parser->compiler->alreadyCompiledFilePaths.expandable[matchedPosition];
+                NULL_GUARD(*importObject, ERROR, Log_e(TAG, "Something wrong with memory"));
+            }
+
             return SUCCESS;
         }
     }
     Shouter_shoutError(cTokenP, "lib cannot be found");
     return SUCCESS;
+}
+
+
+static inline int checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, ImportObjectHandle_t path)
+{
+
+    for(size_t compiledPathIdx = 0; compiledPathIdx < compiler->alreadyCompiledFilePaths.currentSize; compiledPathIdx++)
+    {
+        // generating absolute paths for better same path checking
+        ImportObjectHandle_t alreadyCompiled = compiler->alreadyCompiledFilePaths.expandable[compiledPathIdx];
+        if(strcmp(alreadyCompiled->realPath, path->realPath) == 0)
+        {
+            return compiledPathIdx;
+        }
+    }
+    return -1;
 }

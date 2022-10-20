@@ -86,6 +86,12 @@ static bool compileFile_(CompilerHandle_t compiler, ImportObjectHandle_t filePat
     
     Vector_print(&tokensVector);
 
+    if(!Vector_append(&compiler->alreadyCompiledFilePaths, filePath))
+    {
+        Log_e(TAG, "Failed to append an compiled file path");
+        return ERROR;
+    }
+
     // initializing parser object
 
     if(!Parser_initialize(&parser))
@@ -110,12 +116,6 @@ static bool compileFile_(CompilerHandle_t compiler, ImportObjectHandle_t filePat
     if(!Generator_generateCode(&codeGenerator))
     {
         Log_e(TAG, "Failed to generate c language code for Iguana file %s", filePath->realPath);
-        return ERROR;
-    }
-
-    if(!Vector_append(&compiler->alreadyCompiledFilePaths, filePath->realPath))
-    {
-        Log_e(TAG, "Failed to append an compiled file path");
         return ERROR;
     }
 
@@ -188,11 +188,6 @@ bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char*
             break;  // compilation done
         }
 
-        if(checkIfPathAlreadyCompiled_(compiler, object))
-        {
-            continue;
-        }
-
         if(!compileFile_(compiler, object))
         {
             Log_e(TAG, "Failed to compile %s with %s", object->name, object->objectId.id);
@@ -215,19 +210,4 @@ bool Compiler_destroy(CompilerHandle_t compiler)
     Queue_destroy(&compiler->filePathsToCompile);
 
     return SUCCESS;
-}
-
-static inline bool checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, ImportObjectHandle_t path)
-{
-
-    for(size_t compiledPathIdx = 0; compiledPathIdx < compiler->alreadyCompiledFilePaths.currentSize; compiledPathIdx++)
-    {
-        // generating absolute paths for better same path checking
-        char* alreadyCompiled = compiler->alreadyCompiledFilePaths.expandable[compiledPathIdx];
-        if(strcmp(alreadyCompiled, path->realPath) == 0)
-        {
-            return true;
-        }
-    }
-    return false;
 }
