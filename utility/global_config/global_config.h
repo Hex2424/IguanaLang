@@ -22,7 +22,7 @@
  * 2 - (ERROR / WARN)
  * 3 - (INFO / DEBUG / ERROR / WARN)
  */
-#define VERBOSE_LEVEL                   1
+#define VERBOSE_LEVEL                   2
 
 // OS types     
 #define WINDOWS                         1

@@ -101,21 +101,6 @@ static bool initializeFileDescriptorFor_(FILE** descriptor,const char* virtualBu
         return ERROR;
     }
 
-    
-
-    // *path = "./dksdss.c";
-    // strncpy(*path, iguanaFilePath, iguanaFilePathLength);
-
-
-
-    // if(!iguanaPathToCharfilePath_(*path, extension))
-    // {
-    //     Log_e(TAG, "Failed to change path to \".%c\" format of %s", extension, *path);
-    //     return ERROR;
-    // }
-
-    
-
     *descriptor = fopen(path, "w");
 
     NULL_GUARD(*descriptor, ERROR, Log_e(TAG, "Failed to open %s", path));
@@ -176,14 +161,12 @@ bool Generator_generateCode(const CodeGeneratorHandle_t generator)
 
     if(fclose(generator->hFile))
     {
-        Log_e(TAG, "Failed to close file %s", generator->hFile);
-        return ERROR;
+        Log_w(TAG, "Failed to close file %s", generator->hFile);
     }
 
     if(fclose(generator->cFile))
     {
-        Log_e(TAG, "Failed to close file %s", generator->hFile);
-        return ERROR;
+        Log_w(TAG, "Failed to close file %s", generator->hFile);
     }
     return SUCCESS;
 }
@@ -368,9 +351,6 @@ static inline bool fileWriteMethods_(const CodeGeneratorHandle_t generator)
     return SUCCESS;
 
 }
-
-
-
 
 
 static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator,const MethodObjectHandle_t method)

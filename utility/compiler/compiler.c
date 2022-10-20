@@ -32,6 +32,7 @@ static const char* TAG = "COMPILER";
 
 static bool compileFile_(CompilerHandle_t compiler, ImportObjectHandle_t filePath);
 static bool checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, ImportObjectHandle_t path);
+static bool cleanTempFilePaths_(CompilerHandle_t compiler);
 
 ////////////////////////////////
 // PRIVATE METHODS
@@ -112,7 +113,6 @@ static bool compileFile_(CompilerHandle_t compiler, ImportObjectHandle_t filePat
         return ERROR;
     }
 
-
     if(!Generator_generateCode(&codeGenerator))
     {
         Log_e(TAG, "Failed to generate c language code for Iguana file %s", filePath->realPath);
@@ -136,6 +136,7 @@ static bool compileFile_(CompilerHandle_t compiler, ImportObjectHandle_t filePat
         Log_e(TAG, "Failed to destroy vector");
         return ERROR;
     }
+
     
     return SUCCESS;
 }
@@ -163,19 +164,21 @@ bool Compiler_initialize(CompilerHandle_t compiler)
 
 bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char* filePath)
 {
-    ImportObject_t mainImport;
+    ImportObjectHandle_t mainImport;
+    mainImport = malloc(sizeof(ImportObject_t));
+    ALLOC_CHECK(mainImport, ERROR);
+    
+    mainImport->name = filePath;
+    mainImport->realPath = realpath(filePath, NULL);
 
-    mainImport.name = filePath;
-    mainImport.realPath = realpath(filePath, NULL);
-
-    if(mainImport.realPath == NULL)
+    if(mainImport->realPath == NULL)
     {
         Log_e(TAG, "Failed to retrieve real path of %s", filePath);
         return ERROR;
     }
 
-    ImportObject_generateRandomIDForObject(&mainImport);
-    Queue_enqueue(&compiler->filePathsToCompile, &mainImport);
+    ImportObject_generateRandomIDForObject(mainImport);
+    Queue_enqueue(&compiler->filePathsToCompile, mainImport);
 
     while (true)
     {
@@ -201,6 +204,8 @@ bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char*
 
 bool Compiler_destroy(CompilerHandle_t compiler)
 {
+    cleanTempFilePaths_(compiler);
+
     if(!Vector_destroy(&compiler->alreadyCompiledFilePaths))
     {
         Log_e(TAG, "Failed to destroy alreadyCompiledFilePaths vector");
@@ -209,5 +214,36 @@ bool Compiler_destroy(CompilerHandle_t compiler)
 
     Queue_destroy(&compiler->filePathsToCompile);
 
+    return SUCCESS;
+}
+
+static inline bool cleanTempFilePaths_(CompilerHandle_t compiler)
+{
+    ImportObjectHandle_t compiledPathHandle;
+    char path[CFILES_LENGTH];
+    memcpy(path, TEMP_PATH, sizeof(TEMP_PATH) - 1);
+    path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH) - 1] = '.';
+    path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH) + 1] = '\0';
+
+    for(size_t compiledPathIdx = 0; compiledPathIdx < compiler->alreadyCompiledFilePaths.currentSize; compiledPathIdx++)
+    {
+        compiledPathHandle = compiler->alreadyCompiledFilePaths.expandable[compiledPathIdx];
+
+        memcpy(path + sizeof(TEMP_PATH) - 1, compiledPathHandle->objectId.id, OBJECT_ID_LENGTH);
+        path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH)] = 'c';
+
+        if(remove(path))
+        {
+            Log_w(TAG, "Failed to close file: %s", path);
+        }
+
+        path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH)] = 'h';
+
+        if(remove(path))
+        {
+            Log_w(TAG, "Failed to close file: %s", path);
+        }
+
+    }
     return SUCCESS;
 }

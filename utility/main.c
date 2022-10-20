@@ -37,5 +37,10 @@ int main(int argc, char const *argv[])
         return -1;
     }
 
-    return Compiler_startCompilingProcessOnRoot(&compiler, filePathToCompile);
+    if(!Compiler_startCompilingProcessOnRoot(&compiler, filePathToCompile))
+    {
+        return -2;
+    }
+
+    return Compiler_destroy(&compiler);
 }
