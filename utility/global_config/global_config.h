@@ -22,15 +22,27 @@
  * 2 - (ERROR / WARN)
  * 3 - (INFO / DEBUG / ERROR / WARN)
  */
-#define VERBOSE_LEVEL 1
+#define VERBOSE_LEVEL                   1
 
-// OS types
-#define WINDOWS       1
-#define LINUX         2
+// OS types     
+#define WINDOWS                         1
+#define LINUX                           2
 
-#define OS            LINUX
+#define OS                              LINUX
 
-#define OBJECT_ID_LENGTH 8              // in bytes
-#define MAX_RETRIES_ID   15
+#define OBJECT_ID_LENGTH                8              // in bytes
+#define MAX_RETRIES_ID                  15
+#define OBJECT_RANDOM_SEED              0
+
+#define LINUX_TEMP_FOLDER_PATH          "/tmp/"
+#define WINDOWS_TEMP_FOLDER_PATH        "ECHO %Temp%" // get from CMD
+
+#if OS == LINUX
+    #define TEMP_PATH                   LINUX_TEMP_FOLDER_PATH
+#elif OS == WINDOWS
+    #define TEMP_PATH                   WINDOWS_TEMP_FOLDER_PATH
+#endif
+
+#define CFILES_LENGTH                   (sizeof(TEMP_PATH) + OBJECT_ID_LENGTH + sizeof(".x")) - 1
 
 #endif // UTILITY_GLOBAL_CONFIG_GLOBAL_CONFIG_H_

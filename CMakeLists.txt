@@ -19,6 +19,7 @@ utility/generator/generator.c
 utility/queue/queue.c
 utility/hash/random/random.c
 utility/hash/hash.c
+utility/parser/structures/import_object/import_object.c
 )
 
 cmake_minimum_required(VERSION 3.3)

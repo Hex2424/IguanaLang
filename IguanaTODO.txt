@@ -12,14 +12,22 @@ TODO:
 7. Preprocessor?
 9. Method body things to do
 10. Pointers support
-
+11. Macro string formating
 l.c
 utility/main.c
  
  ../l.c
  
- tmp/
+ tmp/sss
+ sss
  
+ ssssfweenwwef
  ss
  ss
- ss
+ ./dd/.././../
+ 
+ ssss /ss	
+      /ss 
+      
+ /iguana/
+ 

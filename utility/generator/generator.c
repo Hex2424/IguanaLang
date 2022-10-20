@@ -18,18 +18,10 @@
 #include "../hash/hash.h"
 #include <time.h>
 #include "csyntax_database.h"
-#include "../parser/structures/import_object/import_object.h"
 
 ////////////////////////////////
 // DEFINES
-#define LINUX_TEMP_FOLDER_PATH      "/tmp"
-#define WINDOWS_TEMP_FOLDER_PATH    "ECHO %Temp%" // get from CMD
 
-#if OS == LINUX
-    #define TEMP_PATH                   LINUX_TEMP_FOLDER_PATH
-#elif OS == WINDOWS
-    #define TEMP_PATH                   WINDOWS_TEMP_FOLDER_PATH
-#endif
 
 #define BYTE_SIZE                   1
 
@@ -68,25 +60,25 @@ static bool fileWriteImports_(const CodeGeneratorHandle_t generator);
 static bool fileWriteClassVariables_(const CodeGeneratorHandle_t generator);   
 static bool fileWriteVariableDeclaration_(const FILE* file, const VariableObjectHandle_t handle, const VariableDeclaration_t declareType);    
 static bool fileWriteMethods_(const CodeGeneratorHandle_t generator);    
-static bool initializeFileDescriptorFor_(FILE** descriptor,const char* virtualBuffer, char** path, const char* iguanaFilePath, const char extension);     
+static bool initializeFileDescriptorFor_(FILE** descriptor, const char* virtualBuffer, char* path, const ImportObjectHandle_t iguanaImport, const char extension);     
 static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator,const MethodObjectHandle_t method);
 
 ////////////////////////////////
 // IMPLEMENTATION
 
-bool Generator_initialize(CodeGeneratorHandle_t generator, const char* relativeIguanaFilePath, const MainFrameHandle_t ast)
+bool Generator_initialize(CodeGeneratorHandle_t generator, const ImportObjectHandle_t iguanaImport, const MainFrameHandle_t ast)
 {
-    NULL_GUARD(relativeIguanaFilePath, ERROR, Log_e(TAG, "iguanaFilePath got passed as NULL"));
+    NULL_GUARD(iguanaImport, ERROR, Log_e(TAG, "iguanaFilePath got passed as NULL"));
     NULL_GUARD(ast, ERROR, Log_e(TAG, "Abstract syntax tree got passed as NULL"));
 
     generator->ast = ast;
 
-    if(!initializeFileDescriptorFor_(&generator->hFile, generator->writingBufferH, &generator->hFilePath, relativeIguanaFilePath, 'h'))
+    if(!initializeFileDescriptorFor_(&generator->hFile, generator->writingBufferH, &generator->hFilePath, iguanaImport, 'h'))
     {
         return ERROR;
     }
     
-    if(!initializeFileDescriptorFor_(&generator->cFile, generator->writingBufferC, &generator->cFilePath, relativeIguanaFilePath, 'c'))
+    if(!initializeFileDescriptorFor_(&generator->cFile, generator->writingBufferC, generator->cFilePath, iguanaImport, 'c'))
     {
         return ERROR;
     }
@@ -95,22 +87,21 @@ bool Generator_initialize(CodeGeneratorHandle_t generator, const char* relativeI
 }
 
 
-static bool initializeFileDescriptorFor_(FILE** descriptor,const char* virtualBuffer, char** path, const char* iguanaFilePath,const char extension)
+static bool initializeFileDescriptorFor_(FILE** descriptor,const char* virtualBuffer, char* path, const ImportObjectHandle_t iguanaFilePath, const char extension)
 {
-    uint32_t iguanaFilePathLength;
+    memcpy(path, TEMP_PATH, sizeof(TEMP_PATH) - 1);
+    memcpy(path + sizeof(TEMP_PATH) - 1, iguanaFilePath->objectId.id, OBJECT_ID_LENGTH);
+    path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH)] = extension;
+    path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH) - 1] = '.';
 
-
-    iguanaFilePathLength = strlen(iguanaFilePath);
-    (*path) = malloc(iguanaFilePathLength);
-
-    if(*path == NULL)
+    if(path == NULL)
     {
         Log_e(TAG, "Failed to allocate memory for \".%c\" file paths for ig: %s", extension, iguanaFilePath);
         return ERROR;
     }
 
     
-    
+
     // *path = "./dksdss.c";
     // strncpy(*path, iguanaFilePath, iguanaFilePathLength);
 
@@ -124,9 +115,9 @@ static bool initializeFileDescriptorFor_(FILE** descriptor,const char* virtualBu
 
     
 
-    *descriptor = fopen(*path, "w");
+    *descriptor = fopen(path, "w");
 
-    NULL_GUARD(*descriptor, ERROR, Log_e(TAG, "Failed to open %s",*path));
+    NULL_GUARD(*descriptor, ERROR, Log_e(TAG, "Failed to open %s", path));
     setvbuf(*descriptor, virtualBuffer, _IOFBF, FOUT_BUFFER_LENGTH);
     return SUCCESS;
 }

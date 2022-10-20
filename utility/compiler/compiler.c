@@ -17,7 +17,8 @@
 #include "../generator/generator.h"
 #include "compiler.h"
 #include "string.h"
-
+#include "../parser/structures/import_object/import_object.h"
+#include "../global_config/global_config.h"
 ////////////////////////////////
 // DEFINES
 
@@ -29,8 +30,8 @@ static const char* TAG = "COMPILER";
 ////////////////////////////////
 // PRIVATE TYPES
 
-static bool compileFile_(CompilerHandle_t compiler, const char* filePath);
-static bool checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, char* path);
+static bool compileFile_(CompilerHandle_t compiler, ImportObjectHandle_t filePath);
+static bool checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, ImportObjectHandle_t path);
 
 ////////////////////////////////
 // PRIVATE METHODS
@@ -41,7 +42,7 @@ static bool checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, char* path);
 
 
 
-static bool compileFile_(CompilerHandle_t compiler, const char* filePath)
+static bool compileFile_(CompilerHandle_t compiler, ImportObjectHandle_t filePath)
 {
     Vector_t tokensVector;
     CodeGenerator_t codeGenerator;
@@ -51,35 +52,36 @@ static bool compileFile_(CompilerHandle_t compiler, const char* filePath)
     MainFrame_t root;
 
     parser.compiler = compiler;
-    parser.currentFilePath = filePath;
+    parser.currentFilePath = filePath->realPath;
     
 
     // TODO optimize this shit
-    char* lastSlashPointer = strrchr(filePath, '/');
+    char* lastSlashPointer = strrchr(filePath->realPath, '/');
     if(lastSlashPointer == NULL)
     {
         parser.currentFolderPath = "";
         parser.currentFolderPathLength = 0;
     }else
     {
-        parser.currentFolderPath = filePath;
-        parser.currentFolderPathLength = lastSlashPointer - filePath + 1;
+        parser.currentFolderPath = filePath->realPath;
+        parser.currentFolderPathLength = lastSlashPointer - filePath->realPath + 1;
     }
 
 
     // TODO: read directly from file
-    length = FileReader_readToBuffer(filePath, &codeString);
+    length = FileReader_readToBuffer(filePath->realPath, &codeString);
     if(length == -1)
     {
         Log_e(TAG, "Error occured in reading path:%s", filePath);
         return ERROR;
     }
     
-    if(!Separator_getSeparatedWords(codeString, length, &tokensVector, filePath))
+    if(!Separator_getSeparatedWords(codeString, length, &tokensVector, filePath->realPath))
     {
         Log_e(TAG, "Seperator failed to parse: %s", codeString);
         return ERROR;
     }
+
     Vector_fit(&tokensVector);
     
     Vector_print(&tokensVector);
@@ -107,11 +109,11 @@ static bool compileFile_(CompilerHandle_t compiler, const char* filePath)
 
     if(!Generator_generateCode(&codeGenerator))
     {
-        Log_e(TAG, "Failed to generate c language code for Iguana file %s", filePath);
+        Log_e(TAG, "Failed to generate c language code for Iguana file %s", filePath->realPath);
         return ERROR;
     }
 
-    if(!Vector_append(&compiler->alreadyCompiledFilePaths, realpath(filePath, NULL)))
+    if(!Vector_append(&compiler->alreadyCompiledFilePaths, filePath->realPath))
     {
         Log_e(TAG, "Failed to append an compiled file path");
         return ERROR;
@@ -141,6 +143,8 @@ static bool compileFile_(CompilerHandle_t compiler, const char* filePath)
 
 bool Compiler_initialize(CompilerHandle_t compiler)
 {
+    Random_fast_srand();
+
     if(!Vector_create(&compiler->alreadyCompiledFilePaths, NULL))
     {
         Log_e(TAG, "Failed to create vector for already compiler file paths");
@@ -159,27 +163,39 @@ bool Compiler_initialize(CompilerHandle_t compiler)
 
 bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char* filePath)
 {
-    Queue_enqueue(&compiler->filePathsToCompile, filePath);
+    ImportObject_t mainImport;
+
+    mainImport.name = filePath;
+    mainImport.realPath = realpath(filePath, NULL);
+
+    if(mainImport.realPath == NULL)
+    {
+        Log_e(TAG, "Failed to retrieve real path of %s", filePath);
+        return ERROR;
+    }
+
+    ImportObject_generateRandomIDForObject(&mainImport);
+    Queue_enqueue(&compiler->filePathsToCompile, &mainImport);
 
     while (true)
     {
-        char* currentFilePath;
+        ImportObjectHandle_t object;
 
-        currentFilePath = Queue_dequeue(&compiler->filePathsToCompile);
+        object = Queue_dequeue(&compiler->filePathsToCompile);
 
-        if(currentFilePath == NULL)
+        if(object == NULL)
         {
             break;  // compilation done
         }
 
-        if(checkIfPathAlreadyCompiled_(compiler, currentFilePath))
+        if(checkIfPathAlreadyCompiled_(compiler, object))
         {
             continue;
         }
 
-        if(!compileFile_(compiler, currentFilePath))
+        if(!compileFile_(compiler, object))
         {
-            Log_e(TAG, "Failed to compile %s", currentFilePath);
+            Log_e(TAG, "Failed to compile %s with %s", object->name, object->objectId.id);
             return ERROR;
         }
         
@@ -201,16 +217,14 @@ bool Compiler_destroy(CompilerHandle_t compiler)
     return SUCCESS;
 }
 
-static inline bool checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, char* path)
+static inline bool checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, ImportObjectHandle_t path)
 {
-    // TODO: remove this for optimization reasons
-    char *pathToCheck = realpath(path, NULL);
 
     for(size_t compiledPathIdx = 0; compiledPathIdx < compiler->alreadyCompiledFilePaths.currentSize; compiledPathIdx++)
     {
         // generating absolute paths for better same path checking
-
-        if(strcmp(compiler->alreadyCompiledFilePaths.expandable[compiledPathIdx], pathToCheck) == 0)
+        char* alreadyCompiled = compiler->alreadyCompiledFilePaths.expandable[compiledPathIdx];
+        if(strcmp(alreadyCompiled, path->realPath) == 0)
         {
             return true;
         }

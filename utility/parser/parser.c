@@ -25,7 +25,6 @@
 #define cTokenType                                  cTokenP -> tokenType
 #define LONGEST_POSSIBLE_IGUANA_EXTENSION_LENGTH    sizeof("iguana")
 
-#define OBJECT_RANDOM_SEED                          0
 
 ////////////////////////////////
 // PRIVATE CONSTANTS
@@ -54,8 +53,7 @@ static bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t rootHa
 static bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_t rootHandle);
 static bool tryParseSequence_(const TokenType_t* pattern,const size_t patternSize);
 static bool assignTokenValue_(char** to, const char* from);
-static bool addLibraryForCompilation_(ParserHandle_t parser, const ImportObjectHandle_t importObject);
-static bool generateRandomIDForObject_(ImportObjectHandle_t importObject);
+static bool addLibraryForCompilation_(ParserHandle_t parser, ImportObjectHandle_t importObject);
 
 ////////////////////////////////
 // IMPLEMENTATION
@@ -67,7 +65,6 @@ static bool generateRandomIDForObject_(ImportObjectHandle_t importObject);
  */
 bool Parser_initialize(ParserHandle_t parser)
 {
-    Random_fast_srand(OBJECT_RANDOM_SEED);
     return SUCCESS;
 }
 
@@ -200,12 +197,6 @@ static inline bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t
         // standart lib detected
         importObject->name = cTokenP->valueString;
 
-        if(!generateRandomIDForObject_(importObject))
-        {
-            Log_e(TAG, "Failed to generate object id");
-            return ERROR;
-        }
-
         if(!addLibraryForCompilation_(parser, importObject))
         {
             Log_e(TAG, "Failed to add library path for paths to compile");
@@ -237,7 +228,7 @@ static inline bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t
     return SUCCESS;
 }
 
-static inline bool addLibraryForCompilation_(ParserHandle_t parser, const ImportObjectHandle_t importObject)
+static inline bool addLibraryForCompilation_(ParserHandle_t parser, ImportObjectHandle_t importObject)
 {
     char* newFilePathToCompile;
     
@@ -272,61 +263,13 @@ static inline bool addLibraryForCompilation_(ParserHandle_t parser, const Import
             continue;
         }else
         {
-            Queue_enqueue(&parser->compiler->filePathsToCompile, realpath(newFilePathToCompile, NULL));
+            ImportObject_generateRandomIDForObject(importObject);
+            importObject->realPath = realpath(newFilePathToCompile, NULL);
+
+            Queue_enqueue(&parser->compiler->filePathsToCompile, importObject);
             return SUCCESS;
         }
     }
     Shouter_shoutError(cTokenP, "lib cannot be found");
     return SUCCESS;
-}
-
-static inline bool generateRandomIDForObject_(ImportObjectHandle_t importObject)
-{
-    FILE* tempDescriptor;
-
-    for(uint8_t retries = 0; retries < MAX_RETRIES_ID; retries++)
-    {
-        if(importObject == NULL)
-        {
-            Log_e(TAG, "Import object passed null for ID generation");
-            return ERROR;
-        }
-
-        if(importObject->objectId.id == NULL)
-        {
-            Log_e(TAG, "Import object ID is null");
-            return ERROR;
-        }
-
-        for(uint8_t hashIdx = 0; hashIdx < OBJECT_ID_LENGTH; hashIdx++)
-        {
-            importObject->objectId.id[hashIdx] = 'a' + Random_fast_rand() % 26;  // generating random byte
-        }
-
-        importObject->objectId.id[OBJECT_ID_LENGTH - 2] = '.';
-        importObject->objectId.id[OBJECT_ID_LENGTH - 1] = 'c';
-
-        tempDescriptor = fopen(importObject->objectId.id, "r");
-        if(tempDescriptor != NULL)
-        {
-            continue;
-        }
-        fclose(tempDescriptor);
-        importObject->objectId.id[OBJECT_ID_LENGTH - 1] = 'h';
-
-        tempDescriptor = fopen(importObject->objectId.id, "r");
-
-        if(tempDescriptor != NULL)
-        {
-            continue;
-        }
-        fclose(tempDescriptor);
-        importObject->objectId.id[OBJECT_ID_LENGTH - 2] = '\0';
-        importObject->objectId.id[OBJECT_ID_LENGTH - 1] = '\0';
-        return SUCCESS;
-
-    }
-
-    Log_w(TAG, "Something wrong with ID generator or all IDS was used");
-    return ERROR;
 }
