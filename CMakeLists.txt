@@ -20,6 +20,8 @@ utility/queue/queue.c
 utility/hash/random/random.c
 utility/hash/hash.c
 utility/parser/structures/import_object/import_object.c
+utility/external/inbuilt_c_compiler/c_compiler.c
+utility/external/unix_linker/unix_linker.c
 )
 
 cmake_minimum_required(VERSION 3.3)

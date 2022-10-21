@@ -19,6 +19,9 @@
 #include "string.h"
 #include "../parser/structures/import_object/import_object.h"
 #include "../global_config/global_config.h"
+#include "../external/inbuilt_c_compiler/c_compiler.h"
+#include "../external/unix_linker/unix_linker.h"
+
 ////////////////////////////////
 // DEFINES
 
@@ -33,7 +36,7 @@ static const char* TAG = "COMPILER";
 static bool compileFile_(CompilerHandle_t compiler, ImportObjectHandle_t filePath);
 static bool checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, ImportObjectHandle_t path);
 static bool cleanTempFilePaths_(CompilerHandle_t compiler);
-
+// static bool cleanTempCFile_(ImportObjectHandle_t currentImport);
 ////////////////////////////////
 // PRIVATE METHODS
 
@@ -119,6 +122,8 @@ static bool compileFile_(CompilerHandle_t compiler, ImportObjectHandle_t filePat
         return ERROR;
     }
 
+    // cleanTempCFile_(filePath);
+
     if(!FileReader_destroy(codeString))
     {
         Log_e(TAG, "Failed to destroy codeString");
@@ -180,6 +185,7 @@ bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char*
     ImportObject_generateRandomIDForObject(mainImport);
     Queue_enqueue(&compiler->filePathsToCompile, mainImport);
 
+    // Iguana compiling process
     while (true)
     {
         ImportObjectHandle_t object;
@@ -198,13 +204,23 @@ bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char*
         }
         
     }
+
+    // running external tools
+
+    if(!CExternalCompiler_compileWhole(&compiler->alreadyCompiledFilePaths))
+    {
+        Log_e(TAG, "C code compilation failed");
+        // cleanTempCFile_(filePath);
+        return ERROR;
+    }
+
     return SUCCESS;
 
 }
 
 bool Compiler_destroy(CompilerHandle_t compiler)
 {
-    // cleanTempFilePaths_(compiler);
+    cleanTempFilePaths_(compiler);
 
     if(!Vector_destroy(&compiler->alreadyCompiledFilePaths))
     {
@@ -247,3 +263,28 @@ static inline bool cleanTempFilePaths_(CompilerHandle_t compiler)
     }
     return SUCCESS;
 }
+
+// static inline bool cleanTempCFile_(ImportObjectHandle_t currentImport)
+// {
+//     char path[CFILES_LENGTH];
+//     memcpy(path, TEMP_PATH, sizeof(TEMP_PATH) - 1);
+//     path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH) - 1] = '.';
+//     path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH) + 1] = '\0';
+
+//     memcpy(path + sizeof(TEMP_PATH) - 1, currentImport->objectId.id, OBJECT_ID_LENGTH);
+//     path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH)] = 'c';
+
+//     if(remove(path))
+//     {
+//         Log_w(TAG, "Failed to close file: %s", path);
+//     }
+
+//     path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH)] = 'h';
+
+//     if(remove(path))
+//     {
+//         Log_w(TAG, "Failed to close file: %s", path);
+//     }
+
+//     return SUCCESS;
+// }
