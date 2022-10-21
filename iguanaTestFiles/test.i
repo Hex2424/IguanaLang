@@ -1,9 +1,6 @@
 import "stdio";
 
-int:1 ddd = 2;
-int:2 ggg;
-
-int:3 main2()
+int:32 main()
 {
 
 }

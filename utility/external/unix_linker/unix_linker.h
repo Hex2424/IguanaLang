@@ -13,7 +13,8 @@
 
 #ifndef UTILITY_EXTERNAL_UNIX_LINKER_UNIX_LINKER_H_
 #define UTILITY_EXTERNAL_UNIX_LINKER_UNIX_LINKER_H_
+#include "../../vector/vector.h"
 
-
+bool UnixLinker_linkPaths(const VectorHandler_t objectsCompiledExternaly);
 
 #endif // UTILITY_EXTERNAL_UNIX_LINKER_UNIX_LINKER_H_

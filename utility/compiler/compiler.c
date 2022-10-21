@@ -214,6 +214,12 @@ bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char*
         return ERROR;
     }
 
+    if(!UnixLinker_linkPaths(&compiler->alreadyCompiledFilePaths))
+    {
+        Log_e(TAG, "Object files linking failed");
+        return ERROR;
+    }
+
     return SUCCESS;
 
 }
@@ -254,6 +260,13 @@ static inline bool cleanTempFilePaths_(CompilerHandle_t compiler)
         }
 
         path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH)] = 'h';
+
+        if(remove(path))
+        {
+            Log_w(TAG, "Failed to close file: %s", path);
+        }
+
+        path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH)] = 'o';
 
         if(remove(path))
         {
