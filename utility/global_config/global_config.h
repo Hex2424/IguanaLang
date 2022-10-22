@@ -36,6 +36,8 @@
 
 #define LINUX_TEMP_FOLDER_PATH          "./"
 #define WINDOWS_TEMP_FOLDER_PATH        "ECHO %Temp%" // get from CMD
+#define MAIN_PROCESS_FILE_NAME          "___start"
+
 
 #if OS == LINUX
     #define TEMP_PATH                   LINUX_TEMP_FOLDER_PATH

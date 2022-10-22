@@ -36,6 +36,7 @@ static const char* TAG = "COMPILER";
 static bool compileFile_(CompilerHandle_t compiler, ImportObjectHandle_t filePath);
 static bool checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, ImportObjectHandle_t path);
 static bool cleanTempFilePaths_(CompilerHandle_t compiler);
+static bool createMainProcessFile_(CompilerHandle_t compiler,const char* mainFileName);
 // static bool cleanTempCFile_(ImportObjectHandle_t currentImport);
 ////////////////////////////////
 // PRIVATE METHODS
@@ -166,6 +167,59 @@ bool Compiler_initialize(CompilerHandle_t compiler)
     return SUCCESS;
 }
 
+static inline bool createMainProcessFile_(CompilerHandle_t compiler, const char* mainFileName)
+{
+    FILE* file;
+    char fileName[CFILES_LENGTH];
+
+    fileName[0] = '\0';
+    strcat(fileName, TEMP_PATH);
+    strcat(fileName, MAIN_PROCESS_FILE_NAME);
+    strcat(fileName, ".c");
+
+    file = fopen(fileName, "w");
+
+    if(file == NULL)
+    {
+        Log_e(TAG, "Failed to create file");
+        return ERROR;
+    }
+
+    // adding mainProccess file for executing main object
+    fprintf(file,
+    "#include \"%s.h\"\nvoid exit(int);int %s(){exit(%s());}",
+    ((ImportObjectHandle_t)compiler->alreadyCompiledFilePaths.expandable[0])->objectId.id,
+    MAIN_PROCESS_FILE_NAME,
+    mainFileName);
+
+    if(fclose(file) != 0)
+    {
+        Log_w(TAG, "Failed to close file: %s", fileName);
+    }
+
+    fileName[strlen(fileName) - 1] = 'h';
+    file = fopen(fileName, "w");
+    
+    if(fclose(file) != 0)
+    {
+        Log_w(TAG, "Failed to close file: %s", fileName);
+    }
+    ImportObjectHandle_t mainProcessImport;
+    mainProcessImport = malloc(sizeof(ImportObject_t));
+    ALLOC_CHECK(mainProcessImport, ERROR);
+
+    mainProcessImport->name = NULL;
+    strcpy(mainProcessImport->objectId.id, MAIN_PROCESS_FILE_NAME);
+    mainProcessImport->realPath = NULL;
+
+    if(!Vector_append(&compiler->alreadyCompiledFilePaths, mainProcessImport))
+    {
+        Log_e(TAG, "Failed to append main process import to vector");
+        return ERROR;
+    }
+    return SUCCESS;
+}
+
 
 bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char* filePath)
 {
@@ -205,8 +259,13 @@ bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char*
         
     }
 
-    // running external tools
+    if(!createMainProcessFile_(compiler, "main"))
+    {
+        Log_e(TAG, "Failed to initialize main process files");
+        return  ERROR;
+    }
 
+    // running external tools
     if(!CExternalCompiler_compileWhole(&compiler->alreadyCompiledFilePaths))
     {
         Log_e(TAG, "C code compilation failed");
@@ -249,28 +308,31 @@ static inline bool cleanTempFilePaths_(CompilerHandle_t compiler)
 
     for(size_t compiledPathIdx = 0; compiledPathIdx < compiler->alreadyCompiledFilePaths.currentSize; compiledPathIdx++)
     {
+        // uint8_t objectLength;
+
         compiledPathHandle = compiler->alreadyCompiledFilePaths.expandable[compiledPathIdx];
+        // objectLength = strlen(compiledPathHandle->objectId.id);
 
         memcpy(path + sizeof(TEMP_PATH) - 1, compiledPathHandle->objectId.id, OBJECT_ID_LENGTH);
         path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH)] = 'c';
 
         if(remove(path))
         {
-            Log_w(TAG, "Failed to close file: %s", path);
+            Log_w(TAG, "Failed to remove file: %s", path);
         }
 
         path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH)] = 'h';
 
         if(remove(path))
         {
-            Log_w(TAG, "Failed to close file: %s", path);
+            Log_w(TAG, "Failed to remove file: %s", path);
         }
 
         path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH)] = 'o';
 
         if(remove(path))
         {
-            Log_w(TAG, "Failed to close file: %s", path);
+            Log_w(TAG, "Failed to remove file: %s", path);
         }
 
     }

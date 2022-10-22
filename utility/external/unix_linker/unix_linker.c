@@ -15,7 +15,7 @@
 #include "string.h"
 ////////////////////////////////
 // DEFINES
-#define LD_LINKER_COMMAND "ld -lc --entry main"
+#define LD_LINKER_COMMAND "./ld/ld_linker -dynamic-linker ./ld/ld-linux-x86-64.so -o output --entry ___start -lc"
 
 ////////////////////////////////
 // PRIVATE CONSTANTS
