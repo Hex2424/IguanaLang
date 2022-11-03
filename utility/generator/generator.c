@@ -58,7 +58,7 @@ static bool iguanaPathToCharfilePath_(char* filepath, const char cFormatExtensio
 static bool generateNdefGuard_(const CodeGeneratorHandle_t generator);   
 static bool fileWriteImports_(const CodeGeneratorHandle_t generator);    
 static bool fileWriteClassVariables_(const CodeGeneratorHandle_t generator);   
-static bool fileWriteVariableDeclaration_(const FILE* file, const VariableObjectHandle_t handle, const VariableDeclaration_t declareType);    
+static bool fileWriteVariableDeclaration_(const CodeGeneratorHandle_t generator, const FILE* file, const VariableObjectHandle_t handle, const VariableDeclaration_t declareType);    
 static bool fileWriteMethods_(const CodeGeneratorHandle_t generator);    
 static bool initializeFileDescriptorFor_(FILE** descriptor, const char* virtualBuffer, char* path, const ImportObjectHandle_t iguanaImport, const char extension);     
 static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator,const MethodObjectHandle_t method);
@@ -207,7 +207,7 @@ static inline bool fileWriteClassVariables_(const CodeGeneratorHandle_t generato
             VariableObjectHandle_t variable;
 
             variable = generator->ast->classVariables->expandable[variableIdx];
-            fileWriteVariableDeclaration_(generator->hFile, variable, VARIABLE_STRUCT);
+            fileWriteVariableDeclaration_(generator, generator->hFile, variable, VARIABLE_STRUCT);
         }
         fprintf(generator->hFile, "%c%s_t%c%c", BRACKET_END, generator->iguanaImport->objectId.id,SEMICOLON, END_LINE);
     }
@@ -236,7 +236,7 @@ static inline bool fileWriteClassVariables_(const CodeGeneratorHandle_t generato
 //     return SUCCESS;
 // }
 
-static bool fileWriteVariableDeclaration_(const FILE* file,const VariableObjectHandle_t variable,const VariableDeclaration_t declareType)
+static bool fileWriteVariableDeclaration_(const CodeGeneratorHandle_t generator, const FILE* file,const VariableObjectHandle_t variable,const VariableDeclaration_t declareType)
 {
     char* variableTypeKeywordToUse;
 
@@ -254,7 +254,7 @@ static bool fileWriteVariableDeclaration_(const FILE* file,const VariableObjectH
                 break;
             
             case VARIABLE_METHOD:
-                fprintf(file, "%s %s%c", variableTypeKeywordToUse, variable->variableName, BRACKET_ROUND_START);
+                fprintf(file, "%s %s_%s%c", variableTypeKeywordToUse, generator->iguanaImport->objectId.id, variable->variableName, BRACKET_ROUND_START);
                 break;
             case VARIABLE_NORMAL:
                 fprintf(file, "%s %s%c", variableTypeKeywordToUse, variable->variableName, SEMICOLON);
@@ -283,13 +283,13 @@ static inline bool fileWriteMethods_(const CodeGeneratorHandle_t generator)
         method = (MethodObjectHandle_t) generator->ast->methods->expandable[methodIdx];                                                           // getting method by index
         NULL_GUARD(method, ERROR, Log_e(TAG, "AST methods vector expandable is null"));
 
-        if(!fileWriteVariableDeclaration_(generator->hFile, method->returnVariable, VARIABLE_METHOD))
+        if(!fileWriteVariableDeclaration_(generator, generator->hFile, method->returnVariable, VARIABLE_METHOD))
         {
             Log_e(TAG, "Failed to write method %s return type", method->methodName);
             return ERROR;
         }
 
-        if(!fileWriteVariableDeclaration_(generator->cFile, method->returnVariable, VARIABLE_METHOD))
+        if(!fileWriteVariableDeclaration_(generator, generator->cFile, method->returnVariable, VARIABLE_METHOD))
         {
             Log_e(TAG, "Failed to write method %s return type", method->methodName);
             return ERROR;
@@ -301,13 +301,13 @@ static inline bool fileWriteMethods_(const CodeGeneratorHandle_t generator)
             parameter = method->parameters->expandable[paramIdx];
             NULL_GUARD(parameter, ERROR, Log_e(TAG, "AST method %s %d nth is NULL", method->methodName, paramIdx));
 
-            if(!fileWriteVariableDeclaration_(generator->hFile, parameter, VARIABLE_PARAMETER))
+            if(!fileWriteVariableDeclaration_(generator, generator->hFile, parameter, VARIABLE_PARAMETER))
             {
                 Log_e(TAG, "Failed to write method %s return type", method->methodName);
                 return ERROR;
             }
 
-            if(!fileWriteVariableDeclaration_(generator->cFile, parameter, VARIABLE_PARAMETER))
+            if(!fileWriteVariableDeclaration_(generator, generator->cFile, parameter, VARIABLE_PARAMETER))
             {
                 Log_e(TAG, "Failed to write method %s return type", method->methodName);
                 return ERROR;

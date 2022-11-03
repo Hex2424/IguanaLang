@@ -13,21 +13,25 @@ TODO:
 9. Method body things to do
 10. Pointers support
 11. Macro string formating
+12. Passing struct fields as number
 l.c
-utility/main.c
- 
- ../l.c
- 
- tmp/sss
- sss
- 
- ssssfweenwwef
- ss
- ss
- ./dd/.././../
- 
- ssss /ss	
-      /ss 
-      
- /iguana/
- 
+
+
+1. Get specific transaction by ID
+2. Get specific block by ID
+3. Get Last transaction
+4. Get Last block
+5. GUI
+6. Generate users
+7. Create genesis block
+8. put new random transaction count
+
+-gen_rand_users
+
+-gen_rand_trans <amount>| Generating initial random transactions
+-print_users            | Prints all users and their info
+-get_last_trans         | Outputs last transaction of last block
+-get_last_block         | Outputs last block added to blockchain
+-get_block <ID>         | Outputs block finded by ID
+-add_random_trans       | Adds new random transaction to last block
+-mine_block             | Mines new block for transaction storing

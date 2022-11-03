@@ -21,7 +21,7 @@
 #include "../global_config/global_config.h"
 #include "../external/inbuilt_c_compiler/c_compiler.h"
 #include "../external/unix_linker/unix_linker.h"
-
+#include "../parser/parser_utilities/compiler_messages.h"
 ////////////////////////////////
 // DEFINES
 
@@ -187,9 +187,10 @@ static inline bool createMainProcessFile_(CompilerHandle_t compiler, const char*
 
     // adding mainProccess file for executing main object
     fprintf(file,
-    "#include \"%s.h\"\nvoid exit(int);int %s(){exit(%s());}",
+    "#include \"%s.h\"\nvoid exit(int);int %s(){exit(%s_%s());}",
     ((ImportObjectHandle_t)compiler->alreadyCompiledFilePaths.expandable[0])->objectId.id,
     MAIN_PROCESS_FILE_NAME,
+    ((ImportObjectHandle_t)compiler->alreadyCompiledFilePaths.expandable[0])->objectId.id,
     mainFileName);
 
     if(fclose(file) != 0)
@@ -258,26 +259,30 @@ bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char*
         }
         
     }
-
-    if(!createMainProcessFile_(compiler, "main"))
+    if(Shouter_getErrorCount() == NO_ERROR)
     {
-        Log_e(TAG, "Failed to initialize main process files");
-        return  ERROR;
+        if(!createMainProcessFile_(compiler, "main"))
+        {
+            Log_e(TAG, "Failed to initialize main process files");
+            return  ERROR;
+        }
+
+        // running external tools
+        if(!CExternalCompiler_compileWhole(&compiler->alreadyCompiledFilePaths))
+        {
+            Log_e(TAG, "C code compilation failed");
+            // cleanTempCFile_(filePath);
+            return ERROR;
+        }
+
+        if(!UnixLinker_linkPaths(&compiler->alreadyCompiledFilePaths))
+        {
+            Log_e(TAG, "Object files linking failed");
+            return ERROR;
+        }
+
     }
 
-    // running external tools
-    if(!CExternalCompiler_compileWhole(&compiler->alreadyCompiledFilePaths))
-    {
-        Log_e(TAG, "C code compilation failed");
-        // cleanTempCFile_(filePath);
-        return ERROR;
-    }
-
-    if(!UnixLinker_linkPaths(&compiler->alreadyCompiledFilePaths))
-    {
-        Log_e(TAG, "Object files linking failed");
-        return ERROR;
-    }
 
     return SUCCESS;
 
@@ -318,21 +323,21 @@ static inline bool cleanTempFilePaths_(CompilerHandle_t compiler)
 
         if(remove(path))
         {
-            Log_w(TAG, "Failed to remove file: %s", path);
+            Log_d(TAG, "Failed to remove file: %s", path);
         }
 
         path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH)] = 'h';
 
         if(remove(path))
         {
-            Log_w(TAG, "Failed to remove file: %s", path);
+            Log_d(TAG, "Failed to remove file: %s", path);
         }
 
         path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH)] = 'o';
 
         if(remove(path))
         {
-            Log_w(TAG, "Failed to remove file: %s", path);
+            Log_d(TAG, "Failed to remove file: %s", path);
         }
 
     }

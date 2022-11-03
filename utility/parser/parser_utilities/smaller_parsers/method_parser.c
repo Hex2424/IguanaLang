@@ -153,9 +153,11 @@ static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodOb
 
 static bool parseMethodBody_(TokenHandler_t** currentTokenHandle, MethodObjectHandle_t methodHandle)
 {
+
     if(cTokenType == BRACKET_START)
     {
         (*currentTokenHandle)++;
+        
         if(cTokenType == BRACKET_END)
         {
             return SUCCESS;
