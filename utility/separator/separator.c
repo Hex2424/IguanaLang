@@ -167,6 +167,17 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
                 if(!isLiteral)
                 {
                     tokenCount++;
+
+                    while (
+                        *wordIterator == ' '  ||
+                        *wordIterator == '\n' ||
+                        *wordIterator == '\r' ||
+                        *wordIterator == '\t')
+                    {
+                        wordIterator++;
+                        existWordBuild--;
+                    }
+
                     token = Tokenizer_wordToCorrespondingToken(wordIterator, existWordBuild);
 
                     token->location.column = lastColumn;     // setting up file location settings for debugging errors
@@ -208,6 +219,36 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
         }
     }
 
+    if(existWordBuild != 0)
+    {
+        TokenHandler_t token;
+        if(!isLiteral)
+        {
+            tokenCount++;
+            token = Tokenizer_wordToCorrespondingToken(wordIterator, existWordBuild);
+
+            token->location.column = lastColumn;     // setting up file location settings for debugging errors
+            token->location.line = lastLine;
+            token->location.filename = currentFile;
+
+
+            lastColumn = currentColumn;
+            lastLine = currentLine;
+
+            if(token == NULL)
+            {
+                Log_e(TAG, "token is null");
+            }
+
+            Log_d(TAG, "token: %d %s", token->tokenType, token->valueString);
+
+            if(!Vector_append(vectorHandle, token))
+            {
+                Log_e(TAG, "Failed to append tokenType:%d", token->tokenType);
+                return ERROR;
+            }
+        }
+    }
     return tokenCount;
 }
 
