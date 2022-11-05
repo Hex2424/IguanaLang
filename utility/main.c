@@ -13,9 +13,12 @@
 
 #include "compiler/compiler.h"
 #include <stdio.h>
+#include <string.h>
 
 static const char* TAG = "MAIN";
+static const char* igRelativeTempPath = "../iguanaTestFiles/test.i";
 
+#define SEPERATOR_FIXER "/"
 // inline int variable = 0;
 
 // struct ssss
@@ -26,7 +29,24 @@ static const char* TAG = "MAIN";
 int main(int argc, char const *argv[])
 {
     Compiler_t compiler;
-    char filePathToCompile[] = "../iguanaTestFiles/test.i";
+    uint32_t sizeExePath, sizeIguanaFilePath;
+    char* filePathToCompile;
+    sizeExePath = strlen(argv[0]);
+    for(uint32_t i = sizeExePath; i > 0; i--)
+    {
+        if(argv[0][i] == '/')
+        {
+            break;
+        }
+        sizeExePath--;
+    }
+
+    sizeIguanaFilePath = strlen(igRelativeTempPath);
+    filePathToCompile = malloc(sizeExePath + sizeIguanaFilePath + sizeof(SEPERATOR_FIXER));
+    strncat(filePathToCompile, argv[0], sizeExePath);
+    strcat(filePathToCompile, SEPERATOR_FIXER);
+    strcat(filePathToCompile, igRelativeTempPath);
+
     // if(argc < 2)
     // {
     //     printf("Need provide files for compilation\n");

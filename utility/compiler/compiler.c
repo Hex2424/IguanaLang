@@ -22,6 +22,7 @@
 #include "../external/inbuilt_c_compiler/c_compiler.h"
 #include "../external/unix_linker/unix_linker.h"
 #include "../parser/parser_utilities/compiler_messages.h"
+#include <errno.h>
 ////////////////////////////////
 // DEFINES
 
@@ -229,11 +230,12 @@ bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char*
     ALLOC_CHECK(mainImport, ERROR);
     
     mainImport->name = filePath;
+    
     mainImport->realPath = realpath(filePath, NULL);
 
     if(mainImport->realPath == NULL)
     {
-        Log_e(TAG, "Failed to retrieve real path of %s", filePath);
+        Log_e(TAG, "Failed to retrieve real path of %s %s", filePath, strerror(errno));
         return ERROR;
     }
 
