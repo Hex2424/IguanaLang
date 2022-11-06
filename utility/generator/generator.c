@@ -179,9 +179,9 @@ static inline bool fileWriteImports_(const CodeGeneratorHandle_t generator)
     fprintf(generator->cFile, "%s \"%s\"%c", INCLUDE_KEYWORD, generator->hFilePath, END_LINE);
     // printf("%s\n",generator->hFilePath);
     // writing imports to h file
-    for(size_t importIdx = 0; importIdx < (generator->ast->imports->currentSize); importIdx++)
+    for(size_t importIdx = 0; importIdx < Hashmap_size(&generator->ast->imports); importIdx++)
     {
-        importObject = (ImportObjectHandle_t) generator->ast->imports->expandable[importIdx];
+        importObject = (ImportObjectHandle_t) Hashmap_at(&generator->ast->imports, importIdx);
         NULL_GUARD(importObject, ERROR, Log_e(TAG, "Import object from Abstract syntax tree is null"));
         NULL_GUARD(importObject->name, ERROR, Log_e(TAG, "Import name is null"));
         NULL_GUARD(importObject->objectId.id, ERROR, Log_e(TAG, "Import object id is null"));
@@ -197,16 +197,16 @@ static inline bool fileWriteImports_(const CodeGeneratorHandle_t generator)
 static inline bool fileWriteClassVariables_(const CodeGeneratorHandle_t generator)
 {
 
-    if(generator->ast->classVariables->currentSize != 0)
+    if(generator->ast->classVariables.entries.currentSize != 0)
     {
         // generator for typedef struct{ variables };
         fprintf(generator->hFile, "%s %s%c", TYPEDEF_KEYWORD, STRUCT_KEYWORD, BRACKET_START);
         
-        for(size_t variableIdx = 0; variableIdx < generator->ast->classVariables->currentSize; variableIdx++)
+        for(size_t variableIdx = 0; variableIdx < Hashmap_size(&generator->ast->classVariables); variableIdx++)
         {
             VariableObjectHandle_t variable;
 
-            variable = generator->ast->classVariables->expandable[variableIdx];
+            variable = Hashmap_at(&generator->ast->classVariables, variableIdx);
             fileWriteVariableDeclaration_(generator, generator->hFile, variable, VARIABLE_STRUCT);
         }
         fprintf(generator->hFile, "%c%s_t%c%c", BRACKET_END, generator->iguanaImport->objectId.id,SEMICOLON, END_LINE);
@@ -277,10 +277,10 @@ static inline bool fileWriteMethods_(const CodeGeneratorHandle_t generator)
 {
     NULL_GUARD(generator, ERROR, Log_e(TAG, "Generator to method writing passes as null"));
 
-    for(size_t methodIdx = 0; methodIdx < generator->ast->methods->currentSize; methodIdx++)
+    for(size_t methodIdx = 0; methodIdx < Hashmap_size(&generator->ast->methods); methodIdx++)
     {
         MethodObjectHandle_t method;
-        method = (MethodObjectHandle_t) generator->ast->methods->expandable[methodIdx];                                                           // getting method by index
+        method = (MethodObjectHandle_t) Hashmap_at(&generator->ast->methods, methodIdx);                                                           // getting method by index
         NULL_GUARD(method, ERROR, Log_e(TAG, "AST methods vector expandable is null"));
 
         if(!fileWriteVariableDeclaration_(generator, generator->hFile, method->returnVariable, VARIABLE_METHOD))

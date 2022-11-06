@@ -135,9 +135,9 @@ static inline bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_
     {
         variable->assignedValue = 0;
 
-        if(!Vector_append(rootHandle->classVariables, variable))
+        if(!Hashmap_putEntry(&rootHandle->classVariables, variable->variableName, variable))
         {
-            Log_e(TAG, "Failed to append new class variable");
+            Log_e(TAG, "Variable %s is declared several times", variable->variableName);
             return ERROR;
         }
         
@@ -154,11 +154,13 @@ static inline bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_
 
             if(cTokenType == SEMICOLON)
             {
-                if(!Vector_append(rootHandle->classVariables, variable))
+
+                if(!Hashmap_putEntry(&rootHandle->classVariables, variable->variableName, variable))
                 {
-                    Log_e(TAG, "Failed to append new class variable");
+                    Log_e(TAG, "Variable %s is declared several times", variable->variableName);
                     return ERROR;
-                }  
+                }
+
             }else
             {
                 Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
@@ -212,9 +214,10 @@ static inline bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t
             Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
         }else
         {
-            if(!Vector_append(rootHandle->imports, importObject))
+            if(!Hashmap_putEntry(&rootHandle->imports, importObject->name, importObject))
             {
-                Log_e(TAG, "Couldn't append libary to vector");
+                Log_e(TAG, "Library %s is already imported", importObject->name);
+                Shouter_shoutError()
                 return ERROR;
             }
 

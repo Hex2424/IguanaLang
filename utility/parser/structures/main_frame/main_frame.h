@@ -15,16 +15,15 @@
 #define UTILITY_PARSER_STRUCTURES_MAIN_FRAME_MAINFRAME_H_
 #include "../variable/variable.h"
 #include "../method/method.h"
-#include "../../../vector/vector.h"
+#include "../../../hashmap/hashmap.h"
 
 
 
 typedef struct
 {
-    VectorHandler_t imports;
-    VectorHandler_t classVariables;
-    VectorHandler_t methods;
-    
+    Hashmap_t imports;
+    Hashmap_t classVariables;
+    Hashmap_t methods;
 }MainFrame_t;
 
 typedef MainFrame_t* MainFrameHandle_t;

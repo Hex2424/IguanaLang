@@ -19,8 +19,8 @@
 #define NAME_IMPORTS_VECTOR     "imports"
 #define NAME_METHODS_VECTOR     "methods"
 
-#define FAILED_CREATION_LOG     "Could not create %s vector"
-#define FAILED_DESTROY_LOG      "Could not destroy %s vector"
+#define FAILED_CREATION_LOG     "Could not create %s hashmap"
+#define FAILED_DESTROY_LOG      "Could not destroy %s hashmap"
 ////////////////////////////////
 // PRIVATE CONSTANTS
 
@@ -32,9 +32,6 @@ static const char* TAG = "MAIN_FRAME";
 ////////////////////////////////
 // PRIVATE METHODS
 
-static Vector_t imports;
-static Vector_t variables;
-static Vector_t methods;
 
 ////////////////////////////////
 // IMPLEMENTATION
@@ -55,27 +52,23 @@ bool MainFrame_init(MainFrameHandle_t handle)
     settings.expandableConstant = 1.0f / 3.0f;
     settings.containsVectors = true;
 
-    if(!Vector_create(&imports, &settings))
+    if(!Hashmap_create(&handle->imports, &settings))
     {
         Log_e(TAG, FAILED_CREATION_LOG, NAME_IMPORTS_VECTOR);
         return ERROR;
     }
 
-    if(!Vector_create(&variables, &settings))
+    if(!Hashmap_create(&handle->classVariables, &settings))
     {
         Log_e(TAG, FAILED_CREATION_LOG, NAME_VARIABLES_VECTOR);
         return ERROR;
     }
 
-    if(!Vector_create(&methods, &settings))
+    if(!Hashmap_create(&handle->methods, &settings))
     {
         Log_e(TAG, FAILED_CREATION_LOG, NAME_METHODS_VECTOR);
         return ERROR;
     }
-
-    handle->imports = &imports;
-    handle->classVariables = &variables;
-    handle->methods = &methods;
 
     return SUCCESS;
 
@@ -91,19 +84,19 @@ bool MainFrame_init(MainFrameHandle_t handle)
 bool MainFrame_destroy(MainFrameHandle_t handle)
 {
 
-    if(!Vector_destroy(handle->imports))
+    if(!Hashmap_destroy(&handle->imports))
     {
         Log_e(TAG, FAILED_DESTROY_LOG, NAME_IMPORTS_VECTOR);
         return ERROR;
     }
 
-    if(!Vector_destroy(handle->classVariables))
+    if(!Hashmap_destroy(&handle->classVariables))
     {
         Log_e(TAG, FAILED_DESTROY_LOG, NAME_VARIABLES_VECTOR);
         return ERROR;
     }
 
-    if(!Vector_destroy(handle->methods))
+    if(!Hashmap_destroy(&handle->methods))
     {
         Log_e(TAG, FAILED_DESTROY_LOG, NAME_METHODS_VECTOR);
         return ERROR;

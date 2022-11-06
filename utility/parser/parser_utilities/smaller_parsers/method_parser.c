@@ -58,11 +58,12 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, MainFr
         return ERROR;
     }
 
-    if(!Vector_append(root->methods, methodHandle))
+    if(!Hashmap_putEntry(&root->methods, methodHandle->methodName, methodHandle))
     {
-        Log_e(TAG, "Failed to append to method to methods vector");
+        Log_e(TAG, "Method %s is declared several times", methodHandle->methodName);
         return ERROR;
     }
+
 
 }
 
@@ -157,7 +158,10 @@ static bool parseMethodBody_(TokenHandler_t** currentTokenHandle, MethodObjectHa
     if(cTokenType == BRACKET_START)
     {
         (*currentTokenHandle)++;
-        
+        if(*currentTokenHandle == NULL)
+        {
+            return ERROR;
+        }
         if(cTokenType == BRACKET_END)
         {
             return SUCCESS;

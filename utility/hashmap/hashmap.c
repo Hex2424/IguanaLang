@@ -12,7 +12,7 @@
  */
 #include "hashmap.h"
 #include "string.h"
-
+#include "../parser/structures/method/method.h"
 ////////////////////////////////
 // DEFINES
 
@@ -40,13 +40,9 @@ static HashmapPairHandle_t findEntry_(const HashmapHandle_t hashmap, const uint1
  * @param[in/out] hashmap   - Hashmap object for initialization
  * @return                  - Success state
  */
-bool Hashmap_create(HashmapHandle_t hashmap)
+bool Hashmap_create(HashmapHandle_t hashmap, InitialSettingsHandler_t settings)
 {
-    InitialSettings_t settings;
-    settings.initialSize = 7;
-    settings.containsVectors = false;
-
-    if(!Vector_create(&hashmap->entries, &settings))
+    if(!Vector_create(&hashmap->entries, settings))
     {
         Log_e(TAG, "Hashmap creating got failed due vector");
         return ERROR;
@@ -67,7 +63,8 @@ bool Hashmap_putEntry(HashmapHandle_t hashmap, const char* keyString, const void
 {
     HashmapPairHandle_t pair;
     uint16_t currentKeySum;
-    currentKeySum = calculateStringChecksum_(pair->realKey);
+
+    currentKeySum = calculateStringChecksum_(keyString);
 
     pair = findEntry_(hashmap, currentKeySum, keyString);
 
@@ -75,20 +72,41 @@ bool Hashmap_putEntry(HashmapHandle_t hashmap, const char* keyString, const void
     {
         pair = malloc(sizeof(HashmapPair_t));
         ALLOC_CHECK(pair, ERROR);
+        pair->keySum = currentKeySum;
+        pair->realKey = keyString;
+        pair->object = object;
 
         if(!Vector_append(&hashmap->entries, pair))
         {
             Log_e(TAG, "Failed to add hashmap entry");
             return ERROR;
         }
+
+    }else
+    {
+        return ERROR;
     }
-    pair->keySum = currentKeySum;
-    pair->realKey = keyString;
-    pair->object = object;
 
     return SUCCESS;
 }
 
+
+/**
+ * @brief Public method to get object by idx
+ * 
+ * @param[in] hashmap  - Hashmap object
+ * @param[in] idx      - Index of object
+ * @return             - Object pointer 
+ */
+void* Hashmap_at(const HashmapHandle_t hashmap, const uint32_t idx)
+{
+    if(idx < hashmap->entries.currentSize)
+    {
+        return ((HashmapPairHandle_t) hashmap->entries.expandable[idx])->object;
+    }
+
+    return NULL;
+}
 
 /**
  * @brief Public method for getting specific entry with key
@@ -100,6 +118,17 @@ bool Hashmap_putEntry(HashmapHandle_t hashmap, const char* keyString, const void
 bool Hashmap_getEntry(const HashmapHandle_t hashmap, const char* keyString)
 {
     return findEntry_(hashmap, calculateStringChecksum_(keyString), keyString);
+}
+
+/**
+ * @brief Public method to get Hashmap size
+ * 
+ * @param[in] hashmap  - Hashmap object
+ * @return             - Hashmap size in entries count
+ */
+uint64_t Hashmap_size(const HashmapHandle_t hashmap)
+{
+    return hashmap->entries.currentSize;
 }
 
 
