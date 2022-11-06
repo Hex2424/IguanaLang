@@ -26,7 +26,7 @@ typedef struct
 
 static const BindingType_t bindingsTable_[] =
     {
-        {"int", INTEGER_TYPE},                              
+        {"bit", INTEGER_TYPE},                              
         {";", SEMICOLON},
         {"", NUMBER_VALUE},
         {"", NAMING},
