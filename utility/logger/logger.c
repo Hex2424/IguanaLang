@@ -25,11 +25,10 @@
     logData_(TAG, COLOR, expression, args);     \
     va_end(args);
 
-#define COMPILER_LOG                            \
-    va_list args;                               \
-    va_start(args, expression);                 \
-    logData_("", END, expression, args);        \
-    va_end(args);
+#define COMPILER_LOG(COLOR)                     \
+    printf("%s", COLOR);                        \
+    vprintf(expression, args);                  \
+    printf("%s\n",END)
 
 
 ////////////////////////////////
@@ -119,9 +118,19 @@ void inline Log_w(const char* TAG, const char* expression, ...)
  * @param[in] expression[in]    Expression, works same as printf
  * @param ...                   Variadic arguments (numbers, strings, chars...) same as in printf
  */
-void Logc_e(const char* expression, ...)
+inline void Logc(const char* expression, const char* colorString, ...)
 {
-    COMPILER_LOG;
+    va_list args;                               
+    va_start(args, colorString);
+    Logcc(expression, colorString, args);
+    va_end(args);
+}
+
+inline void Logcc(const char* expression, const char* colorString, va_list args)
+{
+    printf("%s", colorString, TAG);
+    vprintf(expression, args);
+    printf("%s\n",END);
 }
 
 

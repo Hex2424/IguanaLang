@@ -13,8 +13,18 @@
 
 #include "compiler_messages.h"
 #include "../../tokenizer/token/token_database/token_bindings.h"
+#include <stdarg.h>
+#include "../../logger/colors.h"
 ////////////////////////////////
 // DEFINES
+
+#define SHOUT_MESSAGE(COLOR)                    \
+    if(tokenHandle != NULL)                     \
+    printLocation_(tokenHandle);                \
+        va_list args;                           \       
+        va_start(args, errorMessage);           \         
+        Logcc(errorMessage, COLOR, args);   \
+        va_end(args);                           \
 
 ////////////////////////////////
 // PRIVATE CONSTANTS
@@ -26,31 +36,40 @@ uint32_t errorCount = NO_ERROR;
 
 ////////////////////////////////
 // PRIVATE METHODS
-void incrementErrorCount_();
-
+static void incrementErrorCount_();
+static void printLocation_(const TokenHandler_t tokenHandle);
 ////////////////////////////////
 // IMPLEMENTATION
 
-void Shouter_shoutError(const TokenHandler_t tokenHandle, const char* errorMessage)
+void Shouter_shoutError(const TokenHandler_t tokenHandle, const char* errorMessage, ...)
 {
+    SHOUT_MESSAGE(LIGHT_RED);
+    incrementErrorCount_();
+}
 
-    Logc_e("%s:%u:%u -> %s",
+void Shouter_shoutWarning(const TokenHandler_t tokenHandle, const char* errorMessage, ...)
+{
+    SHOUT_MESSAGE(YELLOW);
+}
+
+void Shouter_shoutInfo(const TokenHandler_t tokenHandle, const char* errorMessage, ...)
+{
+    SHOUT_MESSAGE(LIGHT_BLUE);
+}
+
+static void printLocation_(const TokenHandler_t tokenHandle)
+{
+    printf("%s:%u:%u -> ",
     tokenHandle->location.filename,
     tokenHandle->location.line,
-    tokenHandle->location.column,
-
-    errorMessage);
-    incrementErrorCount_();
+    tokenHandle->location.column);
 }
 
 void Shouter_shoutExpectedToken(const TokenHandler_t tokenHandle,const TokenType_t tokenTypeExpected)
 {
-
-    Logc_e("%s:%u:%u -> Expected token \'%s\', found this '%s' -_-",
-    tokenHandle->location.filename,
-    tokenHandle->location.line,
-    tokenHandle->location.column,
-    
+    printLocation_(tokenHandle);
+    Logc("Expected token \'%s\', found this '%s' -_-",
+    LIGHT_RED,
     bindingsTable_[tokenTypeExpected].expression,
     tokenHandle->valueString);
     incrementErrorCount_();
@@ -59,12 +78,9 @@ void Shouter_shoutExpectedToken(const TokenHandler_t tokenHandle,const TokenType
 
 void Shouter_shoutUnrecognizedToken(const TokenHandler_t tokenHandle)
 {
-
-    Logc_e("%s:%u:%u -> Unrecognized token \'%s\'",
-    tokenHandle->location.filename,
-    tokenHandle->location.line,
-    tokenHandle->location.column,
-
+    printLocation_(tokenHandle);
+    Logc("Unrecognized token \'%s\'",
+    LIGHT_RED,
     tokenHandle->valueString);
     incrementErrorCount_();
 }
@@ -72,12 +88,8 @@ void Shouter_shoutUnrecognizedToken(const TokenHandler_t tokenHandle)
 
 void Shouter_shoutForgottenToken(const TokenHandler_t tokenHandle,const TokenType_t forgottenToken)
 {
-
-    Logc_e("%s:%u:%u -> Forgotten token: \'%s\'",
-    tokenHandle->location.filename,
-    tokenHandle->location.line,
-    tokenHandle->location.column,
-    
+    printLocation_(tokenHandle);
+    Logc("Forgotten token: \'%s\'",
     bindingsTable_[forgottenToken].expression,
     tokenHandle->tokenType);
 
@@ -94,7 +106,7 @@ inline uint32_t Shouter_getErrorCount()
     return errorCount;
 }
 
-inline void incrementErrorCount_()
+static inline void incrementErrorCount_()
 {
     errorCount++;
 }

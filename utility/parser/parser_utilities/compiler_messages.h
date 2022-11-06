@@ -20,7 +20,9 @@
 
 #define NO_ERROR         0
 
-void Shouter_shoutError(const TokenHandler_t tokenHandle, const char* errorMessage);
+void Shouter_shoutError(const TokenHandler_t tokenHandle, const char* errorMessage, ...);
+void Shouter_shoutWarning(const TokenHandler_t tokenHandle, const char* errorMessage, ...);
+void Shouter_shoutInfo(const TokenHandler_t tokenHandle, const char* errorMessage, ...);
 void Shouter_shoutExpectedToken(const TokenHandler_t tokenHandle, const TokenType_t tokenTypeExpected);
 void Shouter_shoutForgottenToken(const TokenHandler_t tokenHandle,const TokenType_t forgottenToken);
 void Shouter_shoutUnrecognizedToken(const TokenHandler_t tokenHandle);
