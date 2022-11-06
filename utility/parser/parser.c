@@ -110,8 +110,6 @@ bool Parser_parseTokens(ParserHandle_t parser, MainFrameHandle_t root, const Vec
         currentToken++;
 
     }
-
-    Log_i(TAG, "Compiling completed with %d errors", Shouter_getErrorCount());
     return SUCCESS;
 }
 
@@ -137,7 +135,7 @@ static inline bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_
 
         if(!Hashmap_putEntry(&rootHandle->classVariables, variable->variableName, variable))
         {
-            Log_e(TAG, "Variable %s is declared several times", variable->variableName);
+            Shouter_shoutError(cTokenP, "Variable \'%s\' is declared several times", variable->variableName);
             return ERROR;
         }
         
@@ -157,7 +155,7 @@ static inline bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_
 
                 if(!Hashmap_putEntry(&rootHandle->classVariables, variable->variableName, variable))
                 {
-                    Log_e(TAG, "Variable %s is declared several times", variable->variableName);
+                    Shouter_shoutError(cTokenP, "Variable \'%s\' is declared several times", variable->variableName);
                     return ERROR;
                 }
 
@@ -216,8 +214,7 @@ static inline bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t
         {
             if(!Hashmap_putEntry(&rootHandle->imports, importObject->name, importObject))
             {
-                Log_e(TAG, "Library %s is already imported", importObject->name);
-                Shouter_shoutError()
+                Shouter_shoutError(cTokenP, "Library \'%s\' is already imported", importObject->name);
                 return ERROR;
             }
 

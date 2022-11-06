@@ -261,6 +261,7 @@ bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char*
         }
         
     }
+
     if(Shouter_getErrorCount() == NO_ERROR)
     {
         if(!createMainProcessFile_(compiler, "main"))
@@ -283,7 +284,11 @@ bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char*
             return ERROR;
         }
 
+    }else
+    {
+        Shouter_shoutError(NULL, "Compiling completed with %d errors", Shouter_getErrorCount());
     }
+    
 
 
     return SUCCESS;
