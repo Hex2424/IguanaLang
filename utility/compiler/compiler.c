@@ -188,7 +188,7 @@ static inline bool createMainProcessFile_(CompilerHandle_t compiler, const char*
 
     // adding mainProccess file for executing main object
     fprintf(file,
-    "#include \"%s.h\"\nvoid exit(int);int %s(){exit(%s_%s());}",
+    "#include \"%s.h\"\nvoid exit(int);int %s(){exit(%s_%s((void*)0));}",
     ((ImportObjectHandle_t)compiler->alreadyCompiledFilePaths.expandable[0])->objectId.id,
     MAIN_PROCESS_FILE_NAME,
     ((ImportObjectHandle_t)compiler->alreadyCompiledFilePaths.expandable[0])->objectId.id,

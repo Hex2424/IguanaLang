@@ -1,16 +1,7 @@
-import "../test";
-import "../stdio";
+bit:1 ddd;
+bit:2 ggg;
 
-int:1 ddd;
-int:2 ggg;
-
-
-int:1 method(int:3 param1, int:4 param2)
-{
-
-}
-
-int:1 method2(int:3 param1, int:4 param2)
+bit:1 method2(bit:3 param1, bit:4 param2)
 {
 
 }

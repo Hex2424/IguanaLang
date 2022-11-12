@@ -283,16 +283,23 @@ static inline bool fileWriteMethods_(const CodeGeneratorHandle_t generator)
         method = (MethodObjectHandle_t) Hashmap_at(&generator->ast->methods, methodIdx);                                                           // getting method by index
         NULL_GUARD(method, ERROR, Log_e(TAG, "AST methods vector expandable is null"));
 
-        if(!fileWriteVariableDeclaration_(generator, generator->hFile, method->returnVariable, VARIABLE_METHOD))
+        if(!fileWriteVariableDeclaration_(generator, generator->hFile, &method->returnVariable, VARIABLE_METHOD))
         {
             Log_e(TAG, "Failed to write method %s return type", method->methodName);
             return ERROR;
         }
 
-        if(!fileWriteVariableDeclaration_(generator, generator->cFile, method->returnVariable, VARIABLE_METHOD))
+        if(!fileWriteVariableDeclaration_(generator, generator->cFile, &method->returnVariable, VARIABLE_METHOD))
         {
             Log_e(TAG, "Failed to write method %s return type", method->methodName);
             return ERROR;
+        }
+        fprintf(generator->cFile, "%s_t* root", generator->iguanaImport->objectId.id);
+        fprintf(generator->hFile, "%s_t* root", generator->iguanaImport->objectId.id);
+        if(method->parameters->currentSize > 0)
+        {
+            fwrite(&COMMA, 1, 1, generator->cFile);
+            fwrite(&COMMA, 1, 1, generator->hFile);
         }
 
         for(size_t paramIdx = 0; paramIdx < method->parameters->currentSize; paramIdx++)

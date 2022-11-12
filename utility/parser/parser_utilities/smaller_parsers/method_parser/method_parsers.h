@@ -14,9 +14,13 @@
 #ifndef UTILITY_PARSER_PARSER_UTILITIES_SMALLER_PARSERS_METHOD_PARSERS_H_
 #define UTILITY_PARSER_PARSER_UTILITIES_SMALLER_PARSERS_METHOD_PARSERS_H_
 
-#include "../../structures/method/method.h"
-#include "../../structures/main_frame/main_frame.h"
-#include "../../../tokenizer/token/token.h"
+#include "../../../structures/method/method.h"
+#include "../../../structures/main_frame/main_frame.h"
+#include "../../../../tokenizer/token/token.h"
+
+
+
+
 bool MethodParser_parseMethod(TokenHandler_t** currentToken, MainFrameHandle_t root);
 
 #endif // UTILITY_PARSER_PARSER_UTILITIES_SMALLER_PARSERS_METHOD_PARSERS_H_

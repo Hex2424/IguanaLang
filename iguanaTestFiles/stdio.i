@@ -1,14 +1,15 @@
-import "test";
+import "test"
+import "hmm/mainframe"
 
-int:1 ddd = 2;
-int:2 ggg;
+bit:5 ddd = 2;
+bit:2 ggg;
 
-int:32 method(int:32 param1, int:8 param2)
+bit:32 method(bit:32 param1, bit:8 param2)
 {
-    
+
 }
 
-int:16 hello()
+bit:16 hello()
 {
 
 }

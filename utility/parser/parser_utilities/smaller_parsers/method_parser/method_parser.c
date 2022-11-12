@@ -12,7 +12,7 @@
  */
 
 #include "method_parsers.h"
-#include "../global_parser_utility.h"
+#include "../../global_parser_utility.h"
 ////////////////////////////////
 // DEFINES
 #define cTokenP (**currentTokenHandle)
@@ -69,18 +69,14 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, MainFr
 
 static bool parseMethodReturnVariable_(TokenHandler_t** currentTokenHandle, MethodObjectHandle_t methodHandle)
 {
-    VariableObjectHandle_t returnVariable;
-    returnVariable = malloc(sizeof(VariableObject_t));
-    ALLOC_CHECK(returnVariable, ERROR);
 
     methodHandle->methodName = (*(*currentTokenHandle - 2))->valueString;
-
-    returnVariable->variableName = methodHandle->methodName;
-    returnVariable->bitpack = atoi((*((*currentTokenHandle) - 3))->valueString);
-    returnVariable->assignedValue = 0;
-    returnVariable->assignedVariable = NULL;
     
-    methodHandle->returnVariable = returnVariable;
+    methodHandle->returnVariable.variableName = methodHandle->methodName;
+    methodHandle->returnVariable.bitpack = atoi((*((*currentTokenHandle) - 3))->valueString);
+    methodHandle->returnVariable.assignedValue = 0;
+    methodHandle->returnVariable.assignedVariable = NULL;
+    
     return SUCCESS;
 }
 
@@ -158,14 +154,9 @@ static bool parseMethodBody_(TokenHandler_t** currentTokenHandle, MethodObjectHa
     if(cTokenType == BRACKET_START)
     {
         (*currentTokenHandle)++;
-        if(*currentTokenHandle == NULL)
-        {
-            return ERROR;
-        }
-        if(cTokenType == BRACKET_END)
-        {
-            return SUCCESS;
-        }
+        // parsing scope
+        
+
     }else
     {
         Shouter_shoutExpectedToken(cTokenP, BRACKET_START);

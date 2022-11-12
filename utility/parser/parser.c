@@ -14,7 +14,7 @@
 #include "parser.h"
 #include "../tokenizer/token/token.h"
 #include "parser_utilities/global_parser_utility.h"
-#include "parser_utilities/smaller_parsers/method_parsers.h"
+#include "parser_utilities/smaller_parsers/method_parser/method_parsers.h"
 #include "string.h"
 #include "structures/import_object/import_object.h"
 #include "../hash/random/random.h"
@@ -50,7 +50,7 @@ size_t tokensCount;
 // PRIVATE METHODS
 
 static bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t rootHandle);
-static bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_t rootHandle);
+static bool handleKeywordInteger_(MainFrameHandle_t rootHandle);
 static bool tryParseSequence_(const TokenType_t* pattern,const size_t patternSize);
 static bool assignTokenValue_(char** to, const char* from);
 static bool addLibraryForCompilation_(ParserHandle_t parser, ImportObjectHandle_t* importObject);
@@ -102,7 +102,7 @@ bool Parser_parseTokens(ParserHandle_t parser, MainFrameHandle_t root, const Vec
         }else
         if(cTokenType == INTEGER_TYPE)      // detected int keyword
         {
-            handleKeywordInteger_(parser, root);
+            handleKeywordInteger_(root);
         }else
         {
             Shouter_shoutUnrecognizedToken(cTokenP);
@@ -113,7 +113,7 @@ bool Parser_parseTokens(ParserHandle_t parser, MainFrameHandle_t root, const Vec
     return SUCCESS;
 }
 
-static inline bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_t rootHandle)
+static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle)
 {
     VariableObjectHandle_t variable;
 
@@ -203,22 +203,13 @@ static inline bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t
             Log_e(TAG, "Failed to add library path for paths to compile");
             return ERROR;
         }
-        
-        currentToken++;
 
-
-        if(cTokenType != SEMICOLON)
+        if(!Hashmap_putEntry(&rootHandle->imports, importObject->name, importObject))
         {
-            Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
-        }else
-        {
-            if(!Hashmap_putEntry(&rootHandle->imports, importObject->name, importObject))
-            {
-                Shouter_shoutError(cTokenP, "Library \'%s\' is already imported", importObject->name);
-                return ERROR;
-            }
-
+            Shouter_shoutError(cTokenP, "Library \'%s\' is already imported", importObject->name);
+            return ERROR;
         }
+
  
     }else
     {

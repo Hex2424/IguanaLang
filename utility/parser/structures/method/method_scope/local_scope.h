@@ -13,13 +13,12 @@
 #ifndef UTILITY_PARSER_STRUCTURES_METHOD_METHOD_SCOPE_LOCAL_SCOPE_H_
 #define UTILITY_PARSER_STRUCTURES_METHOD_METHOD_SCOPE_LOCAL_SCOPE_H_
 
-#include "../../variable/variable.h"
+#include "../../../../hashmap/hashmap.h"
 
 typedef struct
 {
-    VariableObjectHandle_t* localVariables;
-    void* variousOperations;
-    
+    Hashmap_t localVariables;
+    Vector_t expressions;
 }LocalScopeObject_t;
 
 typedef LocalScopeObject_t* LocalScopeObjectHandle_t;
