@@ -44,7 +44,7 @@ static inline bool handleDotAccess_(LocalScopeObjectHandle_t scopeBody, TokenHan
 static bool handleMethodCall_(ExMethodCallHandle_t methodCall, TokenHandler_t** currentTokenHandle, const bool isMethodSelf);
 static inline bool handleObjectDeclaration_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
 static inline bool handleMethodCallParameterization_(MethodObjectHandle_t methodHandle, TokenHandler_t** currentTokenHandle);
-static bool handleOperator_(QueueHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
+static bool handleOperator_(QueueHandle_t expressionQueue, TokenHandler_t** currentTokenHandle);
 static bool isTokenOperator_(TokenHandler_t** currentTokenHandle);
 static bool isTokenExpression_(TokenHandler_t** currentTokenHandle);
 static bool handleOperations_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
@@ -226,7 +226,7 @@ static bool handleExpression_(QueueHandle_t expressionQueue, TokenHandler_t** cu
     return SUCCESS;
 }
 
-static bool handleOperator_(QueueHandle_t scopeBody, TokenHandler_t** currentTokenHandle)
+static bool handleOperator_(QueueHandle_t expressionQueue, TokenHandler_t** currentTokenHandle)
 {
     if(cTokenType == SEMICOLON)
     {

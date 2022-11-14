@@ -152,9 +152,8 @@ static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodOb
 
 static bool parseMethodBody_(TokenHandler_t** currentTokenHandle, MethodObjectHandle_t methodHandle)
 {
-    LocalScopeObject_t scopeObject;
 
-    if(!BodyParser_initialize(&scopeObject))
+    if(!BodyParser_initialize(&methodHandle->body))
     {
         Log_e(TAG, "Failed to initialize body parser for method \'%s\'", methodHandle->methodName);
         return ERROR;
@@ -164,7 +163,7 @@ static bool parseMethodBody_(TokenHandler_t** currentTokenHandle, MethodObjectHa
     {
         (*currentTokenHandle)++;
         // parsing scope
-        if(!BodyParser_parseScope(&scopeObject, currentTokenHandle))
+        if(!BodyParser_parseScope(&methodHandle->body, currentTokenHandle))
         {
             Log_e(TAG, "Failed to parse scope for method \'%s\'", methodHandle->methodName);
             return ERROR;

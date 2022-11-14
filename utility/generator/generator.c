@@ -18,7 +18,8 @@
 #include "../hash/hash.h"
 #include <time.h>
 #include "csyntax_database.h"
-
+#include "../queue/queue.h"
+#include "../parser/structures/expression/expressions.h"
 ////////////////////////////////
 // DEFINES
 
@@ -62,6 +63,7 @@ static bool fileWriteVariableDeclaration_(const CodeGeneratorHandle_t generator,
 static bool fileWriteMethods_(const CodeGeneratorHandle_t generator);    
 static bool initializeFileDescriptorFor_(FILE** descriptor, const char* virtualBuffer, char* path, const ImportObjectHandle_t iguanaImport, const char extension);     
 static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator,const MethodObjectHandle_t method);
+static bool handleExpressionWriting_(const CodeGeneratorHandle_t generator,const ExpressionHandle_t expression);
 
 ////////////////////////////////
 // IMPLEMENTATION
@@ -331,7 +333,11 @@ static inline bool fileWriteMethods_(const CodeGeneratorHandle_t generator)
         fprintf(generator->hFile, "%c%c\n", BRACKET_ROUND_END, SEMICOLON);
         fprintf(generator->cFile, "%c\n", BRACKET_ROUND_END);
 
-        fileWriteMethodBody_(generator, method);
+        if(!fileWriteMethodBody_(generator, method))
+        {
+            Log_e(TAG, "Failed to write method body to IO");
+            return ERROR;
+        }
         // fprintf("%s", method->returnVariable)
 
     }
@@ -340,7 +346,60 @@ static inline bool fileWriteMethods_(const CodeGeneratorHandle_t generator)
 }
 
 
-static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator,const MethodObjectHandle_t method)
+static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator, const MethodObjectHandle_t method)
 {
-    fprintf(generator->cFile, "%c%c\n", BRACKET_START, BRACKET_END);
+    fwrite(&BRACKET_START, 1, 1, generator->cFile);
+
+    for(size_t expressionQ = 0; expressionQ < method->body.expressions.currentSize; expressionQ++)
+    {
+        QueueHandle_t expressionQueue;
+
+        expressionQueue = method->body.expressions.expandable[expressionQ];
+        if(expressionQueue == NULL)
+        {
+            return ERROR;
+        }
+        
+        for(size_t expressionIdx = 0; expressionIdx < expressionQueue->count; expressionIdx++)
+        {
+            ExpressionHandle_t expression;
+            expression = Queue_dequeue(expressionQueue);
+            
+            if(!handleExpressionWriting_(generator, expression))
+            {
+                Log_e(TAG, "Failed to write expression");
+                return ERROR;
+            }
+
+        }
+        
+        Queue_destroy(expressionQueue);
+        
+    }
+    fprintf(generator->cFile, "%c\n", BRACKET_END);
+    return SUCCESS;
+}
+
+static bool handleExpressionWriting_(const CodeGeneratorHandle_t generator, const ExpressionHandle_t expression)
+{
+    if(expression->type == METHOD_CALL)
+    {
+        ExMethodCallHandle_t methodCallHandle;
+        methodCallHandle = expression->expressionObject;
+        if(methodCallHandle->isMethodSelf)
+        {
+            fprintf(generator->cFile, "%s((void*) 0)%c", methodCallHandle->method.methodName, SEMICOLON);
+        }else
+        {
+            // not implemented yet
+        }
+
+        free(methodCallHandle);
+
+    }else
+    {
+        Log_e(TAG, "Unrecognised expression \'ID:%d\'", expression->type);
+        return ERROR;
+    }
+    return SUCCESS;
 }
