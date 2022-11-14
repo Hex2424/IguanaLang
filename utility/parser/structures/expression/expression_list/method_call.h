@@ -17,6 +17,7 @@
 
 typedef struct
 {
+    bool isMethodSelf;
     MethodObject_t method;
 }ExMethodCall_t;
 

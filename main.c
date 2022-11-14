@@ -14,7 +14,13 @@ void printBits(unsigned int num)
 
 int main()
 {
-
+   int;
+   5;
+   void;
+ 
+   // 's';
+   // h;
+   // b;
    //      float ss = 3.3;
    //      uint32_t* h = (void*)&ss;
    //      uint32_t l = *h;
@@ -29,6 +35,6 @@ int main()
     //     int iii = i;
     //     printf("Leading text %d %f %u\n",iii, i, ii);
     // }
-
+   
 }
 

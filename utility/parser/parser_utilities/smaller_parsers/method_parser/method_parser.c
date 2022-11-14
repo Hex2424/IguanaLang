@@ -13,6 +13,8 @@
 
 #include "method_parsers.h"
 #include "../../global_parser_utility.h"
+#include "../body_parser/body_parser.h"
+
 ////////////////////////////////
 // DEFINES
 #define cTokenP (**currentTokenHandle)
@@ -99,7 +101,7 @@ static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodOb
         parameter = malloc(sizeof(VariableObject_t));
         ALLOC_CHECK(parameter, ERROR);
 
-        if(cTokenType == INTEGER_TYPE)
+        if(cTokenType == BIT_TYPE)
         {
             if(!ParserUtils_tryParseSequence(currentTokenHandle, PATTERN_DECLARE, PATTERN_DECLARE_SIZE))
             {
@@ -137,7 +139,7 @@ static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodOb
             break;
         }else
         {
-            Shouter_shoutExpectedToken(cTokenP, INTEGER_TYPE);
+            Shouter_shoutExpectedToken(cTokenP, BIT_TYPE);
             (*currentTokenHandle)++;
             continue;
         }
@@ -150,12 +152,23 @@ static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodOb
 
 static bool parseMethodBody_(TokenHandler_t** currentTokenHandle, MethodObjectHandle_t methodHandle)
 {
+    LocalScopeObject_t scopeObject;
+
+    if(!BodyParser_initialize(&scopeObject))
+    {
+        Log_e(TAG, "Failed to initialize body parser for method \'%s\'", methodHandle->methodName);
+        return ERROR;
+    }
 
     if(cTokenType == BRACKET_START)
     {
         (*currentTokenHandle)++;
         // parsing scope
-        
+        if(!BodyParser_parseScope(&scopeObject, currentTokenHandle))
+        {
+            Log_e(TAG, "Failed to parse scope for method \'%s\'", methodHandle->methodName);
+            return ERROR;
+        }
 
     }else
     {

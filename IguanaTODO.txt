@@ -17,6 +17,7 @@ TODO:
 13. Loops with ~> symbol (no when loop anymore)
 14. Interfaces
 15. ,,, parameters counts as NULL
+16. as keyword for imports object naming
 l.c
 
 

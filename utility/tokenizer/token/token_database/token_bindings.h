@@ -26,7 +26,7 @@ typedef struct
 
 static const BindingType_t bindingsTable_[] =
     {
-        {"bit", INTEGER_TYPE},                              
+        {"bit", BIT_TYPE},                              
         {";", SEMICOLON},
         {"", NUMBER_VALUE},
         {"", NAMING},
@@ -49,7 +49,8 @@ static const BindingType_t bindingsTable_[] =
         {"<", ARROW_LEFT},
         {"@", NOTATION},
         {".", DOT_SYMBOL},
-        {"\"", LITTERAL}
+        {"\"", LITTERAL},
+        {"this", THIS}
     };
 
 #endif // UTILITY_TOKENIZER_TOKEN_TOKEN_DATABASE_TOKEN_BINDINGS_H_

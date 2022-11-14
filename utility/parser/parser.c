@@ -100,7 +100,7 @@ bool Parser_parseTokens(ParserHandle_t parser, MainFrameHandle_t root, const Vec
         {
             handleKeywordImport_(parser, root);
         }else
-        if(cTokenType == INTEGER_TYPE)      // detected int keyword
+        if(cTokenType == BIT_TYPE)      // detected int keyword
         {
             handleKeywordInteger_(root);
         }else
@@ -272,7 +272,7 @@ static inline bool addLibraryForCompilation_(ParserHandle_t parser, ImportObject
             return SUCCESS;
         }
     }
-    Shouter_shoutError(cTokenP, "lib cannot be found");
+    Shouter_shoutError(cTokenP, "lib \'%s\'cannot be found", (*importObject)->name);
     return SUCCESS;
 }
 

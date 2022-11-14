@@ -21,7 +21,7 @@
 
 typedef enum TokenType
 {
-    INTEGER_TYPE,        // int
+    BIT_TYPE,            // bit
     SEMICOLON,           // ;
     NUMBER_VALUE,        // 1
     NAMING,              // varName
@@ -44,7 +44,8 @@ typedef enum TokenType
     ARROW_LEFT,          // <
     NOTATION,            // @
     DOT_SYMBOL,          // .
-    LITTERAL             // "
+    LITTERAL,            // "
+    THIS                 // this
 } TokenType_t;
 
 

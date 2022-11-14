@@ -22,7 +22,7 @@ sizeof(PATTERN) / sizeof(TokenType_t)
 
 
 Pattern_t PATTERN_LIBRARY_IMPORT[] =        {MODULE_IMPORT, LITTERAL, NAMING, LITTERAL, SEMICOLON};   // example: import "MainFrame";
-Pattern_t PATTERN_DECLARE[] =               {INTEGER_TYPE, COLON, NUMBER_VALUE, NAMING};              // example: int:3 object
+Pattern_t PATTERN_DECLARE[] =               {BIT_TYPE, COLON, NUMBER_VALUE, NAMING};              // example: int:3 object
 Pattern_t PATTERN_OBJECT_DECLARATION[] =    {NAMING, NAMING};                                         // example: Object object
 Pattern_t PATTERN_SEMICOLON[] =             {SEMICOLON};                                              // example: ;
 Pattern_t PATTERN_BRACKET_ROUND_START[] =   {BRACKET_ROUND_START};                                    // example: (
