@@ -297,10 +297,10 @@ bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char*
 
 bool Compiler_destroy(CompilerHandle_t compiler)
 {
-    // if(!cleanTempFilePaths_(compiler))
-    // {
-    //     Log_w(TAG, "Failed to clean compiled file paths");
-    // }
+    if(!cleanTempFilePaths_(compiler))
+    {
+        Log_w(TAG, "Failed to clean compiled file paths");
+    }
 
     if(!Vector_destroy(&compiler->alreadyCompiledFilePaths))
     {
