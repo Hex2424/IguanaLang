@@ -175,5 +175,5 @@ static bool parseMethodBody_(TokenHandler_t** currentTokenHandle, MethodObjectHa
         Shouter_shoutExpectedToken(cTokenP, BRACKET_START);
     }
     
-    return ERROR;
+    return SUCCESS;
 }
