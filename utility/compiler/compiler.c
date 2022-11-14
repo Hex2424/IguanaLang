@@ -82,6 +82,7 @@ static bool compileFile_(CompilerHandle_t compiler, ImportObjectHandle_t filePat
         return ERROR;
     }
     
+    // Seperator works as tokenizer - converts file to tokens
     if(!Separator_getSeparatedWords(codeString, length, &tokensVector, filePath->realPath))
     {
         Log_e(TAG, "Seperator failed to parse: %s", codeString);
@@ -98,26 +99,29 @@ static bool compileFile_(CompilerHandle_t compiler, ImportObjectHandle_t filePat
         return ERROR;
     }
 
-    // initializing parser object
-
+    
+    // Initializing parser object
     if(!Parser_initialize(&parser))
     {
         Log_e(TAG, "Failed to initialize parser");
         return ERROR;
     }
 
+    // Initializing code generator (c files generator) object
     if(!Generator_initialize(&codeGenerator, filePath, &root))
     {
         Log_e(TAG, "Failed to initialize code generator");
         return ERROR;
     }
 
+    // Parser parse tokens to Abstract Syntax Tree
     if(!Parser_parseTokens(&parser, &root, &tokensVector))
     {
         Log_e(TAG, "Failed to parse tokens");
         return ERROR;
     }
 
+    // Generator generates code out of AST(Abstract syntax tree)
     if(!Generator_generateCode(&codeGenerator))
     {
         Log_e(TAG, "Failed to generate c language code for Iguana file %s", filePath->realPath);
@@ -126,18 +130,21 @@ static bool compileFile_(CompilerHandle_t compiler, ImportObjectHandle_t filePat
 
     // cleanTempCFile_(filePath);
 
+    // Deallocating file buffer
     if(!FileReader_destroy(codeString))
     {
         Log_e(TAG, "Failed to destroy codeString");
         return ERROR;
     }
 
+    // Deallocating Parser resources
     if(!Parser_destroy(&parser))
     {
         Log_w(TAG, "Failed to deallocate Parser object");
         return ERROR;
     }
 
+    // Deallocating tokens vector
     if(!Vector_destroy(&tokensVector))
     {
         Log_e(TAG, "Failed to destroy vector");
