@@ -359,7 +359,7 @@ static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator, c
         {
             return ERROR;
         }
-        
+
         for(size_t expressionIdx = 0; expressionIdx < expressionQueue->count; expressionIdx++)
         {
             ExpressionHandle_t expression;
@@ -388,7 +388,7 @@ static bool handleExpressionWriting_(const CodeGeneratorHandle_t generator, cons
         methodCallHandle = expression->expressionObject;
         if(methodCallHandle->isMethodSelf)
         {
-            fprintf(generator->cFile, "%s((void*) 0)%c", methodCallHandle->method.methodName, SEMICOLON);
+            fprintf(generator->cFile, "%s_%s((void*) 0)%c", generator->iguanaImport->objectId.id, methodCallHandle->method.methodName, SEMICOLON);
         }else
         {
             // not implemented yet
