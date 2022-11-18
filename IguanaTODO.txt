@@ -10,32 +10,16 @@ TODO:
 7. C header include support
 8. Inline keyword power
 7. Preprocessor?
-9. Method body things to do
 10. Pointers support
 11. Macro string formating
-12. Passing struct fields as number
 13. Loops with ~> symbol (no when loop anymore)
 14. Interfaces
 15. ,,, parameters counts as NULL
 16. as keyword for imports object naming
+17. Object constructors / primitive types constructors
+18. Comments support
+17. Function pointer / integer pointer
+18. 
 l.c
 
 
-1. Get specific transaction by ID
-2. Get specific block by ID
-3. Get Last transaction
-4. Get Last block
-5. GUI
-6. Generate users
-7. Create genesis block
-8. put new random transaction count
-
--gen_rand_users
-
--gen_rand_trans <amount>| Generating initial random transactions
--print_users            | Prints all users and their info
--get_last_trans         | Outputs last transaction of last block
--get_last_block         | Outputs last block added to blockchain
--get_block <ID>         | Outputs block finded by ID
--add_random_trans       | Adds new random transaction to last block
--mine_block             | Mines new block for transaction storing
