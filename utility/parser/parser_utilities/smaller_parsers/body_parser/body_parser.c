@@ -37,9 +37,6 @@ static const char* TAG = "BODY_PARSER";
 ////////////////////////////////
 // PRIVATE METHODS
 
-static inline bool handleKeywordInteger_(LocalScopeObjectHandle_t variablesHashmap, TokenHandler_t** currentTokenHandle);
-// static inline bool handleKeywordNaming_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
-
 static inline bool handleDotAccess_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
 static bool handleMethodCall_(ExMethodCallHandle_t methodCall, TokenHandler_t** currentTokenHandle, const bool isMethodSelf);
 static inline bool handleObjectDeclaration_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
@@ -86,6 +83,9 @@ bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** 
         }else if(cTokenType == BRACKET_END)
         {
             break;   
+        }else if(cTokenType == SEMICOLON)
+        {
+            (*currentTokenHandle)++;
         }else
         {
             if(!handleOperations_(scopeBody, currentTokenHandle))
@@ -151,7 +151,7 @@ static bool handleExpression_(QueueHandle_t expressionQueue, TokenHandler_t** cu
             // Allocating Method Call object
             
             ExpressionHandle_t expression;
-            expression = malloc(sizeof(MethodObject_t));
+            expression = malloc(sizeof(Expression_t));
             ALLOC_CHECK(expression, ERROR);
 
             ExMethodCallHandle_t methodCall;
@@ -182,6 +182,7 @@ static bool handleExpression_(QueueHandle_t expressionQueue, TokenHandler_t** cu
         }else
         {
             Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
+            (*currentTokenHandle)++;
         }
         
         
@@ -217,6 +218,7 @@ static bool handleExpression_(QueueHandle_t expressionQueue, TokenHandler_t** cu
         }else
         {
             Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
+            (*currentTokenHandle)++;
         }
         
 
@@ -228,79 +230,47 @@ static bool handleExpression_(QueueHandle_t expressionQueue, TokenHandler_t** cu
 
 static bool handleOperator_(QueueHandle_t expressionQueue, TokenHandler_t** currentTokenHandle)
 {
+    TokenHandler_t checkerTokenHandle = NULL;
+    bool nextElementIsExpression = false;
+
+    checkerTokenHandle = (*currentTokenHandle) + 1; // TODO make tokens better way not ptrptrptr, need Object constructor
+    
+    nextElementIsExpression = isTokenExpression_(&checkerTokenHandle);
+
+    // implement double operators (++,--,==);
+    
     if(cTokenType == SEMICOLON)
     {
+
         (*currentTokenHandle)++;
         return SUCCESS;
-    }else
+    }
+
+    if(!nextElementIsExpression)
     {
-        Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
+        Shouter_shoutError(cTokenP, "Expected ; after expression");
+        (*currentTokenHandle)++;
+        return SUCCESS;
+    }
+
+    // Handling specific operator Actions
+    OperatorHandle_t operator;
+    operator = malloc(sizeof(Operator_t));
+    ALLOC_CHECK(operator, ERROR);
+
+    operator->operatorTokenType = cTokenP->tokenType;
+
+    Queue_enqueue(expressionQueue, operator);
+
+    (*currentTokenHandle)++;
+    if(!handleExpression_(expressionQueue, currentTokenHandle))
+    {
+        Log_e(TAG, "Failed to handle expression '%s'", (*checkerTokenHandle).valueString);
+        return ERROR;
     }
     
-
-    
-    // if(cTokenType == NAMING)
-    // {
-    //     // object declaration
-    //     handleObjectDeclaration_(scopeBody, currentTokenHandle);    // Object object;
-    // }else if(cTokenType == BRACKET_ROUND_START)
-    // {
-    //     // method call identified
-    //     (*currentTokenHandle)--;
-    //     handleMethodCall_(scopeBody, currentTokenHandle);           // methodCall();
-
-    // }else if(cTokenType == DOT_SYMBOL)                              // object.methodCall();
-    // {
-    //     (*currentTokenHandle)++;
-    //     handleDotAccess_(scopeBody, currentTokenHandle);
-
-    // }else
-    // {
-    //     Shouter_shoutUnrecognizedToken(cTokenP);
-    //     return SUCCESS;
-    // }
-
-    // if(cTokenType != SEMICOLON)
-    // {
-    //     Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
-    //     (*currentTokenHandle)++;   
-    // }
+    return SUCCESS;
 }
-
-// static bool handleKeywordNaming_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle)
-// {
-
-    
-
-//     return SUCCESS;
-
-// }
-
-// static inline bool handleDotAccess_(LocalScopeObjectHandle_t scopeBody,TokenHandler_t** currentTokenHandle)
-// {
-//     if(cTokenType == NAMING)
-//     {
-//         (*currentTokenHandle)++;
-//         if(cTokenType == BRACKET_ROUND_START)
-//         {
-//             (*currentTokenHandle)--;
-//             if(!handleMethodCall_(scopeBody, currentTokenHandle))
-//             {
-//                 return ERROR;
-//             }
-
-
-//         }else
-//         {
-//             // variable access
-//         }
-        
-//     }else
-//     {
-//         Shouter_shoutUnrecognizedToken(cTokenP);
-//     }
-    
-// }
 
 
 static bool handleMethodCall_(ExMethodCallHandle_t methodCall, TokenHandler_t** currentTokenHandle, const bool isMethodSelf)
@@ -396,69 +366,4 @@ static bool isTokenExpression_(TokenHandler_t** currentTokenHandle)
 
 
     // TODO: Add binary operators
-}
-
-
-static inline bool handleKeywordInteger_(LocalScopeObjectHandle_t variablesHashmap, TokenHandler_t** currentTokenHandle)
-{
-    VariableObjectHandle_t variable;
-
-    if(!ParserUtils_tryParseSequence(currentTokenHandle, PATTERN_DECLARE, PATTERN_DECLARE_SIZE))
-    {
-        return SUCCESS;
-    }
-    variable = malloc(sizeof(VariableObject_t));
-    ALLOC_CHECK(variable, ERROR);
-
-    variable->variableName = (*(*currentTokenHandle - 1))->valueString;
-    variable->bitpack = atoi((*(*currentTokenHandle - 2))->valueString);
-    variable->assignedVariable = NULL;
-
-
-    if(cTokenType == SEMICOLON)        
-    {
-        variable->assignedValue = 0;
-
-        if(!Hashmap_putEntry(variablesHashmap, variable->variableName, variable))
-        {
-            Shouter_shoutError(cTokenP, "Variable \'%s\' is declared several times", variable->variableName);
-            return ERROR;
-        }
-        
-    }else
-    if(cTokenType == EQUAL)             // checking for assignable declaration
-    {
-        (*currentTokenHandle)++;
-        if(cTokenType = NUMBER_VALUE)   // assignableValue
-        {
-            NULL_GUARD(cTokenP->valueString, ERROR, Log_e(TAG, "Cannot parse token value cause its NULL"));
-
-            variable->assignedValue = atoll(cTokenP->valueString);
-            (*currentTokenHandle)++;
-
-            if(cTokenType == SEMICOLON)
-            {
-
-                if(!Hashmap_putEntry(variablesHashmap, variable->variableName, variable))
-                {
-                    Shouter_shoutError(cTokenP, "Variable \'%s\' is declared several times", variable->variableName);
-                    return ERROR;
-                }
-
-            }else
-            {
-                Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
-            }
-
-        }else
-        {
-            Shouter_shoutError(cTokenP, "To variable can be assigned constant number or other variable only");
-        }
-
-    }else
-    {
-        Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
-    }
-
-    return SUCCESS;
 }

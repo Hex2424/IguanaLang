@@ -1,15 +1,17 @@
-import "stdio"
+
 
 bit:1 ss;
 
 bit:32 main()
 {
+    this.method2();
+    this.method2();
+    this.method2();
+    this.method2();
+    this.method2();
 
-    this.method2();
-    this.method2();
-    this.method2();
+    this + 5;
 }
-
 
 bit:1 method2()
 {

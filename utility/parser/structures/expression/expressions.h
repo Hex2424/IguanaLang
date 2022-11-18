@@ -13,15 +13,14 @@
 #ifndef UTILITY_PARSER_STRUCTURES_EXPRESSION_EXPRESSIONS_H_
 #define UTILITY_PARSER_STRUCTURES_EXPRESSION_EXPRESSIONS_H_
 #include "../expression/expression_list/method_call.h"
+#include "../expression/expression_list/single_operator.h"
 
 typedef enum
 {
+    OPERATOR,
     METHOD_CALL,
-    WHEN_LOOP,
-    WHILE_LOOP,
-    REPEAT_LOOP,
-    IF_STATEMENT,
-    GUARD_STATEMENT,
+    LOOP,
+    STATEMENT
 }ExpressionType_t;
 
 typedef struct

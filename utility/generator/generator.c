@@ -32,7 +32,7 @@
 #define GENERATE_GUARD_PART(partName) \
     fprintf(generator->hFile, "%s ",partName); \
     fprintf(generator->hFile, "DEFGUARD_%s",generator->iguanaImport->objectId.id); \
-    fwrite(&END_LINE, BYTE_SIZE, sizeof(END_LINE), generator->hFile)
+    fwrite(&END_LINE_CHAR, BYTE_SIZE, sizeof(END_LINE_CHAR), generator->hFile)
 
 ////////////////////////////////
 // PRIVATE CONSTANTS
@@ -148,7 +148,7 @@ bool Generator_generateCode(const CodeGeneratorHandle_t generator)
     }
 
 
-    fprintf(generator->hFile, "%s%c", ENDIF_KEYWORD, END_LINE);
+    fprintf(generator->hFile, "%s%c", ENDIF_KEYWORD, END_LINE_CHAR);
 
     if(fflush(generator->hFile))  // flushing what is left in buffer
     {
@@ -178,7 +178,7 @@ static inline bool fileWriteImports_(const CodeGeneratorHandle_t generator)
 {
     ImportObjectHandle_t importObject;
 
-    fprintf(generator->cFile, "%s \"%s\"%c", INCLUDE_KEYWORD, generator->hFilePath, END_LINE);
+    fprintf(generator->cFile, "%s \"%s\"%c", INCLUDE_KEYWORD, generator->hFilePath, END_LINE_CHAR);
     // printf("%s\n",generator->hFilePath);
     // writing imports to h file
     for(size_t importIdx = 0; importIdx < Hashmap_size(&generator->ast->imports); importIdx++)
@@ -189,7 +189,7 @@ static inline bool fileWriteImports_(const CodeGeneratorHandle_t generator)
         NULL_GUARD(importObject->objectId.id, ERROR, Log_e(TAG, "Import object id is null"));
 
 
-        fprintf(generator->hFile, "%s \"%s.h\"%c", INCLUDE_KEYWORD, importObject->objectId.id, END_LINE);
+        fprintf(generator->hFile, "%s \"%s.h\"%c", INCLUDE_KEYWORD, importObject->objectId.id, END_LINE_CHAR);
 
     }
     return SUCCESS;
@@ -202,7 +202,7 @@ static inline bool fileWriteClassVariables_(const CodeGeneratorHandle_t generato
     if(generator->ast->classVariables.entries.currentSize != 0)
     {
         // generator for typedef struct{ variables };
-        fprintf(generator->hFile, "%s %s%c", TYPEDEF_KEYWORD, STRUCT_KEYWORD, BRACKET_START);
+        fprintf(generator->hFile, "%s %s%c", TYPEDEF_KEYWORD, STRUCT_KEYWORD, BRACKET_START_CHAR);
         
         for(size_t variableIdx = 0; variableIdx < Hashmap_size(&generator->ast->classVariables); variableIdx++)
         {
@@ -211,7 +211,7 @@ static inline bool fileWriteClassVariables_(const CodeGeneratorHandle_t generato
             variable = Hashmap_at(&generator->ast->classVariables, variableIdx);
             fileWriteVariableDeclaration_(generator, generator->hFile, variable, VARIABLE_STRUCT);
         }
-        fprintf(generator->hFile, "%c%s_t%c%c", BRACKET_END, generator->iguanaImport->objectId.id,SEMICOLON, END_LINE);
+        fprintf(generator->hFile, "%c%s_t%c%c", BRACKET_END_CHAR, generator->iguanaImport->objectId.id, SEMICOLON_CHAR, END_LINE_CHAR);
     }
     return SUCCESS;
 }
@@ -252,14 +252,14 @@ static bool fileWriteVariableDeclaration_(const CodeGeneratorHandle_t generator,
         switch (declareType)
         {
             case VARIABLE_STRUCT:
-                fprintf(file, "%s %s:%d%c", variableTypeKeywordToUse, variable->variableName, variable->bitpack, SEMICOLON);
+                fprintf(file, "%s %s:%d%c", variableTypeKeywordToUse, variable->variableName, variable->bitpack, SEMICOLON_CHAR);
                 break;
             
             case VARIABLE_METHOD:
-                fprintf(file, "%s %s_%s%c", variableTypeKeywordToUse, generator->iguanaImport->objectId.id, variable->variableName, BRACKET_ROUND_START);
+                fprintf(file, "%s %s_%s%c", variableTypeKeywordToUse, generator->iguanaImport->objectId.id, variable->variableName, BRACKET_ROUND_START_CHAR);
                 break;
             case VARIABLE_NORMAL:
-                fprintf(file, "%s %s%c", variableTypeKeywordToUse, variable->variableName, SEMICOLON);
+                fprintf(file, "%s %s%c", variableTypeKeywordToUse, variable->variableName, SEMICOLON_CHAR);
                 break;
             case VARIABLE_PARAMETER:
                 fprintf(file, "%s %s", variableTypeKeywordToUse, variable->variableName);
@@ -300,8 +300,8 @@ static inline bool fileWriteMethods_(const CodeGeneratorHandle_t generator)
         fprintf(generator->hFile, "%s_t* root", generator->iguanaImport->objectId.id);
         if(method->parameters->currentSize > 0)
         {
-            fwrite(&COMMA, 1, 1, generator->cFile);
-            fwrite(&COMMA, 1, 1, generator->hFile);
+            fwrite(&COMMA_CHAR, 1, 1, generator->cFile);
+            fwrite(&COMMA_CHAR, 1, 1, generator->hFile);
         }
 
         for(size_t paramIdx = 0; paramIdx < method->parameters->currentSize; paramIdx++)
@@ -324,14 +324,14 @@ static inline bool fileWriteMethods_(const CodeGeneratorHandle_t generator)
 
             if((paramIdx + 1) != method->parameters->currentSize)
             {
-                fwrite(&COMMA, BYTE_SIZE, sizeof(COMMA), generator->hFile);
-                fwrite(&COMMA, BYTE_SIZE, sizeof(COMMA), generator->cFile);
+                fwrite(&COMMA_CHAR, BYTE_SIZE, sizeof(COMMA_CHAR), generator->hFile);
+                fwrite(&COMMA_CHAR, BYTE_SIZE, sizeof(COMMA_CHAR), generator->cFile);
             }
 
         }
 
-        fprintf(generator->hFile, "%c%c\n", BRACKET_ROUND_END, SEMICOLON);
-        fprintf(generator->cFile, "%c\n", BRACKET_ROUND_END);
+        fprintf(generator->hFile, "%c%c\n", BRACKET_ROUND_END_CHAR, SEMICOLON_CHAR);
+        fprintf(generator->cFile, "%c\n", BRACKET_ROUND_END_CHAR);
 
         if(!fileWriteMethodBody_(generator, method))
         {
@@ -348,7 +348,7 @@ static inline bool fileWriteMethods_(const CodeGeneratorHandle_t generator)
 
 static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator, const MethodObjectHandle_t method)
 {
-    fwrite(&BRACKET_START, 1, 1, generator->cFile);
+    fwrite(&BRACKET_START_CHAR, 1, 1, generator->cFile);
 
     for(size_t expressionQ = 0; expressionQ < method->body.expressions.currentSize; expressionQ++)
     {
@@ -376,7 +376,7 @@ static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator, c
         Queue_destroy(expressionQueue);
         
     }
-    fprintf(generator->cFile, "%c\n", BRACKET_END);
+    fprintf(generator->cFile, "%c\n", BRACKET_END_CHAR);
     return SUCCESS;
 }
 
@@ -388,7 +388,7 @@ static bool handleExpressionWriting_(const CodeGeneratorHandle_t generator, cons
         methodCallHandle = expression->expressionObject;
         if(methodCallHandle->isMethodSelf)
         {
-            fprintf(generator->cFile, "%s_%s((void*) 0)%c", generator->iguanaImport->objectId.id, methodCallHandle->method.methodName, SEMICOLON);
+            fprintf(generator->cFile, "%s_%s((void*) 0)%c", generator->iguanaImport->objectId.id, methodCallHandle->method.methodName, SEMICOLON_CHAR);
         }else
         {
             // not implemented yet

@@ -32,6 +32,7 @@ int main(int argc, char const *argv[])
     uint32_t sizeExePath, sizeIguanaFilePath;
     char* filePathToCompile;
     sizeExePath = strlen(argv[0]);
+
     for(uint32_t i = sizeExePath; i > 0; i--)
     {
         if(argv[0][i] == '/')

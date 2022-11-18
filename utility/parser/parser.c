@@ -94,6 +94,8 @@ bool Parser_parseTokens(ParserHandle_t parser, MainFrameHandle_t root, const Vec
         Vector_destroy(tokenVector);
         return ERROR;
     }
+
+
     while (currentToken < endToken)
     {
         if(cTokenType == MODULE_IMPORT)     // detected import
@@ -279,7 +281,7 @@ static inline bool addLibraryForCompilation_(ParserHandle_t parser, ImportObject
 
 static inline int checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, ImportObjectHandle_t path)
 {
-
+    
     for(size_t compiledPathIdx = 0; compiledPathIdx < compiler->alreadyCompiledFilePaths.currentSize; compiledPathIdx++)
     {
         // generating absolute paths for better same path checking

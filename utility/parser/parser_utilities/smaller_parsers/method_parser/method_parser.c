@@ -161,6 +161,7 @@ static bool parseMethodBody_(TokenHandler_t** currentTokenHandle, MethodObjectHa
 
     if(cTokenType == BRACKET_START)
     {
+
         (*currentTokenHandle)++;
         // parsing scope
         if(!BodyParser_parseScope(&methodHandle->body, currentTokenHandle))
@@ -169,6 +170,7 @@ static bool parseMethodBody_(TokenHandler_t** currentTokenHandle, MethodObjectHa
             return ERROR;
         }
 
+        
     }else
     {
         Shouter_shoutExpectedToken(cTokenP, BRACKET_START);
