@@ -64,6 +64,7 @@ static bool fileWriteMethods_(const CodeGeneratorHandle_t generator);
 static bool initializeFileDescriptorFor_(FILE** descriptor, const char* virtualBuffer, char* path, const ImportObjectHandle_t iguanaImport, const char extension);     
 static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator,const MethodObjectHandle_t method);
 static bool handleExpressionWriting_(const CodeGeneratorHandle_t generator,const ExpressionHandle_t expression);
+static void handleOperatorWritingByType_(FILE* file, const TokenType_t type);
 
 ////////////////////////////////
 // IMPLEMENTATION
@@ -114,7 +115,7 @@ static bool initializeFileDescriptorFor_(FILE** descriptor,const char* virtualBu
 bool Generator_generateCode(const CodeGeneratorHandle_t generator)
 {
 
- // setting virtual buffer for bufferizing file writing (better speed)
+    // setting virtual buffer for bufferizing file writing (better speed)
 
     // TODO: error checking of fwrite
     // writing ndef guard start
@@ -171,6 +172,7 @@ bool Generator_generateCode(const CodeGeneratorHandle_t generator)
     {
         Log_w(TAG, "Failed to close file %s", generator->hFile);
     }
+
     return SUCCESS;
 }
 
@@ -360,11 +362,15 @@ static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator, c
             return ERROR;
         }
 
-        for(size_t expressionIdx = 0; expressionIdx < expressionQueue->count; expressionIdx++)
+        while (true)
         {
             ExpressionHandle_t expression;
             expression = Queue_dequeue(expressionQueue);
-            
+            if(expression == NULL)
+            {
+                break;
+            }
+
             if(!handleExpressionWriting_(generator, expression))
             {
                 Log_e(TAG, "Failed to write expression");
@@ -372,6 +378,7 @@ static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator, c
             }
 
         }
+        fprintf(generator->cFile, "%c", SEMICOLON_CHAR);
         
         Queue_destroy(expressionQueue);
         
@@ -382,13 +389,19 @@ static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator, c
 
 static bool handleExpressionWriting_(const CodeGeneratorHandle_t generator, const ExpressionHandle_t expression)
 {
+    if(expression == NULL)
+    {
+        Log_e(TAG, "Expression pointer is NULL");
+        return ERROR;
+    }
+
     if(expression->type == METHOD_CALL)
     {
         ExMethodCallHandle_t methodCallHandle;
         methodCallHandle = expression->expressionObject;
         if(methodCallHandle->isMethodSelf)
         {
-            fprintf(generator->cFile, "%s_%s((void*) 0)%c", generator->iguanaImport->objectId.id, methodCallHandle->method.methodName, SEMICOLON_CHAR);
+            fprintf(generator->cFile, "%s_%s((void*) 0)", generator->iguanaImport->objectId.id, methodCallHandle->method.methodName);
         }else
         {
             // not implemented yet
@@ -396,10 +409,60 @@ static bool handleExpressionWriting_(const CodeGeneratorHandle_t generator, cons
 
         free(methodCallHandle);
 
+    }else if(expression->type == CONSTANT_NUMBER)
+    {
+        ConstantNumberHandle_t numberHandle;
+        numberHandle = expression->expressionObject;
+        NULL_GUARD(numberHandle, ERROR, Log_e(TAG, "Constant number handle is null somehow"));
+
+        fprintf(generator->cFile, "%s", numberHandle->valueAsString);
+
+    }else if(expression->type == OPERATOR)
+    {
+        OperatorHandle_t operatorHandle;
+        operatorHandle = expression->expressionObject;
+        NULL_GUARD(operatorHandle, ERROR, Log_e(TAG, "Operator handle is null somehow"));
+        handleOperatorWritingByType_(generator->cFile, operatorHandle->operatorTokenType);
+
     }else
     {
         Log_e(TAG, "Unrecognised expression \'ID:%d\'", expression->type);
         return ERROR;
     }
+    
     return SUCCESS;
+}
+
+
+static void handleOperatorWritingByType_(FILE* file, const TokenType_t type)
+{
+ 
+        switch (type)
+        {
+        case OPERATOR_PLUS:
+            {
+                fprintf(file, "+");
+            }break;
+
+        case OPERATOR_MINUS:
+            {
+                fprintf(file, "-");
+            }break;
+
+        case OPERATOR_MULTIPLY:
+            {
+                fprintf(file, "*");
+            }break;
+        
+        case OPERATOR_DIVIDE:
+            {
+                fprintf(file, "/");
+            }break;
+        case OPERATOR_MODULUS:
+            {
+                fprintf(file, "%");
+            }break;
+        default:
+            break;
+        }
 }

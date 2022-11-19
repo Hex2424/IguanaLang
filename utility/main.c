@@ -14,6 +14,7 @@
 #include "compiler/compiler.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 static const char* TAG = "MAIN";
 static const char* igRelativeTempPath = "../iguanaTestFiles/test.i";
@@ -55,13 +56,14 @@ int main(int argc, char const *argv[])
     // }
     if(!Compiler_initialize(&compiler))
     {
-        return -1;
+        exit(-1);
     }
 
     if(!Compiler_startCompilingProcessOnRoot(&compiler, filePathToCompile))
     {
-        return -2;
+        Compiler_destroy(&compiler);
+        exit(-2);
     }
 
-    return Compiler_destroy(&compiler);
+    exit(Compiler_destroy(&compiler));
 }

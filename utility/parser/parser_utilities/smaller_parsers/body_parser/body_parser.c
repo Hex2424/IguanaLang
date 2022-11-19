@@ -17,6 +17,7 @@
 #include "../../../../parser/parser_utilities/compiler_messages.h"
 #include "../../../../parser/structures/expression/expressions.h"
 #include "../../../../queue/queue.h"
+
 ////////////////////////////////
 // DEFINES
 
@@ -24,7 +25,7 @@
 
 #define cTokenP (**currentTokenHandle)
 #define cTokenType cTokenP -> tokenType
-
+#define tokenOffsetType(offset) (*((*currentTokenHandle) + 1))->tokenType
 
 ////////////////////////////////
 // PRIVATE CONSTANTS
@@ -40,66 +41,115 @@ static const char* TAG = "BODY_PARSER";
 static inline bool handleDotAccess_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
 static bool handleMethodCall_(ExMethodCallHandle_t methodCall, TokenHandler_t** currentTokenHandle, const bool isMethodSelf);
 static inline bool handleObjectDeclaration_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
+static bool queueAppendExprObject_(QueueHandle_t expressionQueue, const ExpressionType_t expressionType, void* object);
 static inline bool handleMethodCallParameterization_(MethodObjectHandle_t methodHandle, TokenHandler_t** currentTokenHandle);
 static bool handleOperator_(QueueHandle_t expressionQueue, TokenHandler_t** currentTokenHandle);
 static bool isTokenOperator_(TokenHandler_t** currentTokenHandle);
 static bool isTokenExpression_(TokenHandler_t** currentTokenHandle);
+static bool handleNaming_(QueueHandle_t expressionQueue, TokenHandler_t** currentTokenHandle);
 static bool handleOperations_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
 static bool handleExpression_(QueueHandle_t expressionQueue, TokenHandler_t** currentTokenHandle);
+static bool parseExpressionLine_(QueueHandle_t expressionQueue, TokenHandler_t** currentTokenHandle);
 ////////////////////////////////
 // IMPLEMENTATION
 
 
 bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle)
 {
-  
-    while (true)
+    QueueHandle_t expressionQueue;
+
+    while (cTokenType != BRACKET_END)
     {
-        if(isTokenOperator_(currentTokenHandle))
+
+        expressionQueue = malloc(sizeof(Queue_t));
+        ALLOC_CHECK(expressionQueue, ERROR);
+        
+        if(!Queue_create(expressionQueue))
         {
+            Log_e(TAG, "Failed to create expression Queue");
+            return ERROR;
+        }
 
-            if(!handleOperator_(scopeBody, currentTokenHandle))
-            {
-                return ERROR;
-            }
-
-        }else if(isTokenExpression_(currentTokenHandle))
+        if(!parseExpressionLine_(expressionQueue, currentTokenHandle))
         {
-            QueueHandle_t expressionQueue;
-            expressionQueue = malloc(sizeof(Queue_t));
-            ALLOC_CHECK(expressionQueue, ERROR);
+            Log_e(TAG, "Failed to parse expression sequence");
+            return ERROR;
+        }
 
-            if(!handleExpression_(expressionQueue, currentTokenHandle))
-            {
-                Log_e(TAG, "Failed to parse expression");
-                return ERROR;
-            }
+        if(expressionQueue->count != 0)
+        {
             if(!Vector_append(&scopeBody->expressions, expressionQueue))
             {
-                Log_e(TAG, "Failed to append expression queue");
+                Log_e(TAG, "Failed to append expression Queue to expressions vector");
                 return ERROR;
             }
-
-        }else if(cTokenType == BRACKET_END)
-        {
-            break;   
-        }else if(cTokenType == SEMICOLON)
-        {
-            (*currentTokenHandle)++;
         }else
         {
-            if(!handleOperations_(scopeBody, currentTokenHandle))
-            {
-                Log_e(TAG, "Failed to handle operations");
-                return ERROR;
-            }
+            // deallocating unecessary queue
+            Queue_destroy(expressionQueue);
+            free(expressionQueue);
         }
+        (*currentTokenHandle)++;
+        // if(cTokenType != BRACKET_END)
+        // {
+        //     (*currentTokenHandle)++;
+        // }
         
-        
+    
     }
     
     return SUCCESS;
 }
+
+static bool parseExpressionLine_(QueueHandle_t expressionQueue, TokenHandler_t** currentTokenHandle)
+{
+    bool expectedExpresion;
+    expectedExpresion = true;
+    
+    while (cTokenType != SEMICOLON && cTokenType != BRACKET_END)
+    {
+        if(isTokenExpression_(currentTokenHandle))
+        {
+            if(expectedExpresion)
+            {
+                if(!handleExpression_(expressionQueue, currentTokenHandle))
+                {
+                    Log_e(TAG, "Failed to parse expression");
+                    return ERROR;
+                }
+            }else
+            {
+                Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
+                break;
+            }
+            
+            expectedExpresion = !expectedExpresion;
+
+        }else if(isTokenOperator_(currentTokenHandle))
+        {
+            if(!expectedExpresion)
+            {
+                if(!handleOperator_(expressionQueue, currentTokenHandle))
+                {
+                    Log_e(TAG, "Failed to parse operator");
+                    return ERROR;
+                }
+            }else
+            {
+                Shouter_shoutError(cTokenP, "Expected expression after operator");
+                break;
+            }
+            
+            expectedExpresion = !expectedExpresion;
+            
+        }
+
+        (*currentTokenHandle)++;
+    }
+    Log_d(TAG, "Finished expression line");
+    return SUCCESS;
+}
+
 
 bool BodyParser_initialize(LocalScopeObjectHandle_t scopeBody)
 {
@@ -124,151 +174,123 @@ static bool handleOperations_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t
     return SUCCESS;
 }
 
+static bool handleNaming_(QueueHandle_t expressionQueue, TokenHandler_t** currentTokenHandle)
+{
+    TokenHandler_t currentNamingToken;
+    while (cTokenType != SEMICOLON)
+    {
+        // if(tokenOffsetType(1) == DOT_SYMBOL)
+        // {
+        //     (*currentTokenHandle)++;
+        //     if(tokenOffsetType(1) != NAMING)
+        //     {
+        //         Shouter_shoutError(cTokenP, "With '.' access you can only access object public variable or methods");
+        //         expressionQueue->count = 0;
+        //         break;
+        //     }
+        // }else 
+
+        if(tokenOffsetType(1) == BRACKET_ROUND_START)
+        {
+            ExMethodCallHandle_t methodHandle;
+
+            methodHandle = malloc(sizeof(ExMethodCall_t));
+            ALLOC_CHECK(methodHandle, ERROR);
+
+            if(!handleMethodCall_(methodHandle, currentTokenHandle, true))
+            {
+                Log_e(TAG, "Failed to handle method parsing");
+                return ERROR;
+            }
+
+            if(!queueAppendExprObject_(expressionQueue, METHOD_CALL, methodHandle))
+            {
+                Log_e(TAG, "Failed to append expression object");
+                return ERROR;
+            }
+
+        }else
+        {
+            // incase of operator
+            break;
+        }
+        
+        
+    }
+
+    return SUCCESS;
+}
+
 
 static bool handleExpression_(QueueHandle_t expressionQueue, TokenHandler_t** currentTokenHandle)
 {
 
-    if(cTokenType == NAMING)
-    {
-        (*currentTokenHandle)++;
-        if(isTokenOperator_(currentTokenHandle))
-        {
-            if(!handleOperator_(expressionQueue, currentTokenHandle))
-            {
-                Log_e(TAG, "Failed to handle Operator %s", cTokenP->valueString);
-                return ERROR;
-            }
-
-        }else if(cTokenType == SEMICOLON)
-        {
-            (*currentTokenHandle)++;
-            return SUCCESS;
-
-        }else if(cTokenType == BRACKET_ROUND_START)
-        {
-            (*currentTokenHandle)--;
-
-            // Allocating Method Call object
-            
-            ExpressionHandle_t expression;
-            expression = malloc(sizeof(Expression_t));
-            ALLOC_CHECK(expression, ERROR);
-
-            ExMethodCallHandle_t methodCall;
-            methodCall = malloc(sizeof(MethodObject_t));
-            ALLOC_CHECK(methodCall, ERROR);
-
-            expression->type = METHOD_CALL;
-            expression->expressionObject = methodCall;
-            
-            if(!handleMethodCall_(methodCall, currentTokenHandle, true))
-            {
-                Log_e(TAG, "Failed to handle method call parsing \'%s\'", cTokenP->valueString);
-                return ERROR;
-            }
-
-            Queue_enqueue(expressionQueue, expression);
-            if(!handleOperator_(expressionQueue, currentTokenHandle))
-            {
-                Log_e(TAG, "Failed to handle Operator %s", cTokenP->valueString);
-                return ERROR;
-            } 
-            
-        }else if(cTokenP == DOT_SYMBOL)
-        {
-            // nothing for now
-            
-
-        }else
-        {
-            Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
-            (*currentTokenHandle)++;
-        }
-        
-        
-    }else if(cTokenType == THIS)
+    if(cTokenType == NAMING || cTokenType == THIS)
     {
 
-        (*currentTokenHandle)++;
-
-        if(isTokenOperator_(currentTokenHandle))
+        if(!handleNaming_(expressionQueue, currentTokenHandle))
         {
-            if(!handleOperator_(expressionQueue, currentTokenHandle))
-            {
-                Log_e(TAG, "Failed to handle Operator \'%s\'", cTokenP->valueString);
-                return ERROR;
-            }
-
-        }else if(cTokenType == SEMICOLON)
-        {
-
-            (*currentTokenHandle)++;
-            return SUCCESS;
-
-        }else if(cTokenType == DOT_SYMBOL)
-        {
-            // Calling method inside this object
-            (*currentTokenHandle)++;
-            if(!handleExpression_(expressionQueue, currentTokenHandle))
-            {
-                Log_e(TAG, "Failed to handle Expression with token \'%s\'", cTokenP->valueString);
-                return ERROR;
-            }
-
-        }else
-        {
-            Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
-            (*currentTokenHandle)++;
+            Log_e(TAG, "Failed parse naming");
+            return ERROR;
         }
         
+    }else if(cTokenType == NUMBER_VALUE)
+    {
+        ConstantNumberHandle_t constantValue;
 
+        constantValue = malloc(sizeof(ConstantNumber_t));
+        ALLOC_CHECK(constantValue, ERROR);
+
+        constantValue->valueAsString = cTokenP->valueString;
+
+        if(!queueAppendExprObject_(expressionQueue, CONSTANT_NUMBER, constantValue))
+        {
+            Log_e(TAG, "Failed append expression object to queue");
+            return ERROR;
+        }
+        
+    }else
+    {
+        Shouter_shoutError(cTokenP, "Expected expression and found '%s'", cTokenP->valueString);
     }
     
     
     return SUCCESS;
 }
 
+static bool queueAppendExprObject_(QueueHandle_t expressionQueue, const ExpressionType_t expressionType, void* object)
+{
+    ExpressionHandle_t expression;
+    expression = malloc(sizeof(Expression_t));
+    ALLOC_CHECK(expression, ERROR);
+
+    expression->type = expressionType;
+    expression->expressionObject = object;
+    Log_i(TAG, "Expression contains object type%d", expression->type);
+
+    Queue_enqueue(expressionQueue, expression);
+
+    return SUCCESS;
+}
+
+
 static bool handleOperator_(QueueHandle_t expressionQueue, TokenHandler_t** currentTokenHandle)
 {
-    TokenHandler_t checkerTokenHandle = NULL;
-    bool nextElementIsExpression = false;
-
-    checkerTokenHandle = (*currentTokenHandle) + 1; // TODO make tokens better way not ptrptrptr, need Object constructor
-    
-    nextElementIsExpression = isTokenExpression_(&checkerTokenHandle);
-
-    // implement double operators (++,--,==);
-    
-    if(cTokenType == SEMICOLON)
-    {
-
-        (*currentTokenHandle)++;
-        return SUCCESS;
-    }
-
-    if(!nextElementIsExpression)
-    {
-        Shouter_shoutError(cTokenP, "Expected ; after expression");
-        (*currentTokenHandle)++;
-        return SUCCESS;
-    }
 
     // Handling specific operator Actions
+
     OperatorHandle_t operator;
     operator = malloc(sizeof(Operator_t));
     ALLOC_CHECK(operator, ERROR);
 
     operator->operatorTokenType = cTokenP->tokenType;
 
-    Queue_enqueue(expressionQueue, operator);
-
-    (*currentTokenHandle)++;
-    if(!handleExpression_(expressionQueue, currentTokenHandle))
+    if(!queueAppendExprObject_(expressionQueue, OPERATOR, operator))
     {
-        Log_e(TAG, "Failed to handle expression '%s'", (*checkerTokenHandle).valueString);
+        Log_e(TAG, "Failed to append to queue operator object");
         return ERROR;
     }
-    
+
     return SUCCESS;
 }
 
@@ -334,7 +356,7 @@ static inline bool handleMethodCallParameterization_(MethodObjectHandle_t method
     {
         Shouter_shoutExpectedToken(cTokenP, BRACKET_ROUND_START);
     }
-    (*currentTokenHandle)++;
+
     return SUCCESS;
     
 }

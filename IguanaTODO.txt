@@ -19,7 +19,11 @@ TODO:
 17. Object constructors / primitive types constructors
 18. Comments support
 17. Function pointer / integer pointer
-18. 
+18. Make operational zones like i == a || i == b  to i == (a or b or c ...)
+19. Optimized way to create Abstract syntax tree
+
+
+
 l.c
 
 

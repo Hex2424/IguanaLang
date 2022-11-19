@@ -12,15 +12,16 @@
  */
 #ifndef UTILITY_PARSER_STRUCTURES_EXPRESSION_EXPRESSIONS_H_
 #define UTILITY_PARSER_STRUCTURES_EXPRESSION_EXPRESSIONS_H_
+
 #include "../expression/expression_list/method_call.h"
 #include "../expression/expression_list/single_operator.h"
+#include "../expression/expression_list/constant_value.h"
 
 typedef enum
 {
     OPERATOR,
+    CONSTANT_NUMBER,
     METHOD_CALL,
-    LOOP,
-    STATEMENT
 }ExpressionType_t;
 
 typedef struct

@@ -26,6 +26,7 @@ bool Queue_create(QueueHandle_t queue)
 
 	queue->front = NULL;
 	queue->back = NULL;
+	queue->count = 0;
 	return true;
 }
 
