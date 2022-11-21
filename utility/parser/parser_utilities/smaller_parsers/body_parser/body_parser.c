@@ -136,12 +136,17 @@ static bool parseExpressionLine_(QueueHandle_t expressionQueue, TokenHandler_t**
                 }
             }else
             {
-                Shouter_shoutError(cTokenP, "Expected expression after operator");
+                Shouter_shoutError(cTokenP, "Expected expression after operator \'%s\'", cTokenP->valueString);
                 break;
             }
             
             expectedExpresion = !expectedExpresion;
             
+        }
+
+        if(expectedExpresion && (tokenOffsetType(1) == SEMICOLON))
+        {
+            Shouter_shoutError(cTokenP, "Expected expression after operator \'%s\'", cTokenP->valueString);
         }
 
         (*currentTokenHandle)++;
