@@ -21,6 +21,7 @@ typedef enum
 {
     OPERATOR,
     CONSTANT_NUMBER,
+    VARIABLE_NAME,
     METHOD_CALL,
 }ExpressionType_t;
 

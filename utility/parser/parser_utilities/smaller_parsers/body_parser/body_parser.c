@@ -216,7 +216,15 @@ static bool handleNaming_(QueueHandle_t expressionQueue, TokenHandler_t** curren
 
         }else
         {
-            // incase of operator
+            if(cTokenType == NAMING)
+            {
+                if(!queueAppendExprObject_(expressionQueue, VARIABLE_NAME, cTokenP->valueString))
+                {
+                    Log_e(TAG, "Failed to append expression object");
+                    return ERROR;
+                }
+            }
+    
             break;
         }
         
@@ -271,6 +279,7 @@ static bool queueAppendExprObject_(QueueHandle_t expressionQueue, const Expressi
 
     expression->type = expressionType;
     expression->expressionObject = object;
+    char* ss = object;
     Log_i(TAG, "Expression contains object type%d", expression->type);
 
     Queue_enqueue(expressionQueue, expression);

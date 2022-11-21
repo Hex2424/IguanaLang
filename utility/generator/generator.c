@@ -424,6 +424,13 @@ static bool handleExpressionWriting_(const CodeGeneratorHandle_t generator, cons
         NULL_GUARD(operatorHandle, ERROR, Log_e(TAG, "Operator handle is null somehow"));
         handleOperatorWritingByType_(generator->cFile, operatorHandle->operatorTokenType);
 
+    }else if(expression->type == VARIABLE_NAME)
+    {
+        char* variableName;
+        variableName = expression->expressionObject;
+        NULL_GUARD(variableName, ERROR, Log_e(TAG, "Variable name handle is null somehow"));
+
+        fprintf(generator->cFile, variableName);
     }else
     {
         Log_e(TAG, "Unrecognised expression \'ID:%d\'", expression->type);
