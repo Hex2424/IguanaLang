@@ -34,28 +34,19 @@ static const char* TAG = "GLOBAL_PARSER_UTILITY";
 
 bool ParserUtils_tryParseSequence(TokenHandler_t** currentTokenHandle, const TokenType_t* pattern,const size_t patternSize)
 {
-    int patternIdx;
-    for(patternIdx = 0; patternIdx < patternSize; patternIdx++, (*currentTokenHandle)++)
+    bool parseCorrect = true;
+    for(uint8_t patternIdx = 0; patternIdx < patternSize; patternIdx++, (*currentTokenHandle)++)
     {
-
         if((**currentTokenHandle)->tokenType != pattern[patternIdx])
         {
             // Log_d(TAG, "%d %d", cTokenType,  pattern[patternIdx]);
-            if(((patternIdx + 1) < patternSize) && ((**currentTokenHandle)->tokenType  == pattern[patternIdx + 1]))
-            {
-                Shouter_shoutForgottenToken((**currentTokenHandle),pattern[patternIdx + 1]);
-                
-            }else
-            {
-                Shouter_shoutExpectedToken((**currentTokenHandle), pattern[patternIdx]);
-            }
-            return false;
+
+            Shouter_shoutExpectedToken((**currentTokenHandle), pattern[patternIdx]);
+            parseCorrect = false;
         }
         
     }
-    return true;
-
-
+    return parseCorrect;
 }
 
 /**

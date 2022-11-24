@@ -48,8 +48,9 @@ static bool isTokenOperator_(TokenHandler_t** currentTokenHandle);
 static bool isTokenExpression_(TokenHandler_t** currentTokenHandle);
 static bool handleNaming_(QueueHandle_t expressionQueue, TokenHandler_t** currentTokenHandle);
 static bool handleOperations_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
-static bool handleExpression_(QueueHandle_t expressionQueue, TokenHandler_t** currentTokenHandle);
-static bool parseExpressionLine_(QueueHandle_t expressionQueue, TokenHandler_t** currentTokenHandle);
+static bool handleExpression_(LocalScopeObjectHandle_t localScope, TokenHandler_t** currentTokenHandle);
+static bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, TokenHandler_t** currentTokenHandle);
+static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
 ////////////////////////////////
 // IMPLEMENTATION
 
@@ -70,7 +71,7 @@ bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** 
             return ERROR;
         }
 
-        if(!parseExpressionLine_(expressionQueue, currentTokenHandle))
+        if(!parseExpressionLine_(scopeBody, currentTokenHandle))
         {
             Log_e(TAG, "Failed to parse expression sequence");
             return ERROR;
@@ -101,7 +102,7 @@ bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** 
     return SUCCESS;
 }
 
-static bool parseExpressionLine_(QueueHandle_t expressionQueue, TokenHandler_t** currentTokenHandle)
+static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, TokenHandler_t** currentTokenHandle)
 {
     bool expectedExpresion;
     expectedExpresion = true;
@@ -112,7 +113,7 @@ static bool parseExpressionLine_(QueueHandle_t expressionQueue, TokenHandler_t**
         {
             if(expectedExpresion)
             {
-                if(!handleExpression_(expressionQueue, currentTokenHandle))
+                if(!handleExpression_(localScope, currentTokenHandle))
                 {
                     Log_e(TAG, "Failed to parse expression");
                     return ERROR;
@@ -129,7 +130,7 @@ static bool parseExpressionLine_(QueueHandle_t expressionQueue, TokenHandler_t**
         {
             if(!expectedExpresion)
             {
-                if(!handleOperator_(expressionQueue, currentTokenHandle))
+                if(!handleOperator_(&localScope->expressions, currentTokenHandle))
                 {
                     Log_e(TAG, "Failed to parse operator");
                     return ERROR;
@@ -158,6 +159,7 @@ static bool parseExpressionLine_(QueueHandle_t expressionQueue, TokenHandler_t**
 
 bool BodyParser_initialize(LocalScopeObjectHandle_t scopeBody)
 {
+    
 
     if(!Hashmap_create(&scopeBody->localVariables, NULL))
     {
@@ -172,6 +174,96 @@ bool BodyParser_initialize(LocalScopeObjectHandle_t scopeBody)
     }
 
     return SUCCESS;
+}
+
+static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle)
+{
+    VariableObjectHandle_t variable;
+    variable = malloc(sizeof(VariableObject_t));
+    ALLOC_CHECK(variable, ERROR);
+
+    (*currentTokenHandle)++;
+
+    if(cTokenType == COLON)
+    {
+        (*currentTokenHandle)++;
+
+        if(cTokenType == NUMBER_VALUE)
+        {
+            variable->bitpack = atoi(cTokenP->valueString);
+            (*currentTokenHandle)++;
+
+            if(cTokenType == NAMING)
+            {
+                // no assigning
+                variable->variableName = cTokenP->valueString;
+            
+            }else if(cTokenType == BRACKET_ROUND_START)
+            {
+                // with assigning
+                (*currentTokenHandle)++;
+                if(cTokenType == NUMBER_VALUE)
+                {
+                    variable->assignedValue = cTokenP->valueString;
+                    (*currentTokenHandle)++;
+
+                    if(cTokenType == BRACKET_ROUND_END)
+                    {
+                        (*currentTokenHandle)++;
+                        if(cTokenType == NAMING)
+                        {
+                            variable->variableName = cTokenP->valueString;
+                            if(Hashmap_getEntry(&scopeBody->localVariables, variable->variableName) == NULL)
+                            {
+                                if(!Hashmap_putEntry(&scopeBody->localVariables, variable->variableName, variable))
+                                {
+                                    Log_e(TAG, "For some reason hashmap entry cannot be putted");
+                                    return ERROR;
+                                }
+
+                                if(!queueAppendExprObject_(&scopeBody->expressions, VARIABLE_NAME, variable->variableName))
+                                {
+                                    Log_e(TAG, "Failed to put variable name to expressions");
+                                    return ERROR;
+                                }
+
+                            }else
+                            {
+                                Shouter_shoutError(cTokenP, "Variable '%s' is already declared", variable->variableName);   
+                            }
+
+                        }else
+                        {
+                            Shouter_shoutError(cTokenP, "Expected variable name after constructor");
+                        }
+                        
+                    }else
+                    {
+                        Shouter_shoutExpectedToken(cTokenP, BRACKET_ROUND_END);
+                    }
+                    
+                }else
+                {
+                    Shouter_shoutError(cTokenP, "Expected Constructor parameter, but found this: %s", cTokenP->valueString);
+                }
+                
+            }else
+            {
+                Shouter_shoutError(cTokenP, "Expected Variable constructutor or variable name after bitpack value");
+            }
+
+        }else
+        {
+            Shouter_shoutError(cTokenP, "After colon ':' need specify constant bitpack field");
+        }
+
+        }else
+        {
+            Shouter_shoutExpectedToken(cTokenP, COLON);
+        }
+
+    return SUCCESS;
+    
 }
 
 static bool handleOperations_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle)
@@ -235,13 +327,13 @@ static bool handleNaming_(QueueHandle_t expressionQueue, TokenHandler_t** curren
 }
 
 
-static bool handleExpression_(QueueHandle_t expressionQueue, TokenHandler_t** currentTokenHandle)
+static bool handleExpression_(LocalScopeObjectHandle_t localScope, TokenHandler_t** currentTokenHandle)
 {
 
     if(cTokenType == NAMING || cTokenType == THIS)
     {
 
-        if(!handleNaming_(expressionQueue, currentTokenHandle))
+        if(!handleNaming_(&localScope->expressions, currentTokenHandle))
         {
             Log_e(TAG, "Failed parse naming");
             return ERROR;
@@ -256,12 +348,19 @@ static bool handleExpression_(QueueHandle_t expressionQueue, TokenHandler_t** cu
 
         constantValue->valueAsString = cTokenP->valueString;
 
-        if(!queueAppendExprObject_(expressionQueue, CONSTANT_NUMBER, constantValue))
+        if(!queueAppendExprObject_(&localScope->expressions, CONSTANT_NUMBER, constantValue))
         {
             Log_e(TAG, "Failed append expression object to queue");
             return ERROR;
         }
         
+    }else if(cTokenType == BIT_TYPE)
+    {
+        if(!handleBitType_(localScope, currentTokenHandle))
+        {   
+            Log_e(TAG, "Failed to handle BIT Type declaration");
+            return ERROR;
+        }
     }else
     {
         Shouter_shoutError(cTokenP, "Expected expression and found '%s'", cTokenP->valueString);

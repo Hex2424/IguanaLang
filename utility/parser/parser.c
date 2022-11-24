@@ -123,6 +123,7 @@ static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle)
     {
         return SUCCESS;
     }
+
     variable = malloc(sizeof(VariableObject_t));
     ALLOC_CHECK(variable, ERROR);
 
