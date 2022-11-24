@@ -88,7 +88,7 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
     char *wordIterator;
     bool breakTag;
     bool isLiteral;
-    int existWordBuild;
+    uint32_t existWordBuild;
     size_t overallLength;
     size_t tokenCount;
 
@@ -163,6 +163,7 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
             if (existWordBuild != 0)
             {
                 TokenHandler_t token;
+                uint32_t sizeOfSeperation = existWordBuild;
 
                 if(!isLiteral)
                 {
@@ -178,7 +179,8 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
                         existWordBuild--;
                     }
 
-                    token = Tokenizer_wordToCorrespondingToken(wordIterator, existWordBuild);
+
+                    token = Tokenizer_wordToCorrespondingToken(wordIterator, sizeOfSeperation);
 
                     token->location.column = lastColumn;     // setting up file location settings for debugging errors
                     token->location.line = lastLine;

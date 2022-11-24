@@ -28,6 +28,8 @@
 
 #define NGUARD_HASH_RANDOM_SIZE     64
 #define BYTE_SIZE_BITS              8
+#define LOCAL_VARIABLES_STRUCT_NAME "l"
+
 
 #define GENERATE_GUARD_PART(partName) \
     fprintf(generator->hFile, "%s ",partName); \
@@ -339,7 +341,7 @@ static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator, c
 
     // writing structure Initializator
 
-    fprintf(generator->cFile, "%s_t local%c", generator->iguanaImport->objectId.id, SEMICOLON_CHAR);
+    fprintf(generator->cFile, "%s_t %s%c", generator->iguanaImport->objectId.id, LOCAL_VARIABLES_STRUCT_NAME,SEMICOLON_CHAR);
 
     for(size_t expressionQ = 0; expressionQ < method->body.expressions.currentSize; expressionQ++)
     {
@@ -419,7 +421,7 @@ static bool handleExpressionWriting_(const CodeGeneratorHandle_t generator, cons
         variableName = expression->expressionObject;
         NULL_GUARD(variableName, ERROR, Log_e(TAG, "Variable name handle is null somehow"));
 
-        fprintf(generator->cFile, "local.%s", variableName);
+        fprintf(generator->cFile, "%s.%s",LOCAL_VARIABLES_STRUCT_NAME, variableName);
     }else
     {
         Log_e(TAG, "Unrecognised expression \'ID:%d\'", expression->type);
@@ -457,6 +459,10 @@ static void handleOperatorWritingByType_(FILE* file, const TokenType_t type)
         case OPERATOR_MODULUS:
             {
                 fprintf(file, "%");
+            }break;
+        case EQUAL:
+            {
+                fprintf(file, "=");
             }break;
         default:
             break;

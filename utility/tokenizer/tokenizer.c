@@ -57,9 +57,8 @@ TokenHandler_t Tokenizer_wordToCorrespondingToken(const char *seperation, const 
 
     for(bindingLinePos = 0; bindingLinePos < bindingTableCount; bindingLinePos++)
     {
-        if(memcmp(seperation, bindingsTable_[bindingLinePos].expression, length) == 0)
+        if(length == bindingsTable_[bindingLinePos].size && memcmp(seperation, bindingsTable_[bindingLinePos].expression, length) == 0)
         {
-
             tokenHandler->tokenType = bindingsTable_[bindingLinePos].type;
             tokenHandler->valueString = bindingsTable_[bindingLinePos].expression;
 
