@@ -4,10 +4,13 @@ bit:1 ss;
 
 bit:32 main()
 {
-    bit:1(0)a;
-    bit:1(0)bb;
+    bit:1   ss;
+    bit:1(0) a;
+    bit:2(5) bb;
 
-    a = a + 2;
+    bb = 2;
+    a = bb;
+    a = a + 2 + ss;
     a = a*a*a*a + bb + bb* 5;
     5;
     a + 2;

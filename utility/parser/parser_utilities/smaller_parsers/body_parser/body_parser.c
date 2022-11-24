@@ -197,7 +197,24 @@ static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t exp
             {
                 // no assigning
                 variable->variableName = cTokenP->valueString;
-            
+                if(Hashmap_getEntry(&scopeBody->localVariables, variable->variableName) == NULL)
+                {
+                    if(!Hashmap_putEntry(&scopeBody->localVariables, variable->variableName, variable))
+                    {
+                        Log_e(TAG, "For some reason hashmap entry cannot be putted");
+                        return ERROR;
+                    }
+
+                    if(!queueAppendExprObject_(expressions, VARIABLE_NAME, variable->variableName))
+                    {
+                        Log_e(TAG, "Failed to put variable name to expressions");
+                        return ERROR;
+                    }
+
+                }else
+                {
+                    Shouter_shoutError(cTokenP, "Variable '%s' is already declared", variable->variableName);   
+                }
             }else if(cTokenType == BRACKET_ROUND_START)
             {
                 // with assigning
