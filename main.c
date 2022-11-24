@@ -19,7 +19,20 @@ typedef struct
 
 int main()
 {  
-   int
+   typedef struct
+   {
+      int lolz:5;
+      int lols:1;
+   }ss;
+
+   ss s;
+   while (1)
+   {
+      ss s;
+   }
+   
+
+   printf("%d", s.lols);
 }
 
 // gcc -Wstack-usage=12 -o program main.c

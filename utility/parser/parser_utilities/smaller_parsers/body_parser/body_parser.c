@@ -48,9 +48,9 @@ static bool isTokenOperator_(TokenHandler_t** currentTokenHandle);
 static bool isTokenExpression_(TokenHandler_t** currentTokenHandle);
 static bool handleNaming_(QueueHandle_t expressionQueue, TokenHandler_t** currentTokenHandle);
 static bool handleOperations_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
-static bool handleExpression_(LocalScopeObjectHandle_t localScope, TokenHandler_t** currentTokenHandle);
-static bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, TokenHandler_t** currentTokenHandle);
-static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
+static bool handleExpression_(LocalScopeObjectHandle_t localScope,QueueHandle_t expressions, TokenHandler_t** currentTokenHandle);
+static bool parseExpressionLine_(LocalScopeObjectHandle_t localScope,QueueHandle_t expressions, TokenHandler_t** currentTokenHandle);
+static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t expressions, TokenHandler_t** currentTokenHandle);
 ////////////////////////////////
 // IMPLEMENTATION
 
@@ -71,7 +71,7 @@ bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** 
             return ERROR;
         }
 
-        if(!parseExpressionLine_(scopeBody, currentTokenHandle))
+        if(!parseExpressionLine_(scopeBody, expressionQueue, currentTokenHandle))
         {
             Log_e(TAG, "Failed to parse expression sequence");
             return ERROR;
@@ -102,7 +102,7 @@ bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** 
     return SUCCESS;
 }
 
-static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, TokenHandler_t** currentTokenHandle)
+static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, QueueHandle_t expressions, TokenHandler_t** currentTokenHandle)
 {
     bool expectedExpresion;
     expectedExpresion = true;
@@ -113,7 +113,7 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
         {
             if(expectedExpresion)
             {
-                if(!handleExpression_(localScope, currentTokenHandle))
+                if(!handleExpression_(localScope, expressions, currentTokenHandle))
                 {
                     Log_e(TAG, "Failed to parse expression");
                     return ERROR;
@@ -130,7 +130,7 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
         {
             if(!expectedExpresion)
             {
-                if(!handleOperator_(&localScope->expressions, currentTokenHandle))
+                if(!handleOperator_(expressions, currentTokenHandle))
                 {
                     Log_e(TAG, "Failed to parse operator");
                     return ERROR;
@@ -176,7 +176,7 @@ bool BodyParser_initialize(LocalScopeObjectHandle_t scopeBody)
     return SUCCESS;
 }
 
-static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle)
+static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t expressions, TokenHandler_t** currentTokenHandle)
 {
     VariableObjectHandle_t variable;
     variable = malloc(sizeof(VariableObject_t));
@@ -221,7 +221,7 @@ static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** 
                                     return ERROR;
                                 }
 
-                                if(!queueAppendExprObject_(&scopeBody->expressions, VARIABLE_NAME, variable->variableName))
+                                if(!queueAppendExprObject_(expressions, VARIABLE_NAME, variable->variableName))
                                 {
                                     Log_e(TAG, "Failed to put variable name to expressions");
                                     return ERROR;
@@ -327,13 +327,13 @@ static bool handleNaming_(QueueHandle_t expressionQueue, TokenHandler_t** curren
 }
 
 
-static bool handleExpression_(LocalScopeObjectHandle_t localScope, TokenHandler_t** currentTokenHandle)
+static bool handleExpression_(LocalScopeObjectHandle_t localScope,QueueHandle_t expressions, TokenHandler_t** currentTokenHandle)
 {
 
     if(cTokenType == NAMING || cTokenType == THIS)
     {
 
-        if(!handleNaming_(&localScope->expressions, currentTokenHandle))
+        if(!handleNaming_(expressions, currentTokenHandle))
         {
             Log_e(TAG, "Failed parse naming");
             return ERROR;
@@ -348,7 +348,7 @@ static bool handleExpression_(LocalScopeObjectHandle_t localScope, TokenHandler_
 
         constantValue->valueAsString = cTokenP->valueString;
 
-        if(!queueAppendExprObject_(&localScope->expressions, CONSTANT_NUMBER, constantValue))
+        if(!queueAppendExprObject_(expressions, CONSTANT_NUMBER, constantValue))
         {
             Log_e(TAG, "Failed append expression object to queue");
             return ERROR;
@@ -356,7 +356,7 @@ static bool handleExpression_(LocalScopeObjectHandle_t localScope, TokenHandler_
         
     }else if(cTokenType == BIT_TYPE)
     {
-        if(!handleBitType_(localScope, currentTokenHandle))
+        if(!handleBitType_(localScope, expressions, currentTokenHandle))
         {   
             Log_e(TAG, "Failed to handle BIT Type declaration");
             return ERROR;
