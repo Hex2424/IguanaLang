@@ -338,10 +338,22 @@ static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator, c
         Log_e(TAG, "Failed to write method scope variables");
         return ERROR;
     }
-
     // writing structure Initializator
 
     fprintf(generator->cFile, "%s_t %s%c", generator->iguanaImport->objectId.id, LOCAL_VARIABLES_STRUCT_NAME,SEMICOLON_CHAR);
+
+    // writing variables assignings
+    for(size_t signableVariableIdx = 0; signableVariableIdx < method->body.localVariables.entries.currentSize; signableVariableIdx++)
+    {
+        VariableObjectHandle_t variable;
+
+        variable = (VariableObjectHandle_t) Hashmap_at(&method->body.localVariables, signableVariableIdx);
+        if(variable->hasAssignedValue)
+        {
+            fprintf(generator->cFile, "%s.%s = %s%c",LOCAL_VARIABLES_STRUCT_NAME, variable->variableName,variable->assignedValue, SEMICOLON_CHAR);
+        }
+    }
+
 
     for(size_t expressionQ = 0; expressionQ < method->body.expressions.currentSize; expressionQ++)
     {

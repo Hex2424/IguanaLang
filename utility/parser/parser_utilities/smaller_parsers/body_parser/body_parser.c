@@ -182,6 +182,9 @@ static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t exp
     variable = malloc(sizeof(VariableObject_t));
     ALLOC_CHECK(variable, ERROR);
 
+    variable->hasAssignedValue = false;
+    variable->variableName = NULL;
+    
     (*currentTokenHandle)++;
 
     if(cTokenType == COLON)
@@ -230,6 +233,8 @@ static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t exp
                         if(cTokenType == NAMING)
                         {
                             variable->variableName = cTokenP->valueString;
+                            variable->hasAssignedValue = true;
+
                             if(Hashmap_getEntry(&scopeBody->localVariables, variable->variableName) == NULL)
                             {
                                 if(!Hashmap_putEntry(&scopeBody->localVariables, variable->variableName, variable))

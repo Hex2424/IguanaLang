@@ -14,14 +14,15 @@
 #ifndef UTILITY_PARSER_STRUCTURES_VARIABLE_VARIABLE_H_
 #define UTILITY_PARSER_STRUCTURES_VARIABLE_VARIABLE_H_
 
-#include "stdint.h"
-
+#include <stdint.h>
+#include <stdbool.h>
 
 typedef struct
 {
     char* variableName;
     uint8_t bitpack;
-    long long assignedValue;
+    int64_t assignedValue;
+    bool hasAssignedValue;
     void* assignedVariable;
 }VariableObject_t;
 

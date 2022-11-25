@@ -6,7 +6,7 @@ bit:32 main()
 {
     bit:1   ss;
     bit:1(0) a;
-    bit:2(5) bb;
+    bit:2(4) bb;
 
     bb = 2;
     a = bb;
