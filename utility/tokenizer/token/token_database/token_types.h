@@ -45,7 +45,11 @@ typedef enum TokenType
     NOTATION,            // @
     DOT_SYMBOL,          // .
     LITTERAL,            // "
-    THIS                 // this
+    THIS,                // this
+    OPERATOR_XOR,        // ^
+    OPERATOR_AND,        // &
+    OPERATOR_OR,         // |
+    OPERATOR_NOT         // ~
 } TokenType_t;
 
 

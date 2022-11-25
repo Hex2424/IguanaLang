@@ -11,10 +11,10 @@ bit:32 main()
     bb = 50;
     a = bb;
     a = a + 2 + ss;
-    a = a*a*a*a + bb + bb* 5;
+    a = a*a*a*a + bb + bb / 5;
     5;
     a + 2;
-    5 + 9 + 10 + 7 + method2() + method2();
+    5 + 9 + 10 + 7 + method2() + method2() ^ a % a & a | a;
     a + 5;
     5;
     55 - 6 + 9 + a;

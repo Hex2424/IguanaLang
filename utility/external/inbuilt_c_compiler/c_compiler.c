@@ -20,7 +20,13 @@
 
 ////////////////////////////////
 // DEFINES
-#define GCC_COMPILER_COMMAND "gcc -c %s%s.c -o %s.o 2> clog.err"
+#if VERBOSE_C_COMPILER
+    #define LOG_PATH_TO_FILE ""
+#else
+    #define LOG_PATH_TO_FILE " 2> clog.err"
+#endif
+
+#define GCC_COMPILER_COMMAND "gcc -c %s%s.c -o %s.o"LOG_PATH_TO_FILE
 
 ////////////////////////////////
 // PRIVATE CONSTANTS

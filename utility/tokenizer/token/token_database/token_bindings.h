@@ -54,7 +54,11 @@ static const BindingType_t bindingsTable_[] =
         DECLARE_TYPE("@", NOTATION),
         DECLARE_TYPE(".", DOT_SYMBOL),
         DECLARE_TYPE("\"", LITTERAL),
-        DECLARE_TYPE("this", THIS)
+        DECLARE_TYPE("this", THIS),
+        DECLARE_TYPE("^", OPERATOR_XOR),
+        DECLARE_TYPE("&", OPERATOR_AND),
+        DECLARE_TYPE("|", OPERATOR_OR),
+        DECLARE_TYPE("~", OPERATOR_NOT)
     };
 
 #endif // UTILITY_TOKENIZER_TOKEN_TOKEN_DATABASE_TOKEN_BINDINGS_H_

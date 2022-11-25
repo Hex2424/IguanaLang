@@ -470,12 +470,24 @@ static void handleOperatorWritingByType_(FILE* file, const TokenType_t type)
             }break;
         case OPERATOR_MODULUS:
             {
-                fprintf(file, "%");
+                fprintf(file, "%%");
             }break;
         case EQUAL:
             {
                 fprintf(file, "=");
             }break;
+        case OPERATOR_XOR:
+            {
+                fprintf(file, "^");
+            }break;
+        case OPERATOR_OR:
+            {
+                fprintf(file, "|");
+            }break;
+        case OPERATOR_AND:
+        {
+            fprintf(file, "&");
+        }break;
         default:
             break;
         }

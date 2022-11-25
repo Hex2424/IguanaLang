@@ -23,6 +23,8 @@
  * 3 - (INFO / DEBUG / ERROR / WARN)
  */
 #define VERBOSE_LEVEL                   2
+#define VERBOSE_C_COMPILER              0
+
 
 // OS types     
 #define WINDOWS                         1

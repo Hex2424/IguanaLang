@@ -508,6 +508,9 @@ static bool isTokenOperator_(TokenHandler_t** currentTokenHandle)
             cTokenType == OPERATOR_MINUS    ||
             cTokenType == OPERATOR_MODULUS  ||
             cTokenType == OPERATOR_MULTIPLY ||
+            cTokenType == OPERATOR_XOR      ||
+            cTokenType == OPERATOR_AND      ||
+            cTokenType == OPERATOR_OR       ||
             cTokenType == EQUAL             ||
             cTokenType == OPERATOR_DIVIDE;
 
