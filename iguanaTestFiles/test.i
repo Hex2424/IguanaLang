@@ -6,9 +6,9 @@ bit:32 main()
 {
     bit:1   ss;
     bit:1(0) a;
-    bit:2(4) bb;
+    bit:2(169) bb;
 
-    bb = 2;
+    bb = 50;
     a = bb;
     a = a + 2 + ss;
     a = a*a*a*a + bb + bb* 5;
@@ -22,7 +22,6 @@ bit:32 main()
     ;
     ;5;
     ;;;
-    
 
     method2();
 } 

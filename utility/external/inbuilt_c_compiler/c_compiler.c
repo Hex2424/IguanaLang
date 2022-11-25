@@ -20,7 +20,7 @@
 
 ////////////////////////////////
 // DEFINES
-#define GCC_COMPILER_COMMAND "gcc -c %s%s.c -o %s.o"
+#define GCC_COMPILER_COMMAND "gcc -c %s%s.c -o %s.o 2> clog.err"
 
 ////////////////////////////////
 // PRIVATE CONSTANTS

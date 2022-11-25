@@ -184,7 +184,7 @@ static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t exp
 
     variable->hasAssignedValue = false;
     variable->variableName = NULL;
-    
+
     (*currentTokenHandle)++;
 
     if(cTokenType == COLON)
@@ -224,7 +224,8 @@ static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t exp
                 (*currentTokenHandle)++;
                 if(cTokenType == NUMBER_VALUE)
                 {
-                    variable->assignedValue = cTokenP->valueString;
+                    // Calculating overflow also to prevent it
+                    variable->assignedValue = cTokenP->valueString;  //(atoll(cTokenP->valueString) % (2 << (variable->bitpack - 1)));
                     (*currentTokenHandle)++;
 
                     if(cTokenType == BRACKET_ROUND_END)
