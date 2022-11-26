@@ -46,7 +46,7 @@ static inline bool handleMethodCallParameterization_(MethodObjectHandle_t method
 static bool handleOperator_(QueueHandle_t expressionQueue, TokenHandler_t** currentTokenHandle);
 static bool isTokenOperator_(TokenHandler_t** currentTokenHandle);
 static bool isTokenExpression_(TokenHandler_t** currentTokenHandle);
-static bool handleNaming_(QueueHandle_t expressionQueue, TokenHandler_t** currentTokenHandle);
+static bool handleNaming_(LocalScopeObjectHandle_t localScope, QueueHandle_t expressionsQueue, TokenHandler_t** currentTokenHandle);
 static bool handleOperations_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
 static bool handleExpression_(LocalScopeObjectHandle_t localScope,QueueHandle_t expressions, TokenHandler_t** currentTokenHandle);
 static bool parseExpressionLine_(LocalScopeObjectHandle_t localScope,QueueHandle_t expressions, TokenHandler_t** currentTokenHandle);
@@ -159,7 +159,6 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Que
 
 bool BodyParser_initialize(LocalScopeObjectHandle_t scopeBody)
 {
-    
 
     if(!Hashmap_create(&scopeBody->localVariables, NULL))
     {
@@ -200,14 +199,8 @@ static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t exp
             {
                 // no assigning
                 variable->variableName = cTokenP->valueString;
-                if(Hashmap_getEntry(&scopeBody->localVariables, variable->variableName) == NULL)
+                if(Hashmap_putEntry(&scopeBody->localVariables, variable->variableName, variable))
                 {
-                    if(!Hashmap_putEntry(&scopeBody->localVariables, variable->variableName, variable))
-                    {
-                        Log_e(TAG, "For some reason hashmap entry cannot be putted");
-                        return ERROR;
-                    }
-
                     if(!queueAppendExprObject_(expressions, VARIABLE_NAME, variable->variableName))
                     {
                         Log_e(TAG, "Failed to put variable name to expressions");
@@ -218,6 +211,7 @@ static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t exp
                 {
                     Shouter_shoutError(cTokenP, "Variable '%s' is already declared", variable->variableName);   
                 }
+
             }else if(cTokenType == BRACKET_ROUND_START)
             {
                 // with assigning
@@ -236,23 +230,16 @@ static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t exp
                             variable->variableName = cTokenP->valueString;
                             variable->hasAssignedValue = true;
 
-                            if(Hashmap_getEntry(&scopeBody->localVariables, variable->variableName) == NULL)
+                            if(Hashmap_putEntry(&scopeBody->localVariables, variable->variableName, variable))
                             {
-                                if(!Hashmap_putEntry(&scopeBody->localVariables, variable->variableName, variable))
-                                {
-                                    Log_e(TAG, "For some reason hashmap entry cannot be putted");
-                                    return ERROR;
-                                }
-
                                 if(!queueAppendExprObject_(expressions, VARIABLE_NAME, variable->variableName))
                                 {
                                     Log_e(TAG, "Failed to put variable name to expressions");
                                     return ERROR;
-                                }
-
+                                }   
                             }else
                             {
-                                Shouter_shoutError(cTokenP, "Variable '%s' is already declared", variable->variableName);   
+                                Shouter_shoutError(cTokenP, "Variable '%s' is already declared", variable->variableName);
                             }
 
                         }else
@@ -294,7 +281,7 @@ static bool handleOperations_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t
     return SUCCESS;
 }
 
-static bool handleNaming_(QueueHandle_t expressionQueue, TokenHandler_t** currentTokenHandle)
+static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, QueueHandle_t expressionsQueue, TokenHandler_t** currentTokenHandle)
 {
     TokenHandler_t currentNamingToken;
     while (cTokenType != SEMICOLON)
@@ -323,7 +310,7 @@ static bool handleNaming_(QueueHandle_t expressionQueue, TokenHandler_t** curren
                 return ERROR;
             }
 
-            if(!queueAppendExprObject_(expressionQueue, METHOD_CALL, methodHandle))
+            if(!queueAppendExprObject_(expressionsQueue, METHOD_CALL, methodHandle))
             {
                 Log_e(TAG, "Failed to append expression object");
                 return ERROR;
@@ -333,11 +320,18 @@ static bool handleNaming_(QueueHandle_t expressionQueue, TokenHandler_t** curren
         {
             if(cTokenType == NAMING)
             {
-                if(!queueAppendExprObject_(expressionQueue, VARIABLE_NAME, cTokenP->valueString))
+                if(Hashmap_getEntry(&localScopeBody->localVariables, cTokenP->valueString) != NULL)
                 {
-                    Log_e(TAG, "Failed to append expression object");
-                    return ERROR;
+                    if(!queueAppendExprObject_(expressionsQueue, VARIABLE_NAME, cTokenP->valueString))
+                    {
+                        Log_e(TAG, "Failed to append expression object");
+                        return ERROR;
+                    }
+                }else
+                {
+                    Shouter_shoutError(cTokenP, "Variable '%s' is not declared previously", cTokenP->valueString);
                 }
+
             }
     
             break;
@@ -350,13 +344,13 @@ static bool handleNaming_(QueueHandle_t expressionQueue, TokenHandler_t** curren
 }
 
 
-static bool handleExpression_(LocalScopeObjectHandle_t localScope,QueueHandle_t expressions, TokenHandler_t** currentTokenHandle)
+static bool handleExpression_(LocalScopeObjectHandle_t localScope, QueueHandle_t expressions, TokenHandler_t** currentTokenHandle)
 {
 
     if(cTokenType == NAMING || cTokenType == THIS)
     {
 
-        if(!handleNaming_(expressions, currentTokenHandle))
+        if(!handleNaming_(localScope, expressions, currentTokenHandle))
         {
             Log_e(TAG, "Failed parse naming");
             return ERROR;

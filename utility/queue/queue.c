@@ -131,6 +131,9 @@ void* Queue_dequeue(QueueHandle_t queue)
 	}
 
 	QNodeHandle_t node = queue->front;
+
+	assert(node != NULL);
+
 	queue->front = node->next;
 	void* data = node->data;
 	free(node);

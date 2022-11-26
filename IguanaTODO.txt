@@ -1,5 +1,4 @@
 TODO:
-1. Bitpack variables make working
 2. Bitpacked method params
 3. Bitpacket method returns
 4. On not bitpacked work same fast as c code
@@ -21,6 +20,8 @@ TODO:
 17. Function pointer / integer pointer
 18. Make operational zones like i == a || i == b  to i == (a or b or c ...)
 19. Optimized way to create Abstract syntax tree
+20. Negative numbers support
+21. check if variable was declared what position
 
 
 
