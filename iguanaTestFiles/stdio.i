@@ -1,4 +1,4 @@
-import "test"
+
 import "hmm/mainframe"
 
 bit:5 ddd = 2;

@@ -67,9 +67,7 @@ bool Vector_create(VectorHandler_t object, const InitialSettingsHandler_t initia
     {
         Log_i(TAG, "Found vector initial settings");
 
-        object->expandable = malloc(initialSettings->initialSize * sizeof(void*));
-
-        ALLOC_CHECK(object->expandable, ERROR);
+        ALLOC_CHECK(object->expandable, initialSettings->initialSize * sizeof(void*), ERROR);
 
         object->availableSize = initialSettings->initialSize;
         object->containsVectors = initialSettings->containsVectors;
@@ -87,9 +85,8 @@ bool Vector_create(VectorHandler_t object, const InitialSettingsHandler_t initia
     }else
     {
         Log_i(TAG, "Initial settings is NULL, restoring defaults");
-        object->expandable = malloc(INITIAL_SIZE_DEFAULT * sizeof(void*));
         object->expandableConstant = 1.0f / 3.0f; // default expandable constant
-        ALLOC_CHECK(object->expandable, ERROR);
+        ALLOC_CHECK(object->expandable, INITIAL_SIZE_DEFAULT * sizeof(void*), ERROR);
 
         object->availableSize = INITIAL_SIZE_DEFAULT;
     }
@@ -121,9 +118,8 @@ bool Vector_append(VectorHandler_t object, const void* dataObject)
         {
             newSize += INITIAL_SIZE_DEFAULT;
         }
-        object->expandable = realloc(object->expandable, newSize * sizeof(void*));
 
-        ALLOC_CHECK(object->expandable, ERROR);
+        REALLOC_CHECK(object->expandable, newSize * sizeof(void*), ERROR);
         
         object->availableSize = (newSize - object->currentSize);
 
@@ -145,8 +141,7 @@ bool Vector_append(VectorHandler_t object, const void* dataObject)
 void Vector_fit(VectorHandler_t object)
 {
     NULL_GUARD(object,, VECTOR_NULL_PRINT);
-    object->expandable = realloc(object->expandable, object->currentSize * sizeof(void*));
-    ALLOC_CHECK(object->expandable,);
+    REALLOC_CHECK(object->expandable,object->currentSize * sizeof(void*), ERROR);
     object->availableSize = 0;
 }
 

@@ -214,8 +214,8 @@ static inline bool createMainProcessFile_(CompilerHandle_t compiler, const char*
         Log_w(TAG, "Failed to close file: %s", fileName);
     }
     ImportObjectHandle_t mainProcessImport;
-    mainProcessImport = malloc(sizeof(ImportObject_t));
-    ALLOC_CHECK(mainProcessImport, ERROR);
+
+    ALLOC_CHECK(mainProcessImport, sizeof(ImportObject_t), ERROR);
 
     mainProcessImport->name = NULL;
     strcpy(mainProcessImport->objectId.id, MAIN_PROCESS_FILE_NAME);
@@ -233,8 +233,8 @@ static inline bool createMainProcessFile_(CompilerHandle_t compiler, const char*
 bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char* filePath)
 {
     ImportObjectHandle_t mainImport;
-    mainImport = malloc(sizeof(ImportObject_t));
-    ALLOC_CHECK(mainImport, ERROR);
+
+    ALLOC_CHECK(mainImport,sizeof(ImportObject_t), ERROR);
     
     mainImport->name = filePath;
     
@@ -304,10 +304,10 @@ bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char*
 
 bool Compiler_destroy(CompilerHandle_t compiler)
 {
-    if(!cleanTempFilePaths_(compiler))
-    {
-        Log_w(TAG, "Failed to clean compiled file paths");
-    }
+    // if(!cleanTempFilePaths_(compiler))
+    // {
+    //     Log_w(TAG, "Failed to clean compiled file paths");
+    // }
 
     if(!Vector_destroy(&compiler->alreadyCompiledFilePaths))
     {

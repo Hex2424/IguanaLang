@@ -49,9 +49,7 @@ TokenHandler_t Tokenizer_wordToCorrespondingToken(const char *seperation, const 
     
     NULL_GUARD(seperation, NULL, Log_e(TAG, "Got NULL Seperation Object for parsing %d", 5));
 
-    tokenHandler = malloc(sizeof(Token_t)); // dynamic allocation, must deallocate afterwards
-
-    ALLOC_CHECK(tokenHandler, NULL);
+    ALLOC_CHECK(tokenHandler, sizeof(Token_t), NULL);
 
     bindingTableCount = (sizeof(bindingsTable_) / sizeof(BindingType_t));
 
@@ -106,10 +104,7 @@ static bool handleUnknownType_(TokenHandler_t tokenHandle, const char* expressio
         tokenHandle->tokenType = NAMING; 
     }
 
-
-    tokenHandle->valueString = malloc(expressionSize + 1);  // extra for null terminator \0
-
-    ALLOC_CHECK(tokenHandle->valueString, false);
+    ALLOC_CHECK(tokenHandle->valueString,expressionSize + 1, false);
     
     memcpy(tokenHandle->valueString, expression, expressionSize);
     tokenHandle->valueString[expressionSize] = '\0';                // appending null terminator character for easier life

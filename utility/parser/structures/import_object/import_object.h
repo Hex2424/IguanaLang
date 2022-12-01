@@ -25,6 +25,8 @@ typedef struct
 typedef struct
 {
     char* name;
+    char* objectNamePointer;
+    uint64_t objectNamePointerLength;
     SpecialObjectID_t objectId;
     char* realPath;
 }ImportObject_t;

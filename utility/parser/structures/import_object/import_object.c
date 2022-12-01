@@ -15,6 +15,7 @@
 #include "../../../misc/safety_macros.h"
 #include "../../../global_config/global_config.h"
 #include "string.h"
+#include "../../../file_manip/files.h"
 
 ////////////////////////////////
 // DEFINES
@@ -39,6 +40,9 @@ bool ImportObject_generateRandomIDForObject(ImportObjectHandle_t importObject)
 {
     FILE* tempDescriptor;
     char filePathForCheck[CFILES_LENGTH];
+    
+    // Putting filename as object name due Iguana principles
+    importObject->objectNamePointerLength = Files_filepathGetFilename(importObject->name, &importObject->objectNamePointer);
 
     memcpy(filePathForCheck, TEMP_PATH, sizeof(TEMP_PATH) - 1);
 
@@ -60,6 +64,13 @@ bool ImportObject_generateRandomIDForObject(ImportObjectHandle_t importObject)
         {
             importObject->objectId.id[hashIdx] = 'a' + Random_fast_rand() % 26;  // generating random byte
         }
+        // char* slashPointer;
+        // slashPointer = strrchr(importObject->name, '/');
+        // if(slashPointer == NULL)
+        // {
+        //     slashPointer = importObject->name;
+        // }
+        // strcpy(importObject->objectId.id, slashPointer + 1);
         importObject->objectId.id[OBJECT_ID_LENGTH] = '\0';
         memcpy(filePathForCheck + (sizeof(TEMP_PATH) - 1), importObject->objectId.id, OBJECT_ID_LENGTH);
 
@@ -90,3 +101,4 @@ bool ImportObject_generateRandomIDForObject(ImportObjectHandle_t importObject)
     Log_w(TAG, "Something wrong with ID generator or all IDS was used");
     return ERROR;
 }
+

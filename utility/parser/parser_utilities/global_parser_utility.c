@@ -58,8 +58,7 @@ bool ParserUtils_tryParseSequence(TokenHandler_t** currentTokenHandle, const Tok
  */
 bool ParserUtils_assignTokenValue(char** to, const char* from)
 {
-    *to = malloc(strlen(from));     // recopying token value
-    ALLOC_CHECK(to, ERROR);
+    ALLOC_CHECK(*to, strlen(from), ERROR);
     if(strcpy(*to, from) == NULL)
     {
         Log_e(TAG, "For some reason couldn't copy from token value");

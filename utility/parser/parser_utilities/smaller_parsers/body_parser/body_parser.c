@@ -62,8 +62,7 @@ bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** 
     while (cTokenType != BRACKET_END)
     {
 
-        expressionQueue = malloc(sizeof(Queue_t));
-        ALLOC_CHECK(expressionQueue, ERROR);
+        ALLOC_CHECK(expressionQueue, sizeof(Queue_t), ERROR);
         
         if(!Queue_create(expressionQueue))
         {
@@ -178,8 +177,8 @@ bool BodyParser_initialize(LocalScopeObjectHandle_t scopeBody)
 static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t expressions, TokenHandler_t** currentTokenHandle)
 {
     VariableObjectHandle_t variable;
-    variable = malloc(sizeof(VariableObject_t));
-    ALLOC_CHECK(variable, ERROR);
+
+    ALLOC_CHECK(variable, sizeof(VariableObject_t), ERROR);
 
     variable->hasAssignedValue = false;
     variable->variableName = NULL;
@@ -220,6 +219,7 @@ static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t exp
                 {
                     // Calculating overflow also to prevent it
                     variable->assignedValue = cTokenP->valueString;  //(atoll(cTokenP->valueString) % (2 << (variable->bitpack - 1)));
+                    
                     (*currentTokenHandle)++;
 
                     if(cTokenType == BRACKET_ROUND_END)
@@ -301,8 +301,7 @@ static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, QueueHandle_t
         {
             ExMethodCallHandle_t methodHandle;
 
-            methodHandle = malloc(sizeof(ExMethodCall_t));
-            ALLOC_CHECK(methodHandle, ERROR);
+            ALLOC_CHECK(methodHandle, sizeof(ExMethodCall_t), ERROR);
 
             if(!handleMethodCall_(methodHandle, currentTokenHandle, true))
             {
@@ -360,8 +359,7 @@ static bool handleExpression_(LocalScopeObjectHandle_t localScope, QueueHandle_t
     {
         ConstantNumberHandle_t constantValue;
 
-        constantValue = malloc(sizeof(ConstantNumber_t));
-        ALLOC_CHECK(constantValue, ERROR);
+        ALLOC_CHECK(constantValue, sizeof(ConstantNumber_t), ERROR);
 
         constantValue->valueAsString = cTokenP->valueString;
 
@@ -390,8 +388,8 @@ static bool handleExpression_(LocalScopeObjectHandle_t localScope, QueueHandle_t
 static bool queueAppendExprObject_(QueueHandle_t expressionQueue, const ExpressionType_t expressionType, void* object)
 {
     ExpressionHandle_t expression;
-    expression = malloc(sizeof(Expression_t));
-    ALLOC_CHECK(expression, ERROR);
+
+    ALLOC_CHECK(expression, sizeof(Expression_t), ERROR);
 
     expression->type = expressionType;
     expression->expressionObject = object;
@@ -410,8 +408,8 @@ static bool handleOperator_(QueueHandle_t expressionQueue, TokenHandler_t** curr
     // Handling specific operator Actions
 
     OperatorHandle_t operator;
-    operator = malloc(sizeof(Operator_t));
-    ALLOC_CHECK(operator, ERROR);
+
+    ALLOC_CHECK(operator, sizeof(Operator_t), ERROR);
 
     operator->operatorTokenType = cTokenP->tokenType;
 
@@ -431,8 +429,7 @@ static bool handleMethodCall_(ExMethodCallHandle_t methodCall, TokenHandler_t** 
 
     methodCall->method.methodName = cTokenP->valueString;
     methodCall->isMethodSelf = isMethodSelf;
-    methodCall->method.parameters = malloc(sizeof(Vector_t));
-    ALLOC_CHECK(methodCall->method.parameters, ERROR);
+    ALLOC_CHECK(methodCall->method.parameters, sizeof(Vector_t),ERROR);
 
     if(!Vector_create(methodCall->method.parameters, NULL))
     {

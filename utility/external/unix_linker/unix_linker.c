@@ -36,8 +36,8 @@ bool UnixLinker_linkPaths(const VectorHandler_t objectsCompiledExternaly)
 {
     char* full_command;
     char* iterator;
-    full_command = malloc(sizeof(LD_LINKER_COMMAND) + CFILES_LENGTH + (OBJECT_ID_LENGTH * objectsCompiledExternaly->currentSize));
-    ALLOC_CHECK(full_command, ERROR);
+    
+    ALLOC_CHECK(full_command, sizeof(LD_LINKER_COMMAND) + CFILES_LENGTH + (OBJECT_ID_LENGTH * objectsCompiledExternaly->currentSize), ERROR);
 
     full_command[0] = '\0';//null terminator beggining for strncat
     iterator = full_command;

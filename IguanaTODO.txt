@@ -28,3 +28,18 @@ TODO:
 l.c
 
 
+// Comment
+// Something wrong with this shit
+"ss"
+
+#replace(ss, aaaaaaa);
+#replace(ss, ssssss);
+
+#if(ss < 4)
+{
+
+}
+
+#while()
+#var 
+#regex("") a;

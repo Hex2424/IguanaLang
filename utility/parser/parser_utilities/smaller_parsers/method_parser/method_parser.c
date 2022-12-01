@@ -42,8 +42,7 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, MainFr
 {
     MethodObjectHandle_t methodHandle;
 
-    methodHandle = malloc(sizeof(MethodObject_t));
-    ALLOC_CHECK(methodHandle, ERROR);
+    ALLOC_CHECK(methodHandle, sizeof(MethodObject_t), ERROR);
     // setting up method name
 
     if(!parseMethodReturnVariable_(currentTokenHandle, methodHandle))
@@ -85,8 +84,8 @@ static bool parseMethodReturnVariable_(TokenHandler_t** currentTokenHandle, Meth
 
 static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodObjectHandle_t methodHandle)
 {
-    methodHandle->parameters = malloc(sizeof(Vector_t));
-    ALLOC_CHECK(methodHandle->parameters, ERROR);
+
+    ALLOC_CHECK(methodHandle->parameters, sizeof(Vector_t), ERROR);
 
     if(!Vector_create(methodHandle->parameters, NULL))
     {
@@ -98,8 +97,7 @@ static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodOb
     {
         VariableObjectHandle_t parameter;
 
-        parameter = malloc(sizeof(VariableObject_t));
-        ALLOC_CHECK(parameter, ERROR);
+        ALLOC_CHECK(parameter, sizeof(VariableObject_t), ERROR);
 
         if(cTokenType == BIT_TYPE)
         {

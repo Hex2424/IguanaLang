@@ -59,10 +59,8 @@ size_t FileReader_readToBuffer(const char* fileName, char** buffer)
         Log_e(TAG, "File %s is empty", fileName);
         return -1;
     }
-
-    *buffer = malloc(fileSize);
     
-    ALLOC_CHECK(*buffer, -1);
+    ALLOC_CHECK(*buffer, fileSize, -1);
 
     fseek(igFile, 0L, SEEK_SET);
 

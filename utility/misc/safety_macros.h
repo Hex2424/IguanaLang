@@ -27,11 +27,21 @@
         return returning;                       \
     }                                       
 
-#define ALLOC_CHECK(variable, returning)                \
+#define ALLOC_CHECK(variable,size, returning)      \
+    variable = malloc(size);               \
     NULL_GUARD(variable, returning,                         \
-    Log_e(TAG, "Memory cannot be allocated, heap issue")    \
-)
+    Log_e(TAG, "Memory cannot be allocated, heap issue"))
 
 
+#define REALLOC_CHECK(variable, size, returning)                \
+    variable = realloc(variable, size);                       \
+    NULL_GUARD(variable, ERROR, Log_e(TAG, "Realloc failed for some reason, heap issue"))
+
+
+/**
+ * @brief Macro for returning String length with excluded null terminator which has length of 1
+ * 
+ */
+#define SIZE_STR(string) (sizeof(string) - 1)
 
 #endif // UTILITY_MISC_SAFETY_MACROS_H_

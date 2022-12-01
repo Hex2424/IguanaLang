@@ -70,8 +70,7 @@ bool Hashmap_putEntry(HashmapHandle_t hashmap, const char* keyString, const void
 
     if(pair == NULL)
     {
-        pair = malloc(sizeof(HashmapPair_t));
-        ALLOC_CHECK(pair, ERROR);
+        ALLOC_CHECK(pair, sizeof(HashmapPair_t), ERROR);
         pair->keySum = currentKeySum;
         pair->realKey = keyString;
         pair->object = object;

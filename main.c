@@ -21,18 +21,18 @@ int main()
 {  
    typedef struct
    {
-      int lolz:5;
-      int lols:1;
+      char lolz:5;
+      char lols:1;
    }ss;
 
-   ss s;
-   while (1)
-   {
-      ss s;
-   }
-   
+   uint32_t value = -500848;
+   uint32_t valuei;
+   int value2;
 
-   printf("%d", s.lols);
+   ss l;
+   valuei = value % (2 << (5 - 1));
+   l.lolz = value;
+   printf("%d %d\n", valuei, l.lolz);
 }
 
 // gcc -Wstack-usage=12 -o program main.c

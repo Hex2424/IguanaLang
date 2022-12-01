@@ -124,8 +124,7 @@ static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle)
         return SUCCESS;
     }
 
-    variable = malloc(sizeof(VariableObject_t));
-    ALLOC_CHECK(variable, ERROR);
+    ALLOC_CHECK(variable, sizeof(VariableObject_t), ERROR);
 
     variable->variableName = (*(currentToken - 1))->valueString;
     variable->bitpack = atoi((*(currentToken - 2))->valueString);
@@ -192,8 +191,7 @@ static inline bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t
 {
     ImportObjectHandle_t importObject;
 
-    importObject = malloc(sizeof(ImportObject_t));
-    ALLOC_CHECK(importObject, ERROR);
+    ALLOC_CHECK(importObject,sizeof(ImportObject_t), ERROR);
 
     currentToken++;
     if(cTokenType == LITTERAL)                 // detected <
@@ -232,8 +230,10 @@ static inline bool addLibraryForCompilation_(ParserHandle_t parser, ImportObject
 
     libraryRelativePathLength = strlen((*importObject)->name);
 
-    newFilePathToCompile = malloc(parser->currentFolderPathLength + libraryRelativePathLength + LONGEST_POSSIBLE_IGUANA_EXTENSION_LENGTH); // .iguana is longest
-    ALLOC_CHECK(newFilePathToCompile, ERROR)
+    // .iguana is longest
+    ALLOC_CHECK(newFilePathToCompile,
+    (parser->currentFolderPathLength + libraryRelativePathLength + LONGEST_POSSIBLE_IGUANA_EXTENSION_LENGTH),
+    ERROR);
 
     memcpy(newFilePathToCompile, parser->currentFolderPath, parser->currentFolderPathLength);
     memcpy(newFilePathToCompile + parser->currentFolderPathLength, (*importObject)->name, libraryRelativePathLength);
@@ -259,7 +259,8 @@ static inline bool addLibraryForCompilation_(ParserHandle_t parser, ImportObject
         }else
         {
             (*importObject)->realPath = realpath(newFilePathToCompile, NULL);
-            
+            free(newFilePathToCompile);
+
             int matchedPosition = checkIfPathAlreadyCompiled_(parser->compiler, *importObject);
 
             if(matchedPosition < 0)

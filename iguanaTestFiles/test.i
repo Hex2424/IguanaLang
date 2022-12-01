@@ -1,18 +1,19 @@
-
-
 bit:1 ss;
 
 bit:32 main()
 {
 
-    bit:1(1) ss;
+    bit:1(0) ss;
     bit:1(0) a;
+    bit:2(169) bb;
 
-    ss = ss + 1 + bb;
+    ss = ss + 1;
 
-    bit:2(169) bb = 50;
+    50 % 2;
+
+    bb = 50 + bb;
     a = bb;
-    a = a + 2 + ss;
+    a = a + 2 + ss;169;
     a = a*a*a*a + bb + bb / 5;
     5;
     a + 2;
