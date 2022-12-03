@@ -36,6 +36,13 @@ static const char* TAG = "IMPORT_OBJECT";
 ////////////////////////////////
 // IMPLEMENTATION
 
+
+/**
+ * @brief Public method for getting Object name and generating random Object ID with file existance checks
+ * 
+ * @param[in/out] importObject - Import object where method result will be filled
+ * @return bool                - Success state  
+ */
 bool ImportObject_generateRandomIDForObject(ImportObjectHandle_t importObject)
 {
     FILE* tempDescriptor;
@@ -101,4 +108,3 @@ bool ImportObject_generateRandomIDForObject(ImportObjectHandle_t importObject)
     Log_w(TAG, "Something wrong with ID generator or all IDS was used");
     return ERROR;
 }
-

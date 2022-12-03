@@ -28,6 +28,8 @@ bit:32 main()
     ;;;
 
     method2();
+    method5();
+    method6();
 } 
 
 bit:1 method2()

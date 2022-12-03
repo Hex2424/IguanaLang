@@ -60,13 +60,13 @@ typedef enum
 static bool iguanaPathToCharfilePath_(char* filepath, const char cFormatExtension); 
 static bool generateNdefGuard_(const CodeGeneratorHandle_t generator);   
 static bool fileWriteImports_(const CodeGeneratorHandle_t generator);    
-static bool fileWriteVariableDeclaration_(const FILE* file, const char* currentObjectId, const VariableObjectHandle_t variable, const VariableDeclaration_t declareType);
+static bool fileWriteVariableDeclaration_(const FILE* file, const ImportObjectHandle_t currentObjectId, const VariableObjectHandle_t variable, const VariableDeclaration_t declareType);
 static bool fileWriteMethods_(const CodeGeneratorHandle_t generator);    
 static bool initializeFileDescriptorFor_(FILE** descriptor, const char* virtualBuffer, char* path, const ImportObjectHandle_t iguanaImport, const char extension);     
 static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator,const MethodObjectHandle_t method);
 static bool handleExpressionWriting_(const CodeGeneratorHandle_t generator,const ExpressionHandle_t expression);
 static void handleOperatorWritingByType_(FILE* file, const TokenType_t type);
-static inline bool fileWriteVariablesHashmap_(FILE* file, const HashmapHandle_t scopeVariablesHashmap, const char* currentFileObjectId);
+static inline bool fileWriteVariablesHashmap_(FILE* file, const HashmapHandle_t scopeVariablesHashmap, const ImportObjectHandle_t currentFileObjectId);
 ////////////////////////////////
 // IMPLEMENTATION
 
@@ -135,7 +135,7 @@ bool Generator_generateCode(const CodeGeneratorHandle_t generator)
 
     // Generating class variables
 
-    if(!fileWriteVariablesHashmap_(generator->hFile, &generator->ast->classVariables, generator->iguanaImport->objectId.id))
+    if(!fileWriteVariablesHashmap_(generator->hFile, &generator->ast->classVariables, generator->iguanaImport))
     {
         Log_e(TAG, "Failed to write c class variables");
         return ERROR;
@@ -199,7 +199,7 @@ static inline bool fileWriteImports_(const CodeGeneratorHandle_t generator)
 }
 
 
-static inline bool fileWriteVariablesHashmap_(FILE* file, const HashmapHandle_t scopeVariablesHashmap, const char* currentFileObjectId)
+static inline bool fileWriteVariablesHashmap_(FILE* file, const HashmapHandle_t scopeVariablesHashmap, const ImportObjectHandle_t currentObjectAsImport)
 {
     if(scopeVariablesHashmap->entries.currentSize != 0)
     {
@@ -211,15 +211,15 @@ static inline bool fileWriteVariablesHashmap_(FILE* file, const HashmapHandle_t 
             VariableObjectHandle_t variable;
 
             variable = Hashmap_at(scopeVariablesHashmap, variableIdx);
-            fileWriteVariableDeclaration_(file, currentFileObjectId, variable, VARIABLE_STRUCT);
+            fileWriteVariableDeclaration_(file, currentObjectAsImport, variable, VARIABLE_STRUCT);
         }
-        fprintf(file, "%c%s_t%c%c", BRACKET_END_CHAR, currentFileObjectId, SEMICOLON_CHAR, END_LINE_CHAR);
+        fprintf(file, "%c%s_t%c%c", BRACKET_END_CHAR, currentObjectAsImport->objectId.id, SEMICOLON_CHAR, END_LINE_CHAR);
     }
     return SUCCESS;
 
 }
 
-static bool fileWriteVariableDeclaration_(const FILE* file, const char* currentObjectId, const VariableObjectHandle_t variable, const VariableDeclaration_t declareType)
+static bool fileWriteVariableDeclaration_(const FILE* file, const ImportObjectHandle_t currentObjectImport, const VariableObjectHandle_t variable, const VariableDeclaration_t declareType)
 {
     char* variableTypeKeywordToUse;
 
@@ -237,7 +237,9 @@ static bool fileWriteVariableDeclaration_(const FILE* file, const char* currentO
                 break;
             
             case VARIABLE_METHOD:
-                fprintf(file, "%s %s_%s%c", variableTypeKeywordToUse, currentObjectId, variable->variableName, BRACKET_ROUND_START_CHAR);
+                fprintf(file,"%s ", variableTypeKeywordToUse);
+                fwrite(currentObjectImport->objectNamePointer, 1, currentObjectImport->objectNamePointerLength, file);
+                fprintf(file, "_%s%c", variable->variableName, BRACKET_ROUND_START_CHAR);
                 break;
             case VARIABLE_NORMAL:
                 fprintf(file, "%s %s%c", variableTypeKeywordToUse, variable->variableName, SEMICOLON_CHAR);
@@ -266,13 +268,13 @@ static inline bool fileWriteMethods_(const CodeGeneratorHandle_t generator)
         method = (MethodObjectHandle_t) Hashmap_at(&generator->ast->methods, methodIdx);                                                           // getting method by index
         NULL_GUARD(method, ERROR, Log_e(TAG, "AST methods vector expandable is null"));
 
-        if(!fileWriteVariableDeclaration_(generator->hFile, generator->iguanaImport->objectId.id, &method->returnVariable, VARIABLE_METHOD))
+        if(!fileWriteVariableDeclaration_(generator->hFile, generator->iguanaImport, &method->returnVariable, VARIABLE_METHOD))
         {
             Log_e(TAG, "Failed to write method %s return type", method->methodName);
             return ERROR;
         }
 
-        if(!fileWriteVariableDeclaration_(generator->cFile, generator->iguanaImport->objectId.id, &method->returnVariable, VARIABLE_METHOD))
+        if(!fileWriteVariableDeclaration_(generator->cFile, generator->iguanaImport, &method->returnVariable, VARIABLE_METHOD))
         {
             Log_e(TAG, "Failed to write method %s return type", method->methodName);
             return ERROR;
@@ -293,13 +295,13 @@ static inline bool fileWriteMethods_(const CodeGeneratorHandle_t generator)
             parameter = method->parameters->expandable[paramIdx];
             NULL_GUARD(parameter, ERROR, Log_e(TAG, "AST method %s %d nth is NULL", method->methodName, paramIdx));
 
-            if(!fileWriteVariableDeclaration_(generator->hFile,generator->iguanaImport->objectId.id, parameter, VARIABLE_PARAMETER))
+            if(!fileWriteVariableDeclaration_(generator->hFile,generator->iguanaImport, parameter, VARIABLE_PARAMETER))
             {
                 Log_e(TAG, "Failed to write method %s return type", method->methodName);
                 return ERROR;
             }
 
-            if(!fileWriteVariableDeclaration_(generator->cFile,generator->iguanaImport->objectId.id, parameter, VARIABLE_PARAMETER))
+            if(!fileWriteVariableDeclaration_(generator->cFile,generator->iguanaImport, parameter, VARIABLE_PARAMETER))
             {
                 Log_e(TAG, "Failed to write method %s return type", method->methodName);
                 return ERROR;
@@ -333,14 +335,14 @@ static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator, c
 {
     fwrite(&BRACKET_START_CHAR, 1, 1, generator->cFile);
 
-    if(!fileWriteVariablesHashmap_(generator->cFile, &method->body.localVariables, generator->iguanaImport->objectId.id))
+    if(!fileWriteVariablesHashmap_(generator->cFile, &method->body.localVariables, generator->iguanaImport))
     {
         Log_e(TAG, "Failed to write method scope variables");
         return ERROR;
     }
     // writing structure Initializator
 
-    fprintf(generator->cFile, "%s_t %s%c", generator->iguanaImport->objectId.id, LOCAL_VARIABLES_STRUCT_NAME,SEMICOLON_CHAR);
+    fprintf(generator->cFile, "%s_t %s%c", generator->iguanaImport->objectId.id, LOCAL_VARIABLES_STRUCT_NAME, SEMICOLON_CHAR);
 
     // writing variables assignings
     for(size_t signableVariableIdx = 0; signableVariableIdx < method->body.localVariables.entries.currentSize; signableVariableIdx++)
@@ -404,7 +406,8 @@ static bool handleExpressionWriting_(const CodeGeneratorHandle_t generator, cons
         methodCallHandle = expression->expressionObject;
         if(methodCallHandle->isMethodSelf)
         {
-            fprintf(generator->cFile, "%s_%s((void*) 0)", generator->iguanaImport->objectId.id, methodCallHandle->method.methodName);
+            fwrite(generator->iguanaImport->objectNamePointer, 1, generator->iguanaImport->objectNamePointerLength, generator->cFile);
+            fprintf(generator->cFile, "_%s((void*)0)", methodCallHandle->method.methodName);
         }else
         {
             // not implemented yet
@@ -433,7 +436,7 @@ static bool handleExpressionWriting_(const CodeGeneratorHandle_t generator, cons
         variableName = expression->expressionObject;
         NULL_GUARD(variableName, ERROR, Log_e(TAG, "Variable name handle is null somehow"));
 
-        fprintf(generator->cFile, "%s.%s",LOCAL_VARIABLES_STRUCT_NAME, variableName);
+        fprintf(generator->cFile, "%s.%s", LOCAL_VARIABLES_STRUCT_NAME, variableName);
     }else
     {
         Log_e(TAG, "Unrecognised expression \'ID:%d\'", expression->type);

@@ -13,6 +13,8 @@
 #include "unix_linker.h"
 #include "../../parser/structures/import_object/import_object.h"
 #include "string.h"
+
+
 ////////////////////////////////
 // DEFINES
 #define LD_LINKER_COMMAND "./ld/ld_linker -dynamic-linker ./ld/ld-linux-x86-64.so -o output --entry ___start -lc"
@@ -36,7 +38,7 @@ bool UnixLinker_linkPaths(const VectorHandler_t objectsCompiledExternaly)
 {
     char* full_command;
     char* iterator;
-    
+
     ALLOC_CHECK(full_command, sizeof(LD_LINKER_COMMAND) + CFILES_LENGTH + (OBJECT_ID_LENGTH * objectsCompiledExternaly->currentSize), ERROR);
 
     full_command[0] = '\0';//null terminator beggining for strncat

@@ -194,12 +194,16 @@ static inline bool createMainProcessFile_(CompilerHandle_t compiler, const char*
     }
 
     // adding mainProccess file for executing main object
-    fprintf(file,
-    "#include \"%s.h\"\nvoid exit(int);int %s(){exit(%s_%s((void*)0));}",
+    fprintf(file, "#include \"%s.h\"\nvoid exit(int);int %s(){exit(",
     ((ImportObjectHandle_t)compiler->alreadyCompiledFilePaths.expandable[0])->objectId.id,
-    MAIN_PROCESS_FILE_NAME,
-    ((ImportObjectHandle_t)compiler->alreadyCompiledFilePaths.expandable[0])->objectId.id,
-    mainFileName);
+    MAIN_PROCESS_FILE_NAME
+    );
+
+    fwrite(((ImportObjectHandle_t)compiler->alreadyCompiledFilePaths.expandable[0])->objectNamePointer, 1,
+    ((ImportObjectHandle_t)compiler->alreadyCompiledFilePaths.expandable[0])->objectNamePointerLength,
+    file);
+
+    fprintf(file, "_%s((void*)0));}", mainFileName);
 
     if(fclose(file) != 0)
     {
@@ -304,10 +308,12 @@ bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char*
 
 bool Compiler_destroy(CompilerHandle_t compiler)
 {
-    // if(!cleanTempFilePaths_(compiler))
-    // {
-    //     Log_w(TAG, "Failed to clean compiled file paths");
-    // }
+    #if ENABLE_TEMP_FILES_CLEANUP
+        if(!cleanTempFilePaths_(compiler))
+        {
+            Log_w(TAG, "Failed to clean compiled file paths");
+        }
+    #endif
 
     if(!Vector_destroy(&compiler->alreadyCompiledFilePaths))
     {

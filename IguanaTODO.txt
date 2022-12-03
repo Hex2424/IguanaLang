@@ -22,8 +22,8 @@ TODO:
 19. Optimized way to create Abstract syntax tree
 20. Negative numbers support
 21. check if variable was declared what position
-
-
+22. Handle correct naming of methods incase of differend folders collisions
+23. Direct elf/ .o editing
 
 l.c
 

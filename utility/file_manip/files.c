@@ -52,8 +52,11 @@ uint16_t Files_filepathGetFilename(const char* filePath, char** fileName)
     if(*fileName == NULL) // incase of slash not found
     {
         *fileName = filePath;
+    }else
+    {
+        (*fileName)++;
     }
-
+    
     char* extensionPointer = Files_filepathExtensionPointer(*fileName);
     if(extensionPointer == NULL)
     {
