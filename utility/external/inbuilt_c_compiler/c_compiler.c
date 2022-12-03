@@ -12,21 +12,17 @@
  */
 
 #include "c_compiler.h"
-#include "../../global_config/global_config.h"
 #include "string.h"
 #include "stdio.h"
 #include "../../misc/safety_macros.h"
 #include "../../logger/logger.h"
+#include "c_compiler_macros.h"
 
 ////////////////////////////////
 // DEFINES
-#if VERBOSE_C_COMPILER
-    #define LOG_PATH_TO_FILE ""
-#else
-    #define LOG_PATH_TO_FILE " 2> clog.err"
-#endif
 
-#define GCC_COMPILER_COMMAND "gcc -c %s%s.c -o %s.o"LOG_PATH_TO_FILE
+
+#define GCC_COMPILER_COMMAND "gcc -c %s%s.c -o %s.o "WARNING_SUPRESSED LOG_PATH_TO_FILE
 
 ////////////////////////////////
 // PRIVATE CONSTANTS
