@@ -27,7 +27,9 @@ utility/parser/parser_utilities/smaller_parsers/body_parser/body_parser.c
 utility/file_manip/files.c
 utility/parser/structures/object_type/object_type.c
 )
-
+execute_process(
+    COMMAND bash -c "rm *.c & rm *.h & rm *.o"
+)
 cmake_minimum_required(VERSION 3.3)
 project(${PROJECT_NAME} LANGUAGES C)
 add_executable(${PROJECT_STRING} ${SRC})
