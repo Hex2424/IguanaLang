@@ -21,6 +21,6 @@
 
 
 
-bool MethodParser_parseMethod(TokenHandler_t** currentToken, MainFrameHandle_t root);
+bool MethodParser_parseMethod(TokenHandler_t** currentToken, MainFrameHandle_t root, const Accessibility_t notation);
 
 #endif // UTILITY_PARSER_PARSER_UTILITIES_SMALLER_PARSERS_METHOD_PARSERS_H_

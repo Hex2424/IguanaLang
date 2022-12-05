@@ -1,7 +1,7 @@
 
-set(PROJECT_NAME Iguana)
+set(PROJECT_NAME iguana)
 set(PROJECT_LOCATION /home/hex24/Desktop/C_Projects/IguanaLang)
-set(PROJECT_STRING "Iguana")
+set(PROJECT_STRING "iguana")
 set(SRC 
 utility/main.c
 utility/separator/separator.c

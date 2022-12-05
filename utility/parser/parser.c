@@ -50,12 +50,12 @@ size_t tokensCount;
 // PRIVATE METHODS
 
 static bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t rootHandle);
-static bool handleKeywordInteger_(MainFrameHandle_t rootHandle);
+static bool handleKeywordInteger_(MainFrameHandle_t rootHandle, const Accessibility_t notation);
 static bool tryParseSequence_(const TokenType_t* pattern,const size_t patternSize);
 static bool assignTokenValue_(char** to, const char* from);
 static bool addLibraryForCompilation_(ParserHandle_t parser, ImportObjectHandle_t* importObject);
 static int checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, ImportObjectHandle_t path);
-
+static inline bool handleNotation_(MainFrameHandle_t rootHandle);
 ////////////////////////////////
 // IMPLEMENTATION
 
@@ -104,8 +104,12 @@ bool Parser_parseTokens(ParserHandle_t parser, MainFrameHandle_t root, const Vec
         }else
         if(cTokenType == BIT_TYPE)      // detected int keyword
         {
-            handleKeywordInteger_(root);
-        }else
+            handleKeywordInteger_(root, NO_NOTATION);
+        }else if(cTokenType == NOTATION)
+        {
+            handleNotation_(root);
+        }   
+        else
         {
             Shouter_shoutUnrecognizedToken(cTokenP);
         }
@@ -115,7 +119,44 @@ bool Parser_parseTokens(ParserHandle_t parser, MainFrameHandle_t root, const Vec
     return SUCCESS;
 }
 
-static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle)
+static inline bool handleNotation_(MainFrameHandle_t rootHandle)
+{
+    currentToken++;
+
+    if(NAMING)
+    {
+        Accessibility_t type;
+        // notation handling
+        if(strcmp((*currentToken)->valueString, "CMethod") == 0)
+        {
+            type = CMETHOD;
+        }else
+        if(strcmp((*currentToken)->valueString, "Private") == 0)
+        {
+            type = PRIVATE;
+        }
+        else
+        if(strcmp((*currentToken)->valueString, "Public") == 0)
+        {
+            type = PUBLIC;
+        }else
+        {
+            Shouter_shoutError(cTokenP, "Notation '%s' is not existing in my knowledge", (*currentToken)->valueString);
+            type = NO_NOTATION;
+        }
+        
+        currentToken++;
+        handleKeywordInteger_(rootHandle, type);
+        
+    }else
+    {
+        Shouter_shoutError(cTokenP, "Notation doesn't have any type declared");
+    }
+    return SUCCESS;
+}
+
+
+static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle, const Accessibility_t notation)
 {
     VariableObjectHandle_t variable;
 
@@ -175,7 +216,7 @@ static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle)
     if(cTokenType == BRACKET_ROUND_START)   // identified method
     {
         currentToken++;
-        MethodParser_parseMethod(&currentToken, rootHandle);
+        MethodParser_parseMethod(&currentToken, rootHandle, notation);
 
     }else
     {

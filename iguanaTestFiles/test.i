@@ -1,3 +1,6 @@
+import "stdio"
+import "hmm/test"
+
 bit:1 ss;
 
 bit:32 main()
@@ -31,6 +34,10 @@ bit:32 main()
     method5();
     method6();
 } 
+
+@CMethod bit:1 method10();
+@CMethod bit:1 methodp();
+@CMethod bit:1 methodp();
 
 bit:1 method2()
 {

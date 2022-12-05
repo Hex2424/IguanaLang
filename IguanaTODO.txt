@@ -4,7 +4,7 @@ TODO:
 4. On not bitpacked work same fast as c code
 5. Inheritence
 6. Object orientation (File orientation)
-7. Annotation system
+7. Annotation system (Public / Private / Disabled)
 8. C multiple compiler support
 7. C header include support
 8. Inline keyword power

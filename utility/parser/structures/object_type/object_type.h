@@ -19,8 +19,9 @@
 typedef enum
 {
     PRIVATE,
-    PUBLIC
-
+    PUBLIC,
+    CMETHOD,
+    NO_NOTATION
 }Accessibility_t;
 
 

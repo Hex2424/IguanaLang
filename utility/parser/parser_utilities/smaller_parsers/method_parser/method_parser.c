@@ -38,11 +38,13 @@ static bool parseMethodReturnVariable_(TokenHandler_t** currentTokenHandle, Meth
 ////////////////////////////////
 // IMPLEMENTATION
 
-inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, MainFrameHandle_t root)
+inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, MainFrameHandle_t root, const Accessibility_t notation)
 {
     MethodObjectHandle_t methodHandle;
 
     ALLOC_CHECK(methodHandle, sizeof(MethodObject_t), ERROR);
+    methodHandle->accessType = notation;
+    
     // setting up method name
 
     if(!parseMethodReturnVariable_(currentTokenHandle, methodHandle))
