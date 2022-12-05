@@ -25,6 +25,7 @@ utility/external/unix_linker/unix_linker.c
 utility/hashmap/hashmap.c
 utility/parser/parser_utilities/smaller_parsers/body_parser/body_parser.c
 utility/file_manip/files.c
+utility/parser/structures/object_type/object_type.c
 )
 
 cmake_minimum_required(VERSION 3.3)

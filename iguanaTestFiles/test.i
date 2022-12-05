@@ -35,13 +35,16 @@ bit:32 main()
     method6();
 } 
 
-@CMethod bit:1 method10();
-@CMethod bit:1 methodp();
-@CMethod bit:1 methodp();
+@Private
+bit:1 method10(){}
 
+@CMethod
+bit:1 methodp(){}
+
+@Ignored
 bit:1 method2()
 {
-
+    
 }
 
 bit:1 method3(bit:20 param1, bit:64 param2)

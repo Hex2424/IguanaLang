@@ -125,28 +125,22 @@ static inline bool handleNotation_(MainFrameHandle_t rootHandle)
 
     if(NAMING)
     {
-        Accessibility_t type;
-        // notation handling
-        if(strcmp((*currentToken)->valueString, "CMethod") == 0)
+        // Identifying type by notation naming
+        for(uint8_t bindingIdx = 0; bindingIdx < ObjectTypes_getNotationTableSize(); bindingIdx++)
         {
-            type = CMETHOD;
-        }else
-        if(strcmp((*currentToken)->valueString, "Private") == 0)
-        {
-            type = PRIVATE;
+            if(strcmp((*currentToken)->valueString, ObjectTypes_getNotationBindingById(bindingIdx)->naming) == 0)
+            {
+                currentToken++;
+                handleKeywordInteger_(rootHandle, ObjectTypes_getNotationBindingById(bindingIdx)->type);
+                return SUCCESS;
+            }
         }
-        else
-        if(strcmp((*currentToken)->valueString, "Public") == 0)
-        {
-            type = PUBLIC;
-        }else
-        {
-            Shouter_shoutError(cTokenP, "Notation '%s' is not existing in my knowledge", (*currentToken)->valueString);
-            type = NO_NOTATION;
-        }
-        
+
+        // Situation when passed loop without finding anything
+        Shouter_shoutError(cTokenP, "Notation '%s' is not existing in my knowledge", (*currentToken)->valueString);
+
         currentToken++;
-        handleKeywordInteger_(rootHandle, type);
+        handleKeywordInteger_(rootHandle, NO_NOTATION);
         
     }else
     {
