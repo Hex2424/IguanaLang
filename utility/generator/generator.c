@@ -268,27 +268,41 @@ static inline bool fileWriteMethods_(const CodeGeneratorHandle_t generator)
         method = (MethodObjectHandle_t) Hashmap_at(&generator->ast->methods, methodIdx);                                                           // getting method by index
         NULL_GUARD(method, ERROR, Log_e(TAG, "AST methods vector expandable is null"));
 
+        if(method->accessType == IGNORED)
+        {
+            continue;
+        }
+
         if(!fileWriteVariableDeclaration_(generator->hFile, generator->iguanaImport, &method->returnVariable, VARIABLE_METHOD))
         {
             Log_e(TAG, "Failed to write method %s return type", method->methodName);
             return ERROR;
         }
-
-        if(!fileWriteVariableDeclaration_(generator->cFile, generator->iguanaImport, &method->returnVariable, VARIABLE_METHOD))
+        if(method->containsBody)
         {
-            Log_e(TAG, "Failed to write method %s return type", method->methodName);
-            return ERROR;
+            if(!fileWriteVariableDeclaration_(generator->cFile, generator->iguanaImport, &method->returnVariable, VARIABLE_METHOD))
+            {
+                Log_e(TAG, "Failed to write method %s return type", method->methodName);
+                return ERROR;
+            }
         }
         
         if(generator->ast->classVariables.entries.currentSize != 0)
         {
-            fprintf(generator->cFile, "%s_t* root", generator->iguanaImport->objectId.id);
+            if(method->containsBody)
+            {
+                fprintf(generator->cFile, "%s_t* root", generator->iguanaImport->objectId.id);
+            }
             fprintf(generator->hFile, "%s_t* root", generator->iguanaImport->objectId.id);
         }
 
         if(method->parameters->currentSize > 0)
         {
-            fwrite(&COMMA_CHAR, 1, 1, generator->cFile);
+            if(method->containsBody)
+            {
+                fwrite(&COMMA_CHAR, 1, 1, generator->cFile);
+            }
+
             fwrite(&COMMA_CHAR, 1, 1, generator->hFile);
         }
 
@@ -304,10 +318,13 @@ static inline bool fileWriteMethods_(const CodeGeneratorHandle_t generator)
                 return ERROR;
             }
 
-            if(!fileWriteVariableDeclaration_(generator->cFile,generator->iguanaImport, parameter, VARIABLE_PARAMETER))
+            if(method->containsBody)
             {
-                Log_e(TAG, "Failed to write method %s return type", method->methodName);
-                return ERROR;
+                if(!fileWriteVariableDeclaration_(generator->cFile,generator->iguanaImport, parameter, VARIABLE_PARAMETER))
+                {
+                    Log_e(TAG, "Failed to write method %s return type", method->methodName);
+                    return ERROR;
+                }
             }
 
             if((paramIdx + 1) != method->parameters->currentSize)
@@ -319,13 +336,21 @@ static inline bool fileWriteMethods_(const CodeGeneratorHandle_t generator)
         }
 
         fprintf(generator->hFile, "%c%c\n", BRACKET_ROUND_END_CHAR, SEMICOLON_CHAR);
-        fprintf(generator->cFile, "%c\n", BRACKET_ROUND_END_CHAR);
-
-        if(!fileWriteMethodBody_(generator, method))
+        
+        if(method->containsBody)
         {
-            Log_e(TAG, "Failed to write method body to IO");
-            return ERROR;
+            fprintf(generator->cFile, "%c\n", BRACKET_ROUND_END_CHAR);
+            if(!fileWriteMethodBody_(generator, method))
+            {
+                Log_e(TAG, "Failed to write method body to IO");
+                return ERROR;
+            }
+        }else
+        {
+            // TODO abstracting fwrites
+            fwrite(&SEMICOLON_CHAR, 1, 1, generator->cFile);
         }
+        
         // fprintf("%s", method->returnVariable)
 
     }
