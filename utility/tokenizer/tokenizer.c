@@ -101,7 +101,7 @@ static bool handleUnknownType_(TokenHandler_t tokenHandle, const char* expressio
         expressionSize -= 2;
     }else
     {
-        tokenHandle->tokenType = NAMING; 
+        tokenHandle->tokenType = NAMING;
     }
 
     ALLOC_CHECK(tokenHandle->valueString,expressionSize + 1, false);

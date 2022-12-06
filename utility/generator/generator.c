@@ -352,7 +352,7 @@ static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator, c
         variable = (VariableObjectHandle_t) Hashmap_at(&method->body.localVariables, signableVariableIdx);
         if(variable->hasAssignedValue)
         {
-            fprintf(generator->cFile, "%s.%s = %s%c",LOCAL_VARIABLES_STRUCT_NAME, variable->variableName,variable->assignedValue, SEMICOLON_CHAR);
+            fprintf(generator->cFile, "%s.%s = %s%c", LOCAL_VARIABLES_STRUCT_NAME, variable->variableName,variable->assignedValue, SEMICOLON_CHAR);
         }
     }
 

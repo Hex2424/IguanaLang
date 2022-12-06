@@ -20,7 +20,7 @@ typedef enum
 {
     PRIVATE,
     PUBLIC,
-    CMETHOD,
+    CFIELD,
     IGNORED,
     NO_NOTATION
 }Accessibility_t;

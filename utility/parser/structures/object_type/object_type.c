@@ -23,7 +23,7 @@ static const char* TAG = "OBJECT_TYPE";
 
 const BindingNotationType_t notationBindingTable[] = 
 {
-    {"CMethod", CMETHOD},
+    {"CField", CFIELD},
     {"Private", PRIVATE},
     {"Public", PUBLIC},
     {"Ignored", IGNORED}

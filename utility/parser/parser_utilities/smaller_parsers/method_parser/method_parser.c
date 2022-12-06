@@ -44,7 +44,7 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, MainFr
 
     ALLOC_CHECK(methodHandle, sizeof(MethodObject_t), ERROR);
     methodHandle->accessType = notation;
-    
+    methodHandle->containsBody = false;
     // setting up method name
 
     if(!parseMethodReturnVariable_(currentTokenHandle, methodHandle))
@@ -169,9 +169,13 @@ static bool parseMethodBody_(TokenHandler_t** currentTokenHandle, MethodObjectHa
             Log_e(TAG, "Failed to parse scope for method \'%s\'", methodHandle->methodName);
             return ERROR;
         }
-
+        methodHandle->containsBody = true;
         
-    }else
+    }else if(cTokenType == SEMICOLON)
+    {
+        methodHandle->containsBody = false;
+    }
+    else
     {
         Shouter_shoutExpectedToken(cTokenP, BRACKET_START);
     }
