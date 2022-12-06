@@ -279,9 +279,12 @@ static inline bool fileWriteMethods_(const CodeGeneratorHandle_t generator)
             Log_e(TAG, "Failed to write method %s return type", method->methodName);
             return ERROR;
         }
-
-        fprintf(generator->cFile, "%s_t* root", generator->iguanaImport->objectId.id);
-        fprintf(generator->hFile, "%s_t* root", generator->iguanaImport->objectId.id);
+        
+        if(generator->ast->classVariables.entries.currentSize != 0)
+        {
+            fprintf(generator->cFile, "%s_t* root", generator->iguanaImport->objectId.id);
+            fprintf(generator->hFile, "%s_t* root", generator->iguanaImport->objectId.id);
+        }
 
         if(method->parameters->currentSize > 0)
         {
@@ -341,8 +344,11 @@ static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator, c
         return ERROR;
     }
     // writing structure Initializator
-
-    fprintf(generator->cFile, "%s_t %s%c", generator->iguanaImport->objectId.id, LOCAL_VARIABLES_STRUCT_NAME, SEMICOLON_CHAR);
+    if(generator->ast->classVariables.entries.currentSize != 0)
+    {
+        fprintf(generator->cFile, "%s_t %s%c", generator->iguanaImport->objectId.id, LOCAL_VARIABLES_STRUCT_NAME, SEMICOLON_CHAR);
+    }
+    
 
     // writing variables assignings
     for(size_t signableVariableIdx = 0; signableVariableIdx < method->body.localVariables.entries.currentSize; signableVariableIdx++)

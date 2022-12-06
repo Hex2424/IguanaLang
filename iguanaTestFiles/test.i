@@ -33,6 +33,7 @@ bit:32 main()
     method2();
     method5();
     method6();
+    methodp();
 } 
 
 @Public
@@ -41,11 +42,8 @@ bit:1 method11(){}
 @Private
 bit:1 method10(){}
 
-
 @CField
 bit:1 methodp();
-
-
 
 @Ignored
 bit:1 method2()
