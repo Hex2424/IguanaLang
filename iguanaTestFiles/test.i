@@ -1,6 +1,7 @@
 import "stdio"
 import "hmm/test"
 
+
 bit:1 ss;
 
 bit:32 main()
@@ -9,6 +10,7 @@ bit:32 main()
     bit:1(0) ss;
     bit:1(0) a;
     bit:2(169) bb;
+
 
     ss = ss + 1;
 
@@ -25,14 +27,12 @@ bit:32 main()
     a + 5;
     5;
     55 - 6 + 9 + a;
-    this;
+    this + 5;
     ;
     ;5;
     ;;;
-
+ 
     method2();
-    method5();
-    method6();
     methodp();
 } 
 
@@ -43,16 +43,18 @@ bit:1 method11(){}
 bit:1 method10(){}
 
 @CField
-bit:1 methodp();
+bit:1 methodp(){}
 
-@Ignored
-bit:1 method2()
+
+bit:1 method2(bit:1 param1, bit:1 param2, bit:1 param3, ...)
 {
-
+    
 }
 
 bit:1 method3(bit:20 param1, bit:64 param2)
 {
-    
+
 }
+
+
 

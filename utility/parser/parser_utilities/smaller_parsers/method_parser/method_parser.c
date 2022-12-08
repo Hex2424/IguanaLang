@@ -19,7 +19,7 @@
 // DEFINES
 #define cTokenP (**currentTokenHandle)
 #define cTokenType cTokenP -> tokenType
-
+#define cTokenIncrement (*currentTokenHandle)++
 ////////////////////////////////
 // PRIVATE CONSTANTS
 static const char* TAG = "METHOD_PARSER";
@@ -105,7 +105,7 @@ static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodOb
         {
             if(!ParserUtils_tryParseSequence(currentTokenHandle, PATTERN_DECLARE, PATTERN_DECLARE_SIZE))
             {
-                (*currentTokenHandle)++;
+                cTokenIncrement;
                 continue;
             }
             
@@ -120,7 +120,7 @@ static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodOb
 
             if(cTokenType == COMMA)
             {
-                (*currentTokenHandle)++;
+                cTokenIncrement;
                 continue;
             }else 
             if(cTokenType == BRACKET_ROUND_END)
@@ -129,7 +129,7 @@ static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodOb
             }else
             {
                 Shouter_shoutExpectedToken(cTokenP, BRACKET_ROUND_END);
-                (*currentTokenHandle)++;
+                cTokenIncrement;
                 continue;
             }
 
@@ -137,15 +137,53 @@ static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodOb
         if(cTokenType == BRACKET_ROUND_END)
         {
             break;
-        }else
+        }else if(cTokenType == DOT_SYMBOL)
+        {
+            cTokenIncrement;
+            
+            // handling unlimited parameters '...'
+
+            if(cTokenType != DOT_SYMBOL)
+            {
+                Shouter_shoutError(cTokenP, "expected declaration specifiers or ‘...’ before ‘.’ token");
+            }
+            
+            cTokenIncrement;
+
+            if(cTokenType != DOT_SYMBOL)
+            {
+                Shouter_shoutError(cTokenP, "expected declaration specifiers or ‘...’ before ‘.’ token");
+            }
+
+            cTokenIncrement;
+
+            if(cTokenType != BRACKET_ROUND_END)
+            {
+                if(cTokenType != COMMA)
+                {
+                    Shouter_shoutExpectedToken(cTokenP, BRACKET_ROUND_END);
+                    break;
+                }else
+                {
+                    Shouter_shoutError(cTokenP, "Infinity params '...' should be declared as end parameter");
+                    cTokenIncrement;
+                }
+                
+            }
+            // valid infinity parameters syntac acquired
+
+
+            
+        }
+        else
         {
             Shouter_shoutExpectedToken(cTokenP, BIT_TYPE);
-            (*currentTokenHandle)++;
+            cTokenIncrement;
             continue;
         }
         
     }
-    (*currentTokenHandle)++;
+    cTokenIncrement;
     return SUCCESS;
 
 }
@@ -162,7 +200,7 @@ static bool parseMethodBody_(TokenHandler_t** currentTokenHandle, MethodObjectHa
     if(cTokenType == BRACKET_START)
     {
 
-        (*currentTokenHandle)++;
+        cTokenIncrement;
         // parsing scope
         if(!BodyParser_parseScope(&methodHandle->body, currentTokenHandle))
         {
