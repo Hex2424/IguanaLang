@@ -58,6 +58,7 @@ int main(int argc, char const *argv[])
     {
         exit(-1);
     }
+    compiler.mainIguanaFilePath = realpath(argv[0], NULL);
 
     if(!Compiler_startCompilingProcessOnRoot(&compiler, filePathToCompile))
     {

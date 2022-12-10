@@ -53,6 +53,7 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, MainFr
     {
         return ERROR;
     }
+    
     if(!parseMethodParameters_(currentTokenHandle, methodHandle))
     {
         return ERROR;                         // getting back because parameters parsing failed

@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include "../global_config/global_config.h"
 #include "../parser/structures/import_object/import_object.h"
-
+#include "../compiler/compiler.h"
 
 #define FOUT_BUFFER_LENGTH          1024
 
@@ -34,6 +34,7 @@ typedef struct
     char hFilePath[CFILES_LENGTH];
     char cFilePath[CFILES_LENGTH];
     ImportObjectHandle_t iguanaImport;
+    CompilerHandle_t compiler;
     MainFrameHandle_t ast;
 } CodeGenerator_t;
 

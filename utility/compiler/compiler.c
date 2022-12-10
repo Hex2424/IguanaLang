@@ -66,6 +66,8 @@ static bool compileFile_(CompilerHandle_t compiler, ImportObjectHandle_t filePat
     parser.compiler = compiler;
     parser.currentFilePath = filePath->realPath;
     
+    // Adding compiler handler for generator incase it needs
+    codeGenerator.compiler = compiler;
 
     // TODO optimize this shit
     char* lastSlashPointer = strrchr(filePath->realPath, '/');

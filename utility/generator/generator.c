@@ -63,6 +63,7 @@ static int methodDeclarationIteratorCallback_(void *key, int count, void* value,
 static int classImportsIteratorCallback(void *key, int count, void* value, void *user);
 static int methodBodyVariableIteratorCallback_(void *key, int count, void* value, void *user);
 
+static char* filePathToModulePath_(const CodeGeneratorHandle_t generator);
 static bool iguanaPathToCharfilePath_(char* filepath, const char cFormatExtension); 
 static bool generateNdefGuard_(const CodeGeneratorHandle_t generator);   
 static bool fileWriteImports_(const CodeGeneratorHandle_t generator);    
@@ -237,8 +238,9 @@ static bool fileWriteVariableDeclaration_(const FILE* file, const ImportObjectHa
                 break;
             
             case VARIABLE_METHOD:
+
                 fprintf(file,"%s ", variableTypeKeywordToUse);
-                fwrite(currentObjectImport->objectNamePointer, 1, currentObjectImport->objectNamePointerLength, file);
+                fwrite(currentObjectImport->objectId.id, 1, OBJECT_ID_LENGTH, file);
                 fprintf(file, "_%s%c", variable->variableName, BRACKET_ROUND_START_CHAR);
                 break;
             case VARIABLE_NORMAL:
@@ -372,6 +374,7 @@ static int methodDeclarationIteratorCallback_(void *key, int count, void* value,
 {
     MethodObjectHandle_t method;
     CodeGeneratorHandle_t generator;
+    char* variableTypeKeywordToUse;
     method = value;
     generator = user;
 
@@ -382,11 +385,19 @@ static int methodDeclarationIteratorCallback_(void *key, int count, void* value,
         return SUCCESS;
     }
 
-    if(!fileWriteVariableDeclaration_(generator->hFile, generator->iguanaImport, &method->returnVariable, VARIABLE_METHOD))
+    if(&method->returnVariable.bitpack != 0)
+    {
+        variableTypeKeywordToUse = TYPE_BINDS[(method->returnVariable.bitpack - 1)/ BYTE_SIZE_BITS]; 
+        fprintf(generator->hFile,"%s %s_%s%c",
+            variableTypeKeywordToUse,
+            generator->iguanaImport->objectId.id,
+            method->methodName, BRACKET_ROUND_START_CHAR);
+    }else
     {
         Log_e(TAG, "Failed to write method %s return type", method->methodName);
         return ERROR;
     }
+    
     if(method->containsBody)
     {
         if(!fileWriteVariableDeclaration_(generator->cFile, generator->iguanaImport, &method->returnVariable, VARIABLE_METHOD))
@@ -444,7 +455,11 @@ static int methodDeclarationIteratorCallback_(void *key, int count, void* value,
 
     }
 
-    fprintf(generator->hFile, "%c%c\n", BRACKET_ROUND_END_CHAR, SEMICOLON_CHAR);
+    fprintf(generator->hFile, "%c asm (\"%s_%s\")%c\n",
+        BRACKET_ROUND_END_CHAR,
+        filePathToModulePath_(generator),
+        method->methodName,SEMICOLON_CHAR);
+    
     
     if(method->containsBody)
     {
@@ -463,6 +478,61 @@ static int methodDeclarationIteratorCallback_(void *key, int count, void* value,
 }
 
 
+static char* filePathToModulePath_(const CodeGeneratorHandle_t generator)
+{
+    char* modulePath;
+    char* tempOffset;
+    uint32_t realPathLength;
+    uint32_t iterator;
+
+    iterator = 0;
+
+
+    // TODO optimize these iterators
+    while (generator->compiler->mainIguanaFilePath[iterator] == generator->iguanaImport->realPath[iterator] &&
+        generator->compiler->mainIguanaFilePath[iterator] != NULL &&
+        generator->iguanaImport->realPath[iterator] != NULL 
+    )
+    {
+        if(generator->iguanaImport->realPath[iterator] == '/')
+        {
+            tempOffset = generator->iguanaImport->realPath + iterator;
+        }
+        iterator++;
+
+        /* code */
+    }
+
+    tempOffset++;
+
+    realPathLength = strlen(tempOffset);
+
+    for(char* backwardsIterator = (tempOffset + realPathLength - 1); backwardsIterator >= tempOffset; backwardsIterator--)
+    {
+        realPathLength--;
+        if((*backwardsIterator) == '.')
+        {
+            break;
+        }
+    }
+
+    ALLOC_CHECK(modulePath, realPathLength + 1, ERROR);
+
+    for(uint32_t pos = 0; pos < realPathLength; pos++)
+    {
+        char symbol;
+        if((symbol = tempOffset[pos]) == '/')
+        {
+            symbol = '.';
+        }
+        
+        modulePath[pos] = symbol;
+    }
+    modulePath[realPathLength] = '\0';
+
+    return modulePath;
+}
+
 static bool handleExpressionWriting_(const CodeGeneratorHandle_t generator, const ExpressionHandle_t expression)
 {
     if(expression == NULL)
@@ -477,8 +547,7 @@ static bool handleExpressionWriting_(const CodeGeneratorHandle_t generator, cons
         methodCallHandle = expression->expressionObject;
         if(methodCallHandle->isMethodSelf)
         {
-            fwrite(generator->iguanaImport->objectNamePointer, 1, generator->iguanaImport->objectNamePointerLength, generator->cFile);
-            fprintf(generator->cFile, "_%s((void*)0)", methodCallHandle->method.methodName);
+            fprintf(generator->cFile, "%s_%s((void*)0)",generator->iguanaImport->objectId.id, methodCallHandle->method.methodName);
         }else
         {
             // not implemented yet

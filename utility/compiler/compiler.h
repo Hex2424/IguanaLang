@@ -17,11 +17,13 @@
 #include <stdbool.h>
 #include "../queue/queue.h"
 #include "../vector/vector.h"
+#include "../hashmap/hashmap.h"
 
 typedef struct
 {
     Vector_t alreadyCompiledFilePaths;
     Queue_t filePathsToCompile;
+    char* mainIguanaFilePath;
     Hashmap_t AllMethodCalls;
     Hashmap_t AllMethodDeclarations;
 }Compiler_t;
