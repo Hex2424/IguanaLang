@@ -47,7 +47,13 @@ static bool createMainProcessFile_(CompilerHandle_t compiler,const char* mainFil
 // IMPLEMENTATION
 
 
-
+/**
+ * @brief Private method used to compile one Iguana file and generate object file
+ * 
+ * @param[in/out] compiler - Compiler object itself
+ * @param[in/out] filePath - Import object containing Iguana file path
+ * @return bool            - Success state
+ */
 static bool compileFile_(CompilerHandle_t compiler, ImportObjectHandle_t filePath)
 {
     Vector_t tokensVector;
@@ -155,7 +161,12 @@ static bool compileFile_(CompilerHandle_t compiler, ImportObjectHandle_t filePat
     return SUCCESS;
 }
 
-
+/**
+ * @brief Public method for compiler initialization
+ * 
+ * @param[out] compiler - Compiler object for initializing
+ * @return bool         - Success state
+ */
 bool Compiler_initialize(CompilerHandle_t compiler)
 {
     Random_fast_srand();
@@ -171,10 +182,30 @@ bool Compiler_initialize(CompilerHandle_t compiler)
         Log_e(TAG, "Failed to create filePathsToCompilerQueue");
         return ERROR;
     }
+    
+    if(!Hashmap_new(&compiler->AllMethodCalls, 20))
+    {
+        Log_e(TAG, "Failed to create AllMethodCalls container");
+        return ERROR;
+    }
+
+    if(!Hashmap_new(&compiler->AllMethodDeclarations, 10))
+    {
+        Log_e(TAG, "Failed to create AllMethodDeclarations container");
+        return ERROR;
+    }
 
     return SUCCESS;
 }
 
+
+/**
+ * @brief Private method for creating start .c file which will run main object (Wrapper)
+ * 
+ * @param[in/out] compiler      - Compiler object for initializing
+ * @param[in] mainFileName      - Main process file name
+ * @return bool                 - Success state
+ */
 static inline bool createMainProcessFile_(CompilerHandle_t compiler, const char* mainFileName)
 {
     FILE* file;
@@ -233,7 +264,13 @@ static inline bool createMainProcessFile_(CompilerHandle_t compiler, const char*
     return SUCCESS;
 }
 
-
+/**
+ * @brief Public method for starting main compiling process
+ *
+ * @param[in/out] compiler  - Compiler object
+ * @param[in] filePath      - File path of main Iguana file which has "bit:32 main()" method
+ * @return bool             - Success state
+ */
 bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char* filePath)
 {
     ImportObjectHandle_t mainImport;
@@ -306,6 +343,12 @@ bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char*
 
 }
 
+/**
+ * @brief Public method use for Compiler object variables auto-destruction
+ * 
+ * @param[in] compiler - Compiler object
+ * @return bool        - Success state
+ */
 bool Compiler_destroy(CompilerHandle_t compiler)
 {
     #if ENABLE_TEMP_FILES_CLEANUP
@@ -366,28 +409,3 @@ static inline bool cleanTempFilePaths_(CompilerHandle_t compiler)
     }
     return SUCCESS;
 }
-
-// static inline bool cleanTempCFile_(ImportObjectHandle_t currentImport)
-// {
-//     char path[CFILES_LENGTH];
-//     memcpy(path, TEMP_PATH, sizeof(TEMP_PATH) - 1);
-//     path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH) - 1] = '.';
-//     path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH) + 1] = '\0';
-
-//     memcpy(path + sizeof(TEMP_PATH) - 1, currentImport->objectId.id, OBJECT_ID_LENGTH);
-//     path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH)] = 'c';
-
-//     if(remove(path))
-//     {
-//         Log_w(TAG, "Failed to close file: %s", path);
-//     }
-
-//     path[OBJECT_ID_LENGTH + sizeof(TEMP_PATH)] = 'h';
-
-//     if(remove(path))
-//     {
-//         Log_w(TAG, "Failed to close file: %s", path);
-//     }
-
-//     return SUCCESS;
-// }
