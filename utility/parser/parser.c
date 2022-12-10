@@ -170,11 +170,12 @@ static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle, const Acc
     {
         variable->assignedValue = 0;
 
-        if(!Hashmap_putEntry(&rootHandle->classVariables, variable->variableName, variable))
+        if(Hashmap_set(&rootHandle->classVariables, variable->variableName, variable))
         {
             Shouter_shoutError(cTokenP, "Variable \'%s\' is declared several times", variable->variableName);
             return ERROR;
         }
+        
         
     }else
     if(cTokenType == EQUAL)             // checking for assignable declaration
@@ -190,7 +191,7 @@ static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle, const Acc
             if(cTokenType == SEMICOLON)
             {
 
-                if(!Hashmap_putEntry(&rootHandle->classVariables, variable->variableName, variable))
+                if(Hashmap_set(&rootHandle->classVariables, variable->variableName, variable))
                 {
                     Shouter_shoutError(cTokenP, "Variable \'%s\' is declared several times", variable->variableName);
                     return ERROR;
@@ -240,7 +241,7 @@ static inline bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t
             return ERROR;
         }
 
-        if(!Hashmap_putEntry(&rootHandle->imports, importObject->name, importObject))
+        if(Hashmap_set(&rootHandle->imports, importObject->name, importObject))
         {
             Shouter_shoutError(cTokenP, "Library \'%s\' is already imported", importObject->name);
             return ERROR;

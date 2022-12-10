@@ -19,8 +19,8 @@
 #define NAME_IMPORTS_VECTOR     "imports"
 #define NAME_METHODS_VECTOR     "methods"
 
-#define FAILED_CREATION_LOG     "Could not create %s hashmap"
-#define FAILED_DESTROY_LOG      "Could not destroy %s hashmap"
+#define FAILED_CREATION_LOG     "Could not create '%s' hashmap"
+#define FAILED_DESTROY_LOG      "Could not destroy '%s' hashmap"
 ////////////////////////////////
 // PRIVATE CONSTANTS
 
@@ -46,25 +46,21 @@ static const char* TAG = "MAIN_FRAME";
  */
 bool MainFrame_init(MainFrameHandle_t handle)
 {
-    InitialSettings_t settings;
-
-    settings.initialSize = 5;
-    settings.expandableConstant = 1.0f / 3.0f;
-    settings.containsVectors = true;
-
-    if(!Hashmap_create(&handle->imports, &settings))
+  
+    if(!Hashmap_new(&handle->imports, 5))
     {
         Log_e(TAG, FAILED_CREATION_LOG, NAME_IMPORTS_VECTOR);
         return ERROR;
     }
 
-    if(!Hashmap_create(&handle->classVariables, &settings))
+    if(!Hashmap_new(&handle->classVariables, 10))
     {
         Log_e(TAG, FAILED_CREATION_LOG, NAME_VARIABLES_VECTOR);
         return ERROR;
     }
 
-    if(!Hashmap_create(&handle->methods, &settings))
+
+    if(!Hashmap_new(&handle->methods, 5))
     {
         Log_e(TAG, FAILED_CREATION_LOG, NAME_METHODS_VECTOR);
         return ERROR;
@@ -83,25 +79,9 @@ bool MainFrame_init(MainFrameHandle_t handle)
  */
 bool MainFrame_destroy(MainFrameHandle_t handle)
 {
-
-    if(!Hashmap_destroy(&handle->imports))
-    {
-        Log_e(TAG, FAILED_DESTROY_LOG, NAME_IMPORTS_VECTOR);
-        return ERROR;
-    }
-
-    if(!Hashmap_destroy(&handle->classVariables))
-    {
-        Log_e(TAG, FAILED_DESTROY_LOG, NAME_VARIABLES_VECTOR);
-        return ERROR;
-    }
-
-    if(!Hashmap_destroy(&handle->methods))
-    {
-        Log_e(TAG, FAILED_DESTROY_LOG, NAME_METHODS_VECTOR);
-        return ERROR;
-    }
-
+    Hashmap_delete(&handle->imports);
+    Hashmap_delete(&handle->classVariables);
+    Hashmap_delete(&handle->methods);
 
     return SUCCESS;
 

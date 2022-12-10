@@ -16,6 +16,8 @@
 #include "../../../structures/method/method_scope/local_scope.h"
 #include "../../../../tokenizer/token/token.h"
 #include "../../../../hashmap/hashmap.h"
+#include <stdbool.h>
+
 
 bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
 bool BodyParser_initialize(LocalScopeObjectHandle_t scopeBody);

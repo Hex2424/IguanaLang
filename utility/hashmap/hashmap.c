@@ -1,186 +1,171 @@
-/**
- * @file hashmap.c
- *
- * MORE INFO ABOUT THE FILE'S CONTENTS
- *
- * @copyright This file is a part of the project Iguana and is distributed under MIT license which
- * should have been included with the project. If not see: https://choosealicense.com/licenses/mit/
- *
- * @author Markas Vielavičius (markas.vielavicius@bytewall.com)
- *
- * @date 2022-11-06
- */
 #include "hashmap.h"
-#include "string.h"
-#include "../parser/structures/method/method.h"
-////////////////////////////////
-// DEFINES
+#include "../misc/safety_macros.h"
+#define hash_func meiyan
 
+static inline uint32_t meiyan(const char *key, int count) {
+	typedef uint32_t* P;
+	uint32_t h = 0x811c9dc5;
+	while (count >= 8) {
+		h = (h ^ ((((*(P)key) << 5) | ((*(P)key) >> 27)) ^ *(P)(key + 4))) * 0xad3e7;
+		count -= 8;
+		key += 8;
+	}
+	#define tmp h = (h ^ *(uint16_t*)key) * 0xad3e7; key += 2;
+	if (count & 4) { tmp tmp }
+	if (count & 2) { tmp }
+	if (count & 1) { h = (h ^ *key) * 0xad3e7; }
+	#undef tmp
+	return h ^ (h >> 16);
+}
 
-////////////////////////////////
-// PRIVATE CONSTANTS
-static const char* TAG = "HASHMAP";
+struct keynode *keynode_new(char*k, int l) {
+	struct keynode *node = malloc(sizeof(struct keynode));
+	node->len = l;
+	node->key = malloc(l);
+	memcpy(node->key, k, l);
+	node->next = 0;
+	node->value = -1;
+	return node;
+}
 
-////////////////////////////////
-// PRIVATE TYPES
+void keynode_delete(struct keynode *node) {
+	free(node->key);
+	if (node->next) keynode_delete(node->next);
+	free(node);
+}
 
+bool Hashmap_new(HashmapHandle_t dic, int initial_size) {
+	if (initial_size == 0) initial_size = 1024;
+	dic->length = initial_size;
+	dic->count = 0;
+	dic->table = calloc(sizeof(struct keynode*), initial_size);
+	if(dic->table == NULL)
+	{
+		return ERROR;
+	}
+	dic->growth_treshold = 2.0;
+	dic->growth_factor = 10;
+	
+	return SUCCESS;
+}
 
-////////////////////////////////
-// PRIVATE METHODS
-static uint16_t calculateStringChecksum_(const char* keyString);
-static HashmapPairHandle_t findEntry_(const HashmapHandle_t hashmap, const uint16_t keySum, const char* realKey);
+void Hashmap_delete(HashmapHandle_t dic) {
+	for (int i = 0; i < dic->length; i++) {
+		if (dic->table[i])
+			keynode_delete(dic->table[i]);
+	}
+	free(dic->table);
+	dic->table = 0;
+	free(dic);
+}
 
-////////////////////////////////
-// IMPLEMENTATION
+void Hashmap_reinsert_when_resizing(HashmapHandle_t dic, struct keynode *k2) {
+	int n = hash_func(k2->key, k2->len) % dic->length;
+	if (dic->table[n] == 0) {
+		dic->table[n] = k2;
+		dic->value = &dic->table[n]->value;
+		return;
+	}
+	struct keynode *k = dic->table[n];
+	k2->next = k;
+	dic->table[n] = k2;
+	dic->value = &k2->value;
+}
 
+void Hashmap_resize(HashmapHandle_t dic, int newsize) {
+	int o = dic->length;
+	struct keynode **old = dic->table;
+	dic->table = calloc(sizeof(struct keynode*), newsize);
+	dic->length = newsize;
+	for (int i = 0; i < o; i++) {
+		struct keynode *k = old[i];
+		while (k) {
+			struct keynode *next = k->next;
+			k->next = 0;
+			Hashmap_reinsert_when_resizing(dic, k);
+			k = next;
+		}
+	}
+	free(old);
+}
 
-/**
- * @brief Public method for initializing hashmap
- * 
- * @param[in/out] hashmap   - Hashmap object for initialization
- * @return                  - Success state
- */
-bool Hashmap_create(HashmapHandle_t hashmap, InitialSettingsHandler_t settings)
+int Hashmap_set(HashmapHandle_t dic, void *key, void* valueObject)
 {
-    if(!Vector_create(&hashmap->entries, settings))
-    {
-        Log_e(TAG, "Hashmap creating got failed due vector");
-        return ERROR;
-    }
-    return SUCCESS;
+	int keyLength = strlen(key);
+	int result = Hashmap_add(dic, key, keyLength);
+
+	*dic->value = valueObject;
+
+	return result;
 }
 
 
-/**
- * @brief Public method for putting new entry or replacing existing with specific string key
- * 
- * @param[in/out] hashmap  - hashmap object for manipulation
- * @param[in] keyString    - Key of entry to put
- * @param[in] object       - Object pointer to be put inside hashmap 
- * @return                 - Success state
- */
-bool Hashmap_putEntry(HashmapHandle_t hashmap, const char* keyString, const void* object)
-{
-    HashmapPairHandle_t pair;
-    uint16_t currentKeySum;
-
-    currentKeySum = calculateStringChecksum_(keyString);
-
-    pair = findEntry_(hashmap, currentKeySum, keyString);
-
-    if(pair == NULL)
-    {
-        ALLOC_CHECK(pair, sizeof(HashmapPair_t), ERROR);
-        pair->keySum = currentKeySum;
-        pair->realKey = keyString;
-        pair->object = object;
-
-        if(!Vector_append(&hashmap->entries, pair))
-        {
-            Log_e(TAG, "Failed to add hashmap entry");
-            return ERROR;
-        }
-
-    }else
-    {
-        return ERROR;
-    }
-
-    return SUCCESS;
+int Hashmap_add(HashmapHandle_t dic, void *key, int keyn) {
+	int n = hash_func((const char*)key, keyn) % dic->length;
+	if (dic->table[n] == 0) {
+		double f = (double)dic->count / (double)dic->length;
+		if (f > dic->growth_treshold) {
+			Hashmap_resize(dic, dic->length * dic->growth_factor);
+			return Hashmap_add(dic, key, keyn);
+		}
+		dic->table[n] = keynode_new((char*)key, keyn);
+		dic->value = &dic->table[n]->value;
+		dic->count++;
+		return 0;
+	}
+	struct keynode *k = dic->table[n];
+	while (k) {
+		if (k->len == keyn && memcmp(k->key, key, keyn) == 0) {
+			dic->value = &k->value;
+			return 1;
+		}
+		k = k->next;
+	}
+	dic->count++;
+	struct keynode *k2 = keynode_new((char*)key, keyn);
+	k2->next = dic->table[n];
+	dic->table[n] = k2;
+	dic->value = &k2->value;
+	return 0;
 }
 
-
-/**
- * @brief Public method to get object by idx
- * 
- * @param[in] hashmap  - Hashmap object
- * @param[in] idx      - Index of object
- * @return             - Object pointer 
- */
-void* Hashmap_at(const HashmapHandle_t hashmap, const uint32_t idx)
-{
-    if(idx < hashmap->entries.currentSize)
-    {
-        return ((HashmapPairHandle_t) hashmap->entries.expandable[idx])->object;
-    }
-
-    return NULL;
+int Hashmap_find(HashmapHandle_t dic, void *key, int keyn) {
+	int n = hash_func((const char*)key, keyn) % dic->length;
+    #if defined(__MINGW32__) || defined(__MINGW64__)
+	__builtin_prefetch(gc->table[n]);
+    #endif
+    
+    #if defined(_WIN32) || defined(_WIN64)
+    _mm_prefetch((char*)gc->table[n], _MM_HINT_T0);
+    #endif
+	struct keynode *k = dic->table[n];
+	if (!k) return 0;
+	while (k) {
+		if (k->len == keyn && !memcmp(k->key, key, keyn)) {
+			dic->value = &k->value;
+			return 1;
+		}
+		k = k->next;
+	}
+	return 0;
 }
 
-/**
- * @brief Public method for getting specific entry with key
- * 
- * @param[in] hashmap    - Hashmap object
- * @param[in] keyString  - Key for object retrieval
- * @return               - Success state 
- */
-bool Hashmap_getEntry(const HashmapHandle_t hashmap, const char* keyString)
-{
-    return findEntry_(hashmap, calculateStringChecksum_(keyString), keyString);
+void Hashmap_forEach(HashmapHandle_t dic, enumFunc f, void *user) {
+	for (int i = 0; i < dic->length; i++) {
+		if (dic->table[i] != 0) {
+			struct keynode *k = dic->table[i];
+			while (k) {
+				
+				if (!f(k->key, k->len, k->value, user)) return;
+				k = k->next;
+			}
+		}
+	}
 }
 
-/**
- * @brief Public method to get Hashmap size
- * 
- * @param[in] hashmap  - Hashmap object
- * @return             - Hashmap size in entries count
- */
-uint64_t Hashmap_size(const HashmapHandle_t hashmap)
+inline uint64_t Hashmap_size(HashmapHandle_t dic)
 {
-    return hashmap->entries.currentSize;
+	return dic->count;
 }
 
-
-/**
- * @brief Private method for finding entry by StringKey checksum
- * 
- * @param[in] hashmap - Hashmap object
- * @param[in] keySum  - Keysum against which finding entry 
- * @return            - HashmapPairHandle_t as entry, NULL - no entry found 
- */
-static HashmapPairHandle_t findEntry_(const HashmapHandle_t hashmap, const uint16_t keySum, const char* key)
-{
-    HashmapPairHandle_t currentPair;
-
-    for(uint64_t hashmapEntryIdx = 0; hashmapEntryIdx < hashmap->entries.currentSize; hashmapEntryIdx++)
-    {
-        currentPair = ((HashmapPairHandle_t)hashmap->entries.expandable[hashmapEntryIdx]);
-        if(currentPair->keySum == keySum && (strcmp(currentPair->realKey, key) == 0))
-        {
-            return currentPair;
-        }
-    } 
-    return NULL;
-}
-
-/**
- * @brief Private method for calculating "Hash of string key", in this case checksum
- * 
- * @param[in] keyString - key provides as string
- * @return              - checksum of string bytes
- */
-static uint16_t calculateStringChecksum_(const char* keyString)
-{
-    if(keyString == NULL)
-    {
-        return 0;
-    }
-
-    uint64_t keySize = strlen(keyString);
-    uint16_t checksum = 0;
-    for(uint64_t keyCharIdx = 0; keyCharIdx < keySize; keyCharIdx++)
-    {
-        checksum += keyString[keyCharIdx];
-    }
-    return checksum;
-}
-
-bool Hashmap_destroy(HashmapHandle_t hashmap)
-{
-    if(!Vector_destroy(&hashmap->entries))
-    {
-        Log_e(TAG, "Hashmap destruction got failed");
-        return ERROR;
-    }
-    return SUCCESS;
-}
+#undef hash_func

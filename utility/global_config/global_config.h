@@ -24,7 +24,7 @@
  */
 #define VERBOSE_LEVEL                   2
 #define VERBOSE_C_COMPILER              1
-#define ENABLE_TEMP_FILES_CLEANUP       1
+#define ENABLE_TEMP_FILES_CLEANUP       0
 
 // OS types     
 #define WINDOWS                         1

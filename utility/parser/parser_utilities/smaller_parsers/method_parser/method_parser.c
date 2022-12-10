@@ -63,7 +63,7 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, MainFr
         return ERROR;
     }
 
-    if(!Hashmap_putEntry(&root->methods, methodHandle->methodName, methodHandle))
+    if(Hashmap_set(&root->methods, methodHandle->methodName, methodHandle))
     {
         Shouter_shoutError(cTokenP, "Method \'%s\' is declared several times", methodHandle->methodName);
         return ERROR;

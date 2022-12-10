@@ -57,6 +57,12 @@ typedef enum
 ////////////////////////////////
 // PRIVATE METHODS
 
+// iterator callbacks
+static int methodBodyVariableInitializerForIterator_(void *key, int count, void* value, void *user);
+static int methodDeclarationIteratorCallback_(void *key, int count, void* value, void *user);
+static int classImportsIteratorCallback(void *key, int count, void* value, void *user);
+static int methodBodyVariableIteratorCallback_(void *key, int count, void* value, void *user);
+
 static bool iguanaPathToCharfilePath_(char* filepath, const char cFormatExtension); 
 static bool generateNdefGuard_(const CodeGeneratorHandle_t generator);   
 static bool fileWriteImports_(const CodeGeneratorHandle_t generator);    
@@ -184,35 +190,29 @@ static inline bool fileWriteImports_(const CodeGeneratorHandle_t generator)
     fprintf(generator->cFile, "%s \"%s\"%c", INCLUDE_KEYWORD, generator->hFilePath, END_LINE_CHAR);
     // printf("%s\n",generator->hFilePath);
     // writing imports to h file
-    for(size_t importIdx = 0; importIdx < Hashmap_size(&generator->ast->imports); importIdx++)
-    {
-        importObject = (ImportObjectHandle_t) Hashmap_at(&generator->ast->imports, importIdx);
-        NULL_GUARD(importObject, ERROR, Log_e(TAG, "Import object from Abstract syntax tree is null"));
-        NULL_GUARD(importObject->name, ERROR, Log_e(TAG, "Import name is null"));
-        NULL_GUARD(importObject->objectId.id, ERROR, Log_e(TAG, "Import object id is null"));
+    Hashmap_forEach(&generator->ast->imports, classImportsIteratorCallback, generator);
 
-
-        fprintf(generator->hFile, "%s \"%s.h\"%c", INCLUDE_KEYWORD, importObject->objectId.id, END_LINE_CHAR);
-
-    }
     return SUCCESS;
 }
 
 
 static inline bool fileWriteVariablesHashmap_(FILE* file, const HashmapHandle_t scopeVariablesHashmap, const ImportObjectHandle_t currentObjectAsImport)
 {
-    if(scopeVariablesHashmap->entries.currentSize != 0)
+    if(Hashmap_size(scopeVariablesHashmap) != 0)
     {
         // generator for typedef struct{ variables };
         fprintf(file, "%s %s%c", TYPEDEF_KEYWORD, STRUCT_KEYWORD, BRACKET_START_CHAR);
-        
-        for(size_t variableIdx = 0; variableIdx < Hashmap_size(scopeVariablesHashmap); variableIdx++)
-        {
-            VariableObjectHandle_t variable;
 
-            variable = Hashmap_at(scopeVariablesHashmap, variableIdx);
-            fileWriteVariableDeclaration_(file, currentObjectAsImport, variable, VARIABLE_STRUCT);
-        }
+        typedef struct
+        {
+            FILE* file;
+            ImportObjectHandle_t currentObjectAsImport;
+        }pack_t;
+
+        pack_t tempPack = {file, scopeVariablesHashmap};
+
+        Hashmap_forEach(scopeVariablesHashmap, methodBodyVariableIteratorCallback_, &tempPack);
+
         fprintf(file, "%c%s_t%c%c", BRACKET_END_CHAR, currentObjectAsImport->objectId.id, SEMICOLON_CHAR, END_LINE_CHAR);
     }
     return SUCCESS;
@@ -261,99 +261,8 @@ static bool fileWriteVariableDeclaration_(const FILE* file, const ImportObjectHa
 static inline bool fileWriteMethods_(const CodeGeneratorHandle_t generator)
 {
     NULL_GUARD(generator, ERROR, Log_e(TAG, "Generator to method writing passes as null"));
+    Hashmap_forEach(&generator->ast->methods, methodDeclarationIteratorCallback_, generator);
 
-    for(size_t methodIdx = 0; methodIdx < Hashmap_size(&generator->ast->methods); methodIdx++)
-    {
-        MethodObjectHandle_t method;
-        method = (MethodObjectHandle_t) Hashmap_at(&generator->ast->methods, methodIdx);                                                           // getting method by index
-        NULL_GUARD(method, ERROR, Log_e(TAG, "AST methods vector expandable is null"));
-
-        if(method->accessType == IGNORED)
-        {
-            continue;
-        }
-
-        if(!fileWriteVariableDeclaration_(generator->hFile, generator->iguanaImport, &method->returnVariable, VARIABLE_METHOD))
-        {
-            Log_e(TAG, "Failed to write method %s return type", method->methodName);
-            return ERROR;
-        }
-        if(method->containsBody)
-        {
-            if(!fileWriteVariableDeclaration_(generator->cFile, generator->iguanaImport, &method->returnVariable, VARIABLE_METHOD))
-            {
-                Log_e(TAG, "Failed to write method %s return type", method->methodName);
-                return ERROR;
-            }
-        }
-        
-        if(generator->ast->classVariables.entries.currentSize != 0)
-        {
-            if(method->containsBody)
-            {
-                fprintf(generator->cFile, "%s_t* root", generator->iguanaImport->objectId.id);
-            }
-            fprintf(generator->hFile, "%s_t* root", generator->iguanaImport->objectId.id);
-        }
-
-        if(method->parameters->currentSize > 0)
-        {
-            if(method->containsBody)
-            {
-                fwrite(&COMMA_CHAR, 1, 1, generator->cFile);
-            }
-
-            fwrite(&COMMA_CHAR, 1, 1, generator->hFile);
-        }
-
-        for(size_t paramIdx = 0; paramIdx < method->parameters->currentSize; paramIdx++)
-        {
-            VariableObjectHandle_t parameter;
-            parameter = method->parameters->expandable[paramIdx];
-            NULL_GUARD(parameter, ERROR, Log_e(TAG, "AST method %s %d nth is NULL", method->methodName, paramIdx));
-
-            if(!fileWriteVariableDeclaration_(generator->hFile,generator->iguanaImport, parameter, VARIABLE_PARAMETER))
-            {
-                Log_e(TAG, "Failed to write method %s return type", method->methodName);
-                return ERROR;
-            }
-
-            if(method->containsBody)
-            {
-                if(!fileWriteVariableDeclaration_(generator->cFile,generator->iguanaImport, parameter, VARIABLE_PARAMETER))
-                {
-                    Log_e(TAG, "Failed to write method %s return type", method->methodName);
-                    return ERROR;
-                }
-            }
-
-            if((paramIdx + 1) != method->parameters->currentSize)
-            {
-                fwrite(&COMMA_CHAR, BYTE_SIZE, sizeof(COMMA_CHAR), generator->hFile);
-                fwrite(&COMMA_CHAR, BYTE_SIZE, sizeof(COMMA_CHAR), generator->cFile);
-            }
-
-        }
-
-        fprintf(generator->hFile, "%c%c\n", BRACKET_ROUND_END_CHAR, SEMICOLON_CHAR);
-        
-        if(method->containsBody)
-        {
-            fprintf(generator->cFile, "%c\n", BRACKET_ROUND_END_CHAR);
-            if(!fileWriteMethodBody_(generator, method))
-            {
-                Log_e(TAG, "Failed to write method body to IO");
-                return ERROR;
-            }
-        }else
-        {
-            // TODO abstracting fwrites
-            fwrite(&SEMICOLON_CHAR, 1, 1, generator->cFile);
-        }
-        
-        // fprintf("%s", method->returnVariable)
-
-    }
     return SUCCESS;
 
 }
@@ -369,24 +278,13 @@ static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator, c
         return ERROR;
     }
     // writing structure Initializator
-    if(generator->ast->classVariables.entries.currentSize != 0)
+    if(Hashmap_size(&generator->ast->classVariables) != 0)
     {
         fprintf(generator->cFile, "%s_t %s%c", generator->iguanaImport->objectId.id, LOCAL_VARIABLES_STRUCT_NAME, SEMICOLON_CHAR);
     }
     
-
+    Hashmap_forEach(&method->body.localVariables, methodBodyVariableInitializerForIterator_, generator);
     // writing variables assignings
-    for(size_t signableVariableIdx = 0; signableVariableIdx < method->body.localVariables.entries.currentSize; signableVariableIdx++)
-    {
-        VariableObjectHandle_t variable;
-
-        variable = (VariableObjectHandle_t) Hashmap_at(&method->body.localVariables, signableVariableIdx);
-        if(variable->hasAssignedValue)
-        {
-            fprintf(generator->cFile, "%s.%s = %s%c", LOCAL_VARIABLES_STRUCT_NAME, variable->variableName,variable->assignedValue, SEMICOLON_CHAR);
-        }
-    }
-
 
     for(size_t expressionQ = 0; expressionQ < method->body.expressions.currentSize; expressionQ++)
     {
@@ -422,6 +320,148 @@ static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator, c
     fprintf(generator->cFile, "%c\n", BRACKET_END_CHAR);
     return SUCCESS;
 }
+
+static int methodBodyVariableInitializerForIterator_(void *key, int count, void* value, void *user)
+{
+    VariableObjectHandle_t variable;
+    CodeGeneratorHandle_t generator;
+    variable = value;
+    generator = user;
+
+    if(variable->hasAssignedValue)
+    {
+        fprintf(generator->cFile, "%s.%s = %s%c", LOCAL_VARIABLES_STRUCT_NAME, variable->variableName,variable->assignedValue, SEMICOLON_CHAR);
+    }
+    return SUCCESS;
+}
+
+static int methodBodyVariableIteratorCallback_(void *key, int count, void* value, void *user)
+{
+    typedef struct
+    {
+        FILE* file;
+        ImportObjectHandle_t currentObjectAsImport;
+    }pack_t;
+
+    pack_t* tempPack;
+    VariableObjectHandle_t variable;
+    CodeGeneratorHandle_t generator;
+    variable = value;
+    tempPack = user;
+    
+    fileWriteVariableDeclaration_(tempPack->file, tempPack->currentObjectAsImport, variable, VARIABLE_STRUCT);
+    return SUCCESS;
+}
+
+static int classImportsIteratorCallback(void *key, int count, void* value, void *user)
+{
+    ImportObjectHandle_t importObject;
+    CodeGeneratorHandle_t generator;
+    importObject = value;
+    generator = user;
+
+    NULL_GUARD(importObject, ERROR, Log_e(TAG, "Import object from Abstract syntax tree is null"));
+    NULL_GUARD(importObject->name, ERROR, Log_e(TAG, "Import name is null"));
+    NULL_GUARD(importObject->objectId.id, ERROR, Log_e(TAG, "Import object id is null"));
+
+    fprintf(generator->hFile, "%s \"%s.h\"%c", INCLUDE_KEYWORD, importObject->objectId.id, END_LINE_CHAR);
+    return SUCCESS;
+}
+
+static int methodDeclarationIteratorCallback_(void *key, int count, void* value, void *user)
+{
+    MethodObjectHandle_t method;
+    CodeGeneratorHandle_t generator;
+    method = value;
+    generator = user;
+
+    NULL_GUARD(method, ERROR, Log_e(TAG, "AST method '%s' is NULL", key));
+
+    if(method->accessType == IGNORED)
+    {
+        return SUCCESS;
+    }
+
+    if(!fileWriteVariableDeclaration_(generator->hFile, generator->iguanaImport, &method->returnVariable, VARIABLE_METHOD))
+    {
+        Log_e(TAG, "Failed to write method %s return type", method->methodName);
+        return ERROR;
+    }
+    if(method->containsBody)
+    {
+        if(!fileWriteVariableDeclaration_(generator->cFile, generator->iguanaImport, &method->returnVariable, VARIABLE_METHOD))
+        {
+            Log_e(TAG, "Failed to write method %s return type", method->methodName);
+            return ERROR;
+        }
+    }
+
+    if(Hashmap_size(&generator->ast->classVariables) != 0)
+    {
+        if(method->containsBody)
+        {
+            fprintf(generator->cFile, "%s_t* root", generator->iguanaImport->objectId.id);
+        }
+        fprintf(generator->hFile, "%s_t* root", generator->iguanaImport->objectId.id);
+    }
+    
+    if(method->parameters->currentSize > 0)
+    {
+        if(method->containsBody)
+        {
+            fwrite(&COMMA_CHAR, 1, 1, generator->cFile);
+        }
+
+        fwrite(&COMMA_CHAR, 1, 1, generator->hFile);
+    }
+
+    for(size_t paramIdx = 0; paramIdx < method->parameters->currentSize; paramIdx++)
+    {
+        VariableObjectHandle_t parameter;
+        parameter = method->parameters->expandable[paramIdx];
+        NULL_GUARD(parameter, ERROR, Log_e(TAG, "AST method %s %d nth is NULL", method->methodName, paramIdx));
+
+        if(!fileWriteVariableDeclaration_(generator->hFile,generator->iguanaImport, parameter, VARIABLE_PARAMETER))
+        {
+            Log_e(TAG, "Failed to write method %s return type", method->methodName);
+            return ERROR;
+        }
+
+        if(method->containsBody)
+        {
+            if(!fileWriteVariableDeclaration_(generator->cFile,generator->iguanaImport, parameter, VARIABLE_PARAMETER))
+            {
+                Log_e(TAG, "Failed to write method %s return type", method->methodName);
+                return ERROR;
+            }
+        }
+
+        if((paramIdx + 1) != method->parameters->currentSize)
+        {
+            fwrite(&COMMA_CHAR, BYTE_SIZE, sizeof(COMMA_CHAR), generator->hFile);
+            fwrite(&COMMA_CHAR, BYTE_SIZE, sizeof(COMMA_CHAR), generator->cFile);
+        }
+
+    }
+
+    fprintf(generator->hFile, "%c%c\n", BRACKET_ROUND_END_CHAR, SEMICOLON_CHAR);
+    
+    if(method->containsBody)
+    {
+        fprintf(generator->cFile, "%c\n", BRACKET_ROUND_END_CHAR);
+        if(!fileWriteMethodBody_(generator, method))
+        {
+            Log_e(TAG, "Failed to write method body to IO");
+            return ERROR;
+        }
+    }else
+    {
+        // TODO abstracting fwrites
+        fwrite(&SEMICOLON_CHAR, 1, 1, generator->cFile);
+    }
+    return SUCCESS;
+}
+
 
 static bool handleExpressionWriting_(const CodeGeneratorHandle_t generator, const ExpressionHandle_t expression)
 {

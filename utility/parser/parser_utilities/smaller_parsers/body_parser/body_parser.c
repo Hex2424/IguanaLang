@@ -75,7 +75,7 @@ bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** 
             Log_e(TAG, "Failed to parse expression sequence");
             return ERROR;
         }
-        
+
         if(expressionQueue->count != 0)
         {
             if(!Vector_append(&scopeBody->expressions, expressionQueue))
@@ -159,7 +159,7 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Que
 bool BodyParser_initialize(LocalScopeObjectHandle_t scopeBody)
 {
 
-    if(!Hashmap_create(&scopeBody->localVariables, NULL))
+    if(!Hashmap_new(&scopeBody->localVariables, 5))
     {
         Log_e(TAG, "Failed to initialize BodyParser variables hashmap");
         return ERROR;
@@ -198,7 +198,7 @@ static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t exp
             {
                 // no assigning
                 variable->variableName = cTokenP->valueString;
-                if(Hashmap_putEntry(&scopeBody->localVariables, variable->variableName, variable))
+                if(!Hashmap_set(&scopeBody->localVariables, variable->variableName, variable))
                 {
                     if(!queueAppendExprObject_(expressions, VARIABLE_NAME, variable->variableName))
                     {
@@ -230,7 +230,7 @@ static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t exp
                             variable->variableName = cTokenP->valueString;
                             variable->hasAssignedValue = true;
 
-                            if(Hashmap_putEntry(&scopeBody->localVariables, variable->variableName, variable))
+                            if(!Hashmap_set(&scopeBody->localVariables, variable->variableName, variable))
                             {
                                 if(!queueAppendExprObject_(expressions, VARIABLE_NAME, variable->variableName))
                                 {
@@ -319,7 +319,7 @@ static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, QueueHandle_t
         {
             if(cTokenType == NAMING)
             {
-                if(Hashmap_getEntry(&localScopeBody->localVariables, cTokenP->valueString) != NULL)
+                if(Hashmap_find(&localScopeBody->localVariables, cTokenP->valueString, strlen(cTokenP->valueString)))
                 {
                     if(!queueAppendExprObject_(expressionsQueue, VARIABLE_NAME, cTokenP->valueString))
                     {

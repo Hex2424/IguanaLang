@@ -56,5 +56,3 @@ bit:1 method3(bit:20 param1, bit:64 param2)
 
 }
 
-
-
