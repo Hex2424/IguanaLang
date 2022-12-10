@@ -278,7 +278,7 @@ static inline bool fileWriteMethodBody_(const CodeGeneratorHandle_t generator, c
         return ERROR;
     }
     // writing structure Initializator
-    if(Hashmap_size(&generator->ast->classVariables) != 0)
+    if(Hashmap_size(&method->body.localVariables) != 0)
     {
         fprintf(generator->cFile, "%s_t %s%c", generator->iguanaImport->objectId.id, LOCAL_VARIABLES_STRUCT_NAME, SEMICOLON_CHAR);
     }
