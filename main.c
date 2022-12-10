@@ -1,7 +1,11 @@
 #include "stdio.h"
 #include "stdint.h"
 
-struct ss;
+struct ss
+{
+   int aa;
+   int bb;
+};
 
 void printBits(struct ss num)
 {
@@ -17,7 +21,7 @@ void printBits(struct ss num)
 int main()
 {  
    struct ss s = {4, 5};
-   printBits(s);
+   printBits(s) asm ("hgvygvghv");
    printf("\n");;
 }
 

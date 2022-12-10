@@ -455,7 +455,7 @@ static int methodDeclarationIteratorCallback_(void *key, int count, void* value,
 
     }
 
-    fprintf(generator->hFile, "%c asm (\"%s_%s\")%c\n",
+    fprintf(generator->hFile, "%c asm (\"%s___%s\")%c\n",
         BRACKET_ROUND_END_CHAR,
         filePathToModulePath_(generator),
         method->methodName,SEMICOLON_CHAR);

@@ -33,7 +33,7 @@ bit:32 main()
     ;;;
  
     method2();
-    methodp();
+    methodpp();
 } 
 
 @Ignored
