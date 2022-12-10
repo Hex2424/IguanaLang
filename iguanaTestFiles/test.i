@@ -36,8 +36,8 @@ bit:32 main()
     methodp();
 } 
 
-@Public
-bit:1 method11(){}
+@Ignored
+bit:1 method11(bit:1 param1, bit:1 param2, bit:1 param3, ...){}
 
 @Private
 bit:1 method10(){}
@@ -46,7 +46,7 @@ bit:1 method10(){}
 bit:1 methodp(){}
 
 
-bit:1 method2(bit:1 param1, bit:1 param2, bit:1 param3, ...)
+bit:1 method2()
 {
     
 }
