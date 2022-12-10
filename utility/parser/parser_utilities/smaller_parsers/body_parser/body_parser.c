@@ -75,7 +75,7 @@ bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** 
             Log_e(TAG, "Failed to parse expression sequence");
             return ERROR;
         }
-
+        
         if(expressionQueue->count != 0)
         {
             if(!Vector_append(&scopeBody->expressions, expressionQueue))

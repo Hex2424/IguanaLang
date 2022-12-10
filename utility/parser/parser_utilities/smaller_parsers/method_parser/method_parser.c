@@ -45,6 +45,8 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, MainFr
     ALLOC_CHECK(methodHandle, sizeof(MethodObject_t), ERROR);
     methodHandle->accessType = notation;
     methodHandle->containsBody = false;
+    methodHandle->hasInfinityParams = false;
+
     // setting up method name
 
     if(!parseMethodReturnVariable_(currentTokenHandle, methodHandle))
@@ -171,7 +173,7 @@ static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodOb
                 
             }
             // valid infinity parameters syntac acquired
-
+            methodHandle->hasInfinityParams = true;
 
             
         }

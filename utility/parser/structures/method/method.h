@@ -26,8 +26,8 @@ typedef struct
     VectorHandler_t parameters;
     VariableObject_t returnVariable;
     LocalScopeObject_t body;
-    bool containsBody;
-    
+    bool containsBody       : 1;
+    bool hasInfinityParams  : 1;
 }MethodObject_t;
 
 typedef MethodObject_t* MethodObjectHandle_t;
