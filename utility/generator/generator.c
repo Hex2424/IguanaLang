@@ -229,7 +229,13 @@ static bool fileWriteVariableDeclaration_(const FILE* file, const ImportObjectHa
 
     if(variable->bitpack != 0)
     {
-        variableTypeKeywordToUse = TYPE_BINDS[(variable->bitpack - 1)/ BYTE_SIZE_BITS]; 
+        if(variable->bitpack < ((sizeof(uint64_t) * 8) + 1))
+        {
+            variableTypeKeywordToUse = TYPE_BINDS[(variable->bitpack - 1)/ BYTE_SIZE_BITS]; 
+        }else
+        {
+            Log_e(TAG, "Error occured bitpack is too big");
+        }
 
         switch (declareType)
         {
@@ -385,7 +391,7 @@ static int methodDeclarationIteratorCallback_(void *key, int count, void* value,
         return SUCCESS;
     }
 
-    if(&method->returnVariable.bitpack != 0)
+    if(method->returnVariable.bitpack != 0)
     {
         variableTypeKeywordToUse = TYPE_BINDS[(method->returnVariable.bitpack - 1)/ BYTE_SIZE_BITS]; 
         fprintf(generator->hFile,"%s %s_%s%c",

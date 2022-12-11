@@ -20,9 +20,9 @@
 typedef struct
 {
     char* variableName;
-    uint8_t bitpack;
+    uint8_t bitpack : 7;
     int64_t assignedValue;
-    bool hasAssignedValue;
+    bool hasAssignedValue : 1;
     void* assignedVariable;
 }VariableObject_t;
 

@@ -21,13 +21,13 @@
 
 typedef struct
 {
-    Accessibility_t accessType;
+    Accessibility_t accessType : 4;
     char* methodName;
     VectorHandler_t parameters;
     VariableObject_t returnVariable;
     LocalScopeObject_t body;
-    bool containsBody       : 1;
-    bool hasInfinityParams  : 1;
+    bool containsBody : 1;
+    bool hasInfinityParams : 1;
 }MethodObject_t;
 
 typedef MethodObject_t* MethodObjectHandle_t;

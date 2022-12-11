@@ -212,7 +212,7 @@ static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle, const Acc
     {
         currentToken++;
         MethodParser_parseMethod(&currentToken, rootHandle, notation);
-
+        
     }else
     {
         Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
