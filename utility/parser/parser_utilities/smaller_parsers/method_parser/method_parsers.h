@@ -17,10 +17,10 @@
 #include "../../../structures/method/method.h"
 #include "../../../structures/main_frame/main_frame.h"
 #include "../../../../tokenizer/token/token.h"
+#include "../../../../parser/parser.h"
 
 
 
-
-bool MethodParser_parseMethod(TokenHandler_t** currentToken, MainFrameHandle_t root, const Accessibility_t notation);
+bool MethodParser_parseMethod(TokenHandler_t** currentToken, ParserHandle_t parser, MainFrameHandle_t root, const Accessibility_t notation);
 
 #endif // UTILITY_PARSER_PARSER_UTILITIES_SMALLER_PARSERS_METHOD_PARSERS_H_

@@ -25,6 +25,8 @@ TODO:
 22. Handle correct naming of methods incase of differend folders collisions
 23. Direct elf/ .o editing (Assembler options, change .c file name);
 24. Handle all Dynamic allocation memory fragmentations
+25. Disk variables
+26. Types wrapping feature int {a,b,c};
 l.c
 
 

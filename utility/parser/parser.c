@@ -50,12 +50,14 @@ size_t tokensCount;
 // PRIVATE METHODS
 
 static bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t rootHandle);
-static bool handleKeywordInteger_(MainFrameHandle_t rootHandle, const Accessibility_t notation);
+static bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_t rootHandle, const Accessibility_t notation);
 static bool tryParseSequence_(const TokenType_t* pattern,const size_t patternSize);
 static bool assignTokenValue_(char** to, const char* from);
 static bool addLibraryForCompilation_(ParserHandle_t parser, ImportObjectHandle_t* importObject);
 static int checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, ImportObjectHandle_t path);
-static inline bool handleNotation_(MainFrameHandle_t rootHandle);
+static inline bool handleNotation_(ParserHandle_t parser, MainFrameHandle_t rootHandle);
+static inline bool addDeclaredMethodsToGlobalLinkList_(ParserHandle_t parser, const MainFrameHandle_t root);
+static inline bool addDeclaredMethodsToGlobalLinkListIteratorCallback_(void *key, int count, void *value, void *user);
 ////////////////////////////////
 // IMPLEMENTATION
 
@@ -98,28 +100,33 @@ bool Parser_parseTokens(ParserHandle_t parser, MainFrameHandle_t root, const Vec
 
     while (currentToken < endToken)
     {
-        if(cTokenType == MODULE_IMPORT)     // detected import
+        switch(cTokenType)
         {
-            handleKeywordImport_(parser, root);
-        }else
-        if(cTokenType == BIT_TYPE)      // detected int keyword
-        {
-            handleKeywordInteger_(root, NO_NOTATION);
-        }else if(cTokenType == NOTATION)
-        {
-            handleNotation_(root);
-        }   
-        else
-        {
-            Shouter_shoutUnrecognizedToken(cTokenP);
+            case MODULE_IMPORT: handleKeywordImport_(parser, root); break;                        // detected import keyword
+            case BIT_TYPE: handleKeywordInteger_(parser, root, NO_NOTATION);break;  // detected bit keyword
+            case NOTATION: handleNotation_(parser, root);break;                     // detected annotation
+
+            default : Shouter_shoutUnrecognizedToken(cTokenP);break;                // error case
         }
         currentToken++;
 
     }
+
+    // Hashmap_forEach(&root->methods, addDeclaredMethodsToGlobalLinkListIteratorCallback_, parser);
+    
+
     return SUCCESS;
 }
 
-static inline bool handleNotation_(MainFrameHandle_t rootHandle)
+// static inline bool addDeclaredMethodsToGlobalLinkListIteratorCallback_(void *key, int count, void *value, void *user)
+// {
+//     if(!Vector_append(&(((ParserHandle_t)user)->compiler->AllMethodDeclarations), value))
+//     {
+//         return ERROR;
+//     }
+// }
+
+static inline bool handleNotation_(ParserHandle_t parser, MainFrameHandle_t rootHandle)
 {
     currentToken++;
 
@@ -131,7 +138,7 @@ static inline bool handleNotation_(MainFrameHandle_t rootHandle)
             if(strcmp((*currentToken)->valueString, ObjectTypes_getNotationBindingById(bindingIdx)->naming) == 0)
             {
                 currentToken++;
-                handleKeywordInteger_(rootHandle, ObjectTypes_getNotationBindingById(bindingIdx)->type);
+                handleKeywordInteger_(parser, rootHandle, ObjectTypes_getNotationBindingById(bindingIdx)->type);
                 return SUCCESS;
             }
         }
@@ -140,7 +147,7 @@ static inline bool handleNotation_(MainFrameHandle_t rootHandle)
         Shouter_shoutError(cTokenP, "Notation '%s' is not existing in my knowledge", (*currentToken)->valueString);
 
         currentToken++;
-        handleKeywordInteger_(rootHandle, NO_NOTATION);
+        handleKeywordInteger_(parser, rootHandle, NO_NOTATION);
         
     }else
     {
@@ -150,7 +157,7 @@ static inline bool handleNotation_(MainFrameHandle_t rootHandle)
 }
 
 
-static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle, const Accessibility_t notation)
+static inline bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_t rootHandle, const Accessibility_t notation)
 {
     VariableObjectHandle_t variable;
 
@@ -211,7 +218,7 @@ static inline bool handleKeywordInteger_(MainFrameHandle_t rootHandle, const Acc
     if(cTokenType == BRACKET_ROUND_START)   // identified method
     {
         currentToken++;
-        MethodParser_parseMethod(&currentToken, rootHandle, notation);
+        MethodParser_parseMethod(&currentToken, parser, rootHandle, notation);
         
     }else
     {

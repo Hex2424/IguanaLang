@@ -81,7 +81,7 @@ bool MainFrame_destroy(MainFrameHandle_t handle)
 {
     Hashmap_delete(&handle->imports);
     Hashmap_delete(&handle->classVariables);
-    Hashmap_delete(&handle->methods);
+    // Hashmap_delete(&handle->methods);
 
     return SUCCESS;
 

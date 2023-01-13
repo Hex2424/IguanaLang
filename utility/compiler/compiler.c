@@ -64,8 +64,8 @@ static bool compileFile_(CompilerHandle_t compiler, ImportObjectHandle_t filePat
     MainFrame_t root;
 
     parser.compiler = compiler;
-    parser.currentFilePath = filePath->realPath;
-    
+    parser.currentFilePath = filePath;
+
     // Adding compiler handler for generator incase it needs
     codeGenerator.compiler = compiler;
 
@@ -191,7 +191,7 @@ bool Compiler_initialize(CompilerHandle_t compiler)
         return ERROR;
     }
 
-    if(!Hashmap_new(&compiler->AllMethodDeclarations, 10))
+    if(!Hashmap_new(&compiler->AllMethodDeclarations, 15))
     {
         Log_e(TAG, "Failed to create AllMethodDeclarations container");
         return ERROR;

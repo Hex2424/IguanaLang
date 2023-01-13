@@ -14,7 +14,7 @@
 #include "method_parsers.h"
 #include "../../global_parser_utility.h"
 #include "../body_parser/body_parser.h"
-
+#include "../../../parser.h"
 ////////////////////////////////
 // DEFINES
 #define cTokenP (**currentTokenHandle)
@@ -38,7 +38,8 @@ static bool parseMethodReturnVariable_(TokenHandler_t** currentTokenHandle, Meth
 ////////////////////////////////
 // IMPLEMENTATION
 
-inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, MainFrameHandle_t root, const Accessibility_t notation)
+// TODO: make parser contain currentTokenHandle to prevent it always pass through parameters
+inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, ParserHandle_t parser, MainFrameHandle_t root, const Accessibility_t notation)
 {
     MethodObjectHandle_t methodHandle;
 
@@ -56,13 +57,22 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, MainFr
     
     if(!parseMethodParameters_(currentTokenHandle, methodHandle))
     {
-        return ERROR;                         // getting back because parameters parsing failed
+        return ERROR;
     }
 
     if(!parseMethodBody_(currentTokenHandle, methodHandle))
     {
         return ERROR;
     }
+
+
+
+    if(Hashmap_set(&parser->compiler->AllMethodDeclarations, methodHandle->methodName, methodHandle))
+    {
+        Shouter_shoutError(cTokenP, "Method \'%s\' is declared several times", methodHandle->methodName);
+        return ERROR;
+    }
+
 
     if(Hashmap_set(&root->methods, methodHandle->methodName, methodHandle))
     {
@@ -72,6 +82,8 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, MainFr
 
 
 }
+
+
 
 static bool parseMethodReturnVariable_(TokenHandler_t** currentTokenHandle, MethodObjectHandle_t methodHandle)
 {

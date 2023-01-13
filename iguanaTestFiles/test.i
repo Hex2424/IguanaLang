@@ -34,7 +34,8 @@ bit:32 main()
  
     method2();
     methodpp();
-} 
+    method11();
+}
 
 @Ignored
 bit:1 method11(bit:1 param1, bit:1 param2, bit:1 param3, ...){}

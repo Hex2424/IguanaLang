@@ -20,11 +20,12 @@
 #include "stdbool.h"
 #include "../tokenizer/token/token.h"
 #include "../compiler/compiler.h"
+#include "../parser/structures/import_object/import_object.h"
 
 typedef struct
 {
     CompilerHandle_t compiler;
-    char* currentFilePath;
+    ImportObjectHandle_t currentFilePath;
     char* currentFolderPath;
     size_t currentFolderPathLength;
 }Parser_t;
