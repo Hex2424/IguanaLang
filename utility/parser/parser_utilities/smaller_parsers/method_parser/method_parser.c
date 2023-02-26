@@ -66,7 +66,6 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, Parser
     }
 
 
-
     if(Hashmap_set(&parser->compiler->AllMethodDeclarations, methodHandle->methodName, methodHandle))
     {
         Shouter_shoutError(cTokenP, "Method \'%s\' is declared several times", methodHandle->methodName);

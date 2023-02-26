@@ -24,8 +24,6 @@ typedef struct
     Vector_t alreadyCompiledFilePaths;
     Queue_t filePathsToCompile;
     char* mainIguanaFilePath;
-    Hashmap_t AllMethodCalls;
-    Hashmap_t AllMethodDeclarations;
 }Compiler_t;
 
 typedef Compiler_t* CompilerHandle_t;

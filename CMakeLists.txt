@@ -25,6 +25,7 @@ utility/hashmap/hashmap.c
 utility/parser/parser_utilities/smaller_parsers/body_parser/body_parser.c
 utility/file_manip/files.c
 utility/parser/structures/object_type/object_type.c
+utility/symbol_table/symbol_table.c
 )
 execute_process(
     COMMAND bash -c "rm *.c & rm *.h & rm *.o"

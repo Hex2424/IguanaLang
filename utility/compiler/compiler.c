@@ -273,7 +273,7 @@ bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char*
 {
     ImportObjectHandle_t mainImport;
 
-    ALLOC_CHECK(mainImport,sizeof(ImportObject_t), ERROR);
+    ALLOC_CHECK(mainImport, sizeof(ImportObject_t), ERROR);
     
     mainImport->name = filePath;
     
