@@ -16,9 +16,11 @@
 
 #include "stdbool.h"
 
-
 #define SUCCESS                 true
 #define ERROR                   false
+
+
+
 
 #define NULL_GUARD(variable, returning, print)  \
     if(variable == NULL)                        \
