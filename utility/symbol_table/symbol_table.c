@@ -14,6 +14,8 @@
 #include "symbol_table.h"
 #include "../misc/safety_macros.h"
 #include <string.h>
+#include "../logger/logger.h"
+#include "../parser/parser_utilities/compiler_messages.h"
 
 ////////////////////////////////
 // DEFINES
@@ -21,7 +23,7 @@
 #define INITIAL_CLASSES_HASHMAP_SIZE        5
 ////////////////////////////////
 // PRIVATE CONSTANTS
-
+static const char* TAG = "SYMBOL_TABLE";
 
 ////////////////////////////////
 // PRIVATE TYPES
@@ -45,11 +47,13 @@ bool SymbolTable_create(SymbolTableHandle_t symbolTable)
 {
     if(!Hashmap_new(&symbolTable->allSymbolCalls, INITIAL_CALLS_HASHMAP_SIZE));
     {
+        Log_e(TAG, "Failed to create Declarations hashmap");
         return ERROR;
     }
 
     if(!Hashmap_new(&symbolTable->allClasses, INITIAL_CLASSES_HASHMAP_SIZE))
     {
+        Log_e(TAG, "Failed to create Symbol calls hashmap");
         return ERROR;
     }
 
@@ -57,31 +61,54 @@ bool SymbolTable_create(SymbolTableHandle_t symbolTable)
 }
 
 
-bool SymbolTable_addNewDeclaration(SymbolTableHandle_t symbolTable, const SymbolType_t type, const char* symbolFullName, void* object)
+int_fast8_t SymbolTable_addNewDeclaration(SymbolTableHandle_t symbolTable, const SymbolType_t type, const char* symbolFullName, void* object)
 {
-    HashmapHandle_t value;
+    HashmapHandle_t symbolsHashmap;
+    uint32_t classNameLength;
+    // Expecting to get full symbol name as "ClassName_symbolName" ;
 
+    classNameLength = strchr(symbolFullName, '_') - symbolFullName;
 
-    
-
-
-
-    if(!Hashmap_find(&symbolTable->allClasses, className, ))
+    if(Hashmap_find(&symbolTable->allClasses, symbolFullName, classNameLength))
     {
-        value = 
+        // When value gets found setting it to value
+        symbolsHashmap = symbolTable->allClasses.value;
+    }else
+    {
+        ALLOC_CHECK(symbolsHashmap, sizeof(Hashmap_t), ERROR);
+        // When not found it creates new hashmap which will contain all symbols of specific class
+        if(!Hashmap_new(symbolsHashmap, 3))
+        {
+            Log_e(TAG, "Failed to create Class hashmap");
+            return ERROR;
+        }
+
+        // Setting Symbols hashmap as one of value of Classes Hashmap
+        bool result = (bool) Hashmap_add(&symbolTable->allClasses, symbolFullName, classNameLength);
+        *(symbolTable->allClasses.value) = symbolsHashmap;
+
+        if(result)
+        {
+            Log_e(TAG, "False positive Hashmap_find function for some reason");
+            return ERROR;
+        }
+        
     }
 
-    if(Hashmap_set(&symbolTable->allClasses, className))
+    // Until now all hashmap of classes related stuff should be handled properly
+
+    if(Hashmap_set(symbolsHashmap, symbolFullName + classNameLength + SIZE_STR("_"), object))
     {
-
+        ; // pabaigt
+        return SUCCESS;
     }
-
+    // TODO change bool return to error returning
 
     return SUCCESS;
 }
 
 
-bool SymbolTable_addNewDeclarationRequest(SymbolTableHandle_t symbolTable, const SymbolType_t type, const char* className, const char* symbolName, void* object)
+int_fast8_t SymbolTable_addNewDeclarationRequest(SymbolTableHandle_t symbolTable, const SymbolType_t type, const char* className, const char* symbolName, void* object)
 {
  
  

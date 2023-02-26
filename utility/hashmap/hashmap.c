@@ -94,7 +94,7 @@ int Hashmap_set(HashmapHandle_t dic, void *key, void* valueObject)
 	int keyLength = strlen(key);
 	int result = Hashmap_add(dic, key, keyLength);
 
-	*dic->value = valueObject;
+	*(dic->value) = valueObject;
 
 	return result;
 }
