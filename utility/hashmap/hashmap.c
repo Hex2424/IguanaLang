@@ -18,7 +18,7 @@ static inline uint32_t meiyan(const char *key, int count) {
 	return h ^ (h >> 16);
 }
 
-struct keynode *keynode_new(char*k, int l) {
+struct keynode *keynode_new(char*k, const int l) {
 	struct keynode *node = malloc(sizeof(struct keynode));
 	node->len = l;
 	node->key = malloc(l);
@@ -72,7 +72,7 @@ void Hashmap_reinsert_when_resizing(HashmapHandle_t dic, struct keynode *k2) {
 	dic->value = &k2->value;
 }
 
-void Hashmap_resize(HashmapHandle_t dic, int newsize) {
+void Hashmap_resize(HashmapHandle_t dic, const int newsize) {
 	int o = dic->length;
 	struct keynode **old = dic->table;
 	dic->table = calloc(sizeof(struct keynode*), newsize);
@@ -89,7 +89,7 @@ void Hashmap_resize(HashmapHandle_t dic, int newsize) {
 	free(old);
 }
 
-int Hashmap_set(HashmapHandle_t dic, void *key, void* valueObject)
+int Hashmap_set(HashmapHandle_t dic, const void *key, void* valueObject)
 {
 	int keyLength = strlen(key);
 	int result = Hashmap_add(dic, key, keyLength);
@@ -100,7 +100,7 @@ int Hashmap_set(HashmapHandle_t dic, void *key, void* valueObject)
 }
 
 
-int Hashmap_add(HashmapHandle_t dic, void *key, int keyn) {
+int Hashmap_add(HashmapHandle_t dic, const void *key, const int keyn) {
 	int n = hash_func((const char*)key, keyn) % dic->length;
 	if (dic->table[n] == 0) {
 		double f = (double)dic->count / (double)dic->length;
@@ -129,7 +129,7 @@ int Hashmap_add(HashmapHandle_t dic, void *key, int keyn) {
 	return 0;
 }
 
-int Hashmap_find(HashmapHandle_t dic, void *key, int keyn) {
+int Hashmap_find(const HashmapHandle_t dic, const void *key, const int keyn) {
 	int n = hash_func((const char*)key, keyn) % dic->length;
     #if defined(__MINGW32__) || defined(__MINGW64__)
 	__builtin_prefetch(gc->table[n]);
@@ -150,7 +150,7 @@ int Hashmap_find(HashmapHandle_t dic, void *key, int keyn) {
 	return 0;
 }
 
-void Hashmap_forEach(HashmapHandle_t dic, enumFunc f, void *user) {
+void Hashmap_forEach(const HashmapHandle_t dic, enumFunc f, const void *user) {
 	for (int i = 0; i < dic->length; i++) {
 		if (dic->table[i] != 0) {
 			struct keynode *k = dic->table[i];
@@ -163,7 +163,7 @@ void Hashmap_forEach(HashmapHandle_t dic, enumFunc f, void *user) {
 	}
 }
 
-inline uint64_t Hashmap_size(HashmapHandle_t dic)
+inline uint64_t Hashmap_size(const HashmapHandle_t dic)
 {
 	return dic->count;
 }

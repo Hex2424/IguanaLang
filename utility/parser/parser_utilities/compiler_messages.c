@@ -32,7 +32,7 @@
 
 ////////////////////////////////
 // PRIVATE TYPES
-uint32_t errorCount = NO_ERROR;
+uint32_t errorCount = 0;
 
 ////////////////////////////////
 // PRIVATE METHODS

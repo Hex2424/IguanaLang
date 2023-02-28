@@ -33,9 +33,9 @@ typedef Hashmap_t* HashmapHandle_t;
 
 bool Hashmap_new(HashmapHandle_t dic, int initial_size);
 void Hashmap_delete(HashmapHandle_t dic);
-int Hashmap_set(HashmapHandle_t dic, void *key, void* valueObject);
-int Hashmap_add(HashmapHandle_t dic, void *key, int keyn);
-int Hashmap_find(HashmapHandle_t dic, void *key, int keyn);
-void Hashmap_forEach(HashmapHandle_t dic, enumFunc f, void *user);
-uint64_t Hashmap_size(HashmapHandle_t dic);
+int Hashmap_set(HashmapHandle_t dic, const void *key, void* valueObject);
+int Hashmap_add(HashmapHandle_t dic, const void *key, const int keyn);
+int Hashmap_find(const HashmapHandle_t dic, const void *key, const int keyn);
+void Hashmap_forEach(const HashmapHandle_t dic, enumFunc f, const void *user);
+uint64_t Hashmap_size(const HashmapHandle_t dic);
 #endif

@@ -20,7 +20,19 @@
 #define ERROR                   false
 
 
+typedef enum
+{
+    NO_ERROR,                    // should be first number as 0 position
+    ERR_HASHMAP_CREATION,
+    ERR_VECTOR_CREATION,
+    ERR_ALLOCATION,
+    ERR_NULL_POINTER,
+    ERR_OUT_OF_BOUNDS,
+    ERR_ALREADY_EXISTING_DECLARATION,
+    ERR_IOEXCEPTION
 
+
+}error_t;
 
 #define NULL_GUARD(variable, returning, print)  \
     if(variable == NULL)                        \

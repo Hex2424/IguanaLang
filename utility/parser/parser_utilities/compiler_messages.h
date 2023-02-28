@@ -18,7 +18,6 @@
 #include "../../tokenizer/token/token.h"
 #include "stdint.h"
 
-#define NO_ERROR         0
 
 void Shouter_shoutError(const TokenHandler_t tokenHandle, const char* errorMessage, ...);
 void Shouter_shoutWarning(const TokenHandler_t tokenHandle, const char* errorMessage, ...);

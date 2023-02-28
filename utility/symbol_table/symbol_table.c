@@ -43,29 +43,30 @@ static int declarationsForEach_(void *key, int count, void* value, void *user);
  * @param[in/out] symbolTable - Symbol table object for initialization
  * @return                    - Success state
  */
-bool SymbolTable_create(SymbolTableHandle_t symbolTable)
+error_t SymbolTable_create(SymbolTableHandle_t symbolTable)
 {
     if(!Hashmap_new(&symbolTable->allSymbolCalls, INITIAL_CALLS_HASHMAP_SIZE));
     {
         Log_e(TAG, "Failed to create Declarations hashmap");
-        return ERROR;
+        return ERR_ALLOCATION;
     }
 
     if(!Hashmap_new(&symbolTable->allClasses, INITIAL_CLASSES_HASHMAP_SIZE))
     {
         Log_e(TAG, "Failed to create Symbol calls hashmap");
-        return ERROR;
+        return ERR_ALLOCATION;
     }
 
-    return SUCCESS;
+    return NO_ERROR;
 }
 
 
-int_fast8_t SymbolTable_addNewDeclaration(SymbolTableHandle_t symbolTable, const SymbolType_t type, const char* symbolFullName, void* object)
+error_t SymbolTable_addNewDeclaration(SymbolTableHandle_t symbolTable, const SymbolType_t type, const char* symbolFullName, void* object)
 {
     HashmapHandle_t symbolsHashmap;
     uint32_t classNameLength;
-    // Expecting to get full symbol name as "ClassName_symbolName" ;
+
+    // Expecting to get full symbol name as "ClassName_symbolName"
 
     classNameLength = strchr(symbolFullName, '_') - symbolFullName;
 
@@ -80,7 +81,7 @@ int_fast8_t SymbolTable_addNewDeclaration(SymbolTableHandle_t symbolTable, const
         if(!Hashmap_new(symbolsHashmap, 3))
         {
             Log_e(TAG, "Failed to create Class hashmap");
-            return ERROR;
+            return ERR_ALLOCATION;
         }
 
         // Setting Symbols hashmap as one of value of Classes Hashmap
@@ -90,7 +91,7 @@ int_fast8_t SymbolTable_addNewDeclaration(SymbolTableHandle_t symbolTable, const
         if(result)
         {
             Log_e(TAG, "False positive Hashmap_find function for some reason");
-            return ERROR;
+            return ERR_ALLOCATION;
         }
         
     }
@@ -100,20 +101,21 @@ int_fast8_t SymbolTable_addNewDeclaration(SymbolTableHandle_t symbolTable, const
     if(Hashmap_set(symbolsHashmap, symbolFullName + classNameLength + SIZE_STR("_"), object))
     {
         ; // pabaigt
-        return SUCCESS;
+        return ERR_ALREADY_EXISTING_DECLARATION;
     }
     // TODO change bool return to error returning
 
-    return SUCCESS;
+    return NO_ERROR;
 }
 
 
-int_fast8_t SymbolTable_addNewDeclarationRequest(SymbolTableHandle_t symbolTable, const SymbolType_t type, const char* className, const char* symbolName, void* object)
+error_t SymbolTable_addNewDeclarationRequest(SymbolTableHandle_t symbolTable, const SymbolType_t type, const char* className, const char* symbolName, void* object)
 {
  
  
     return SUCCESS;
 }
+
 
 
 bool SymbolTable_destroy(SymbolTableHandle_t symbolTable)
