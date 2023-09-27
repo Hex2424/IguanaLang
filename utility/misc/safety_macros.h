@@ -32,7 +32,7 @@ typedef enum
     ERR_IOEXCEPTION
 
 
-}error_t;
+}errors_t;
 
 #define NULL_GUARD(variable, returning, print)  \
     if(variable == NULL)                        \
