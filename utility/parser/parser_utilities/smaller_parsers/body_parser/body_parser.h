@@ -15,7 +15,7 @@
 #define UTILITY_PARSER_PARSER_UTILITIES_SMALLER_PARSERS_METHOD_PARSER_BODY_PARSER_BODY_PARSER_H_
 #include "../../../structures/method/method_scope/local_scope.h"
 #include "../../../../tokenizer/token/token.h"
-#include "../../../../hashmap/hashmap.h"
+#include <hashmap.h>
 #include <stdbool.h>
 
 

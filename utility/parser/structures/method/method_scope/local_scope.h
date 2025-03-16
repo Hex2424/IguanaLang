@@ -13,8 +13,8 @@
 #ifndef UTILITY_PARSER_STRUCTURES_METHOD_METHOD_SCOPE_LOCAL_SCOPE_H_
 #define UTILITY_PARSER_STRUCTURES_METHOD_METHOD_SCOPE_LOCAL_SCOPE_H_
 
-#include "../../../../hashmap/hashmap.h"
-#include "../../../../vector/vector.h"
+#include <hashmap.h>
+#include <vector.h>
 typedef struct
 {
     Hashmap_t localVariables;

@@ -16,7 +16,7 @@
 
 #include "../variable/variable.h"
 #include "../object_type/object_type.h"
-#include "../../../vector/vector.h"
+#include <vector.h>
 #include "method_scope/local_scope.h"
 
 typedef struct

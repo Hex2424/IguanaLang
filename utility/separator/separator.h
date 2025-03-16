@@ -13,7 +13,7 @@
 
 #ifndef UTILITY_SEPERATOR_SEPARATOR_H
 #define UTILITY_SEPERATOR_SEPARATOR_H
-#include "../vector/vector.h"
+#include <vector.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>

@@ -15,13 +15,13 @@
 #define UTILITY_PARSER_STRUCTURES_MAIN_FRAME_MAINFRAME_H_
 #include "../variable/variable.h"
 #include "../method/method.h"
-#include "../../../hashmap/hashmap.h"
-
+#include <hashmap.h>
+#include <platform_specific.h>
 
 
 typedef struct
 {
-    Hashmap_t imports;
+    char iguanaObjectName[MAX_FILENAME_LENGTH];
     Hashmap_t classVariables;
     Hashmap_t methods;
 }MainFrame_t;

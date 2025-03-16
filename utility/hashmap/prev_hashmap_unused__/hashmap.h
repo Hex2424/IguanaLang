@@ -15,8 +15,8 @@
 #define UTILITY_HASHMAP_HASHMAP_H_
 #include <stdbool.h>
 #include <stdint.h>
-#include "../vector/vector.h"
-#include "../logger/logger.h"
+#include <vector.h>
+#include <logger.h>
 
 typedef struct
 {

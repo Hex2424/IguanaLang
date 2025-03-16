@@ -11,12 +11,11 @@
  * @date 2022-09-15
  */
 #include "main_frame.h"
-#include "../../../vector/vector.h"
-#include "../../../logger/logger.h"
+#include <vector.h>
+#include <logger.h>
 ////////////////////////////////
 // DEFINES
 #define NAME_VARIABLES_VECTOR   "variables"
-#define NAME_IMPORTS_VECTOR     "imports"
 #define NAME_METHODS_VECTOR     "methods"
 
 #define FAILED_CREATION_LOG     "Could not create '%s' hashmap"
@@ -46,12 +45,6 @@ static const char* TAG = "MAIN_FRAME";
  */
 bool MainFrame_init(MainFrameHandle_t handle)
 {
-  
-    if(!Hashmap_new(&handle->imports, 5))
-    {
-        Log_e(TAG, FAILED_CREATION_LOG, NAME_IMPORTS_VECTOR);
-        return ERROR;
-    }
 
     if(!Hashmap_new(&handle->classVariables, 10))
     {
@@ -79,7 +72,6 @@ bool MainFrame_init(MainFrameHandle_t handle)
  */
 bool MainFrame_destroy(MainFrameHandle_t handle)
 {
-    Hashmap_delete(&handle->imports);
     Hashmap_delete(&handle->classVariables);
     // Hashmap_delete(&handle->methods);
 

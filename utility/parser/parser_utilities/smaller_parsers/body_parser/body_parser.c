@@ -12,11 +12,11 @@
  */
 
 #include "body_parser.h"
-#include "../../../../misc/safety_macros.h"
+#include <safety_macros.h>
 #include "../../../../parser/parser_utilities/global_parser_utility.h"
 #include "../../../../parser/parser_utilities/compiler_messages.h"
 #include "../../../../parser/structures/expression/expressions.h"
-#include "../../../../queue/queue.h"
+#include <queue.h>
 
 ////////////////////////////////
 // DEFINES
@@ -38,7 +38,7 @@ static const char* TAG = "BODY_PARSER";
 ////////////////////////////////
 // PRIVATE METHODS
 
-static inline bool handleDotAccess_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
+// static inline bool handleDotAccess_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
 static bool handleMethodCall_(ExMethodCallHandle_t methodCall, TokenHandler_t** currentTokenHandle, const bool isMethodSelf);
 static inline bool handleObjectDeclaration_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
 static bool queueAppendExprObject_(QueueHandle_t expressionQueue, const ExpressionType_t expressionType, void* object);
@@ -47,7 +47,7 @@ static bool handleOperator_(QueueHandle_t expressionQueue, TokenHandler_t** curr
 static bool isTokenOperator_(TokenHandler_t** currentTokenHandle);
 static bool isTokenExpression_(TokenHandler_t** currentTokenHandle);
 static bool handleNaming_(LocalScopeObjectHandle_t localScope, QueueHandle_t expressionsQueue, TokenHandler_t** currentTokenHandle);
-static bool handleOperations_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
+// static bool handleOperations_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
 static bool handleExpression_(LocalScopeObjectHandle_t localScope,QueueHandle_t expressions, TokenHandler_t** currentTokenHandle);
 static bool parseExpressionLine_(LocalScopeObjectHandle_t localScope,QueueHandle_t expressions, TokenHandler_t** currentTokenHandle);
 static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t expressions, TokenHandler_t** currentTokenHandle);
@@ -218,7 +218,7 @@ static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t exp
                 if(cTokenType == NUMBER_VALUE)
                 {
                     // Calculating overflow also to prevent it
-                    variable->assignedValue = cTokenP->valueString;  //(atoll(cTokenP->valueString) % (2 << (variable->bitpack - 1)));
+                    variable->variableName = cTokenP->valueString;  //(atoll(cTokenP->valueString) % (2 << (variable->bitpack - 1)));
                     
                     (*currentTokenHandle)++;
 
@@ -276,14 +276,14 @@ static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t exp
     
 }
 
-static bool handleOperations_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle)
-{
-    return SUCCESS;
-}
+// static bool handleOperations_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle)
+// {
+//     return SUCCESS;
+// }
 
 static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, QueueHandle_t expressionsQueue, TokenHandler_t** currentTokenHandle)
 {
-    TokenHandler_t currentNamingToken;
+    // TokenHandler_t currentNamingToken;
     while (cTokenType != SEMICOLON)
     {
         // if(tokenOffsetType(1) == DOT_SYMBOL)
@@ -393,7 +393,7 @@ static bool queueAppendExprObject_(QueueHandle_t expressionQueue, const Expressi
 
     expression->type = expressionType;
     expression->expressionObject = object;
-    char* ss = object;
+;
     Log_i(TAG, "Expression contains object type%d", expression->type);
 
     Queue_enqueue(expressionQueue, expression);
@@ -490,7 +490,7 @@ static inline bool handleMethodCallParameterization_(MethodObjectHandle_t method
 
 static inline bool handleObjectDeclaration_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle)
 {
-    
+    return false;
 }
 
 static bool isTokenOperator_(TokenHandler_t** currentTokenHandle)
@@ -502,8 +502,8 @@ static bool isTokenOperator_(TokenHandler_t** currentTokenHandle)
             cTokenType == OPERATOR_XOR      ||
             cTokenType == OPERATOR_AND      ||
             cTokenType == OPERATOR_OR       ||
-            cTokenType == EQUAL             ||
-            cTokenType == OPERATOR_DIVIDE;
+            cTokenType == EQUAL;             
+            // cTokenType == OPERATOR_DIVIDE;
 
     // TODO: Add binary operators
 }

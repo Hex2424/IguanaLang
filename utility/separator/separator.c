@@ -14,8 +14,8 @@
 
 #include "separator.h"
 #include "../tokenizer/tokenizer.h"
-#include "../vector/vector.h"
-#include "../logger/logger.h"
+#include <vector.h>
+#include <logger.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -38,7 +38,6 @@ static const char allowedNamingSymbols_[] = "qwertyuiopasdfghjklzxcvbnmQWERTYUIO
 ////////////////////////////////
 // PRIVATE METHODS
 
-static const size_t calculateTokens_(const char *begginingIterator, const char *maxIterator);
 static const size_t tokenize_(const char *begginingIterator, const char *maxIterator, VectorHandler_t vectorHandle,const char* currentFile);
 
 ////////////////////////////////
@@ -89,7 +88,6 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
     bool breakTag;
     bool isLiteral;
     uint32_t existWordBuild;
-    size_t overallLength;
     size_t tokenCount;
 
     size_t currentColumn = 1;
@@ -99,7 +97,7 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
     size_t lastColumn = 1;
 
     isLiteral = false;
-    wordIterator = begginingIterator;
+    wordIterator = (char*) begginingIterator;
     existWordBuild = 0;
     tokenCount = 0;
 
@@ -184,7 +182,7 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
 
                     token->location.column = lastColumn;     // setting up file location settings for debugging errors
                     token->location.line = lastLine;
-                    token->location.filename = currentFile;
+                    token->location.filename = (char*) currentFile;
 
 
                     lastColumn = currentColumn;
@@ -231,7 +229,7 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
 
             token->location.column = lastColumn;     // setting up file location settings for debugging errors
             token->location.line = lastLine;
-            token->location.filename = currentFile;
+            token->location.filename = (char*) currentFile;
 
 
             lastColumn = currentColumn;

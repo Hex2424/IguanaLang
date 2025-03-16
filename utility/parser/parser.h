@@ -14,18 +14,16 @@
 #ifndef UTILITY_PARSER_PARSER_H_
 #define UTILITY_PARSER_PARSER_H_
 
-#include "../vector/vector.h"
-#include "../logger/logger.h"
+#include <vector.h>
+#include <logger.h>
 #include "structures/main_frame/main_frame.h"
-#include "stdbool.h"
+#include <stdbool.h>
 #include "../tokenizer/token/token.h"
 #include "../compiler/compiler.h"
-#include "../parser/structures/import_object/import_object.h"
+
 
 typedef struct
 {
-    CompilerHandle_t compiler;
-    ImportObjectHandle_t currentFilePath;
     char* currentFolderPath;
     size_t currentFolderPathLength;
 }Parser_t;
