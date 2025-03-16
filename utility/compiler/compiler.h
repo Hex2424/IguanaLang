@@ -16,21 +16,11 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "../queue/queue.h"
-#include "../vector/vector.h"
-#include "../hashmap/hashmap.h"
-
-typedef struct
-{
-    Vector_t alreadyCompiledFilePaths;
-    Queue_t filePathsToCompile;
-    char* mainIguanaFilePath;
-}Compiler_t;
-
-typedef Compiler_t* CompilerHandle_t;
+#include <vector.h>
+#include <hashmap.h>
 
 
-bool Compiler_initialize(CompilerHandle_t compiler);
-bool Compiler_destroy(CompilerHandle_t compiler);
-bool Compiler_startCompilingProcessOnRoot(CompilerHandle_t compiler, const char* filePath);
+bool Compiler_compile(const char* iguanaFilePath, const bool isMain);
+bool Compiler_initialize(const char* mainFilePath);
 
 #endif // UTILITY_COMPILER_COMPILER_H_

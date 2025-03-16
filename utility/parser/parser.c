@@ -16,7 +16,6 @@
 #include "parser_utilities/global_parser_utility.h"
 #include "parser_utilities/smaller_parsers/method_parser/method_parsers.h"
 #include "string.h"
-#include "structures/import_object/import_object.h"
 #include "../hash/random/random.h"
 ////////////////////////////////
 // DEFINES
@@ -49,15 +48,14 @@ size_t tokensCount;
 ////////////////////////////////
 // PRIVATE METHODS
 
-static bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t rootHandle);
 static bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_t rootHandle, const Accessibility_t notation);
-static bool tryParseSequence_(const TokenType_t* pattern,const size_t patternSize);
-static bool assignTokenValue_(char** to, const char* from);
-static bool addLibraryForCompilation_(ParserHandle_t parser, ImportObjectHandle_t* importObject);
-static int checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, ImportObjectHandle_t path);
+// static bool tryParseSequence_(const TokenType_t* pattern,const size_t patternSize);
+// static bool assignTokenValue_(char** to, const char* from);
+// static bool addLibraryForCompilation_(ParserHandle_t parser, ImportObjectHandle_t* importObject);
+// static int checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, ImportObjectHandle_t path);
 static inline bool handleNotation_(ParserHandle_t parser, MainFrameHandle_t rootHandle);
-static inline bool addDeclaredMethodsToGlobalLinkList_(ParserHandle_t parser, const MainFrameHandle_t root);
-static inline bool addDeclaredMethodsToGlobalLinkListIteratorCallback_(void *key, int count, void *value, void *user);
+// static inline bool addDeclaredMethodsToGlobalLinkList_(ParserHandle_t parser, const MainFrameHandle_t root);
+// static inline bool addDeclaredMethodsToGlobalLinkListIteratorCallback_(void *key, int count, void *value, void *user);
 ////////////////////////////////
 // IMPLEMENTATION
 
@@ -102,7 +100,6 @@ bool Parser_parseTokens(ParserHandle_t parser, MainFrameHandle_t root, const Vec
     {
         switch(cTokenType)
         {
-            case MODULE_IMPORT: handleKeywordImport_(parser, root); break;                        // detected import keyword
             case BIT_TYPE: handleKeywordInteger_(parser, root, NO_NOTATION);break;  // detected bit keyword
             case NOTATION: handleNotation_(parser, root);break;                     // detected annotation
 
@@ -188,7 +185,7 @@ static inline bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_
     if(cTokenType == EQUAL)             // checking for assignable declaration
     {
         currentToken++;
-        if(cTokenType = NUMBER_VALUE)   // assignableValue
+        if(cTokenType == NUMBER_VALUE)   // assignableValue
         {
             NULL_GUARD(cTokenP->valueString, ERROR, Log_e(TAG, "Cannot parse token value cause its NULL"));
 
@@ -230,111 +227,111 @@ static inline bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_
 }
 
 
-static inline bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t rootHandle)
-{
-    ImportObjectHandle_t importObject;
+// static inline bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t rootHandle)
+// {
+//     ImportObjectHandle_t importObject;
 
-    ALLOC_CHECK(importObject,sizeof(ImportObject_t), ERROR);
+//     ALLOC_CHECK(importObject,sizeof(ImportObject_t), ERROR);
 
-    currentToken++;
-    if(cTokenType == LITTERAL)                 // detected <
-    {
-        // standart lib detected
-        importObject->name = cTokenP->valueString;
+//     currentToken++;
+//     if(cTokenType == LITTERAL)                 // detected <
+//     {
+//         // standart lib detected
+//         importObject->name = cTokenP->valueString;
 
-        if(!addLibraryForCompilation_(parser, &importObject))
-        {
-            Log_e(TAG, "Failed to add library path for paths to compile");
-            return ERROR;
-        }
+//         if(!addLibraryForCompilation_(parser, &importObject))
+//         {
+//             Log_e(TAG, "Failed to add library path for paths to compile");
+//             return ERROR;
+//         }
 
-        if(Hashmap_set(&rootHandle->imports, importObject->name, importObject))
-        {
-            Shouter_shoutError(cTokenP, "Library \'%s\' is already imported", importObject->name);
-            return ERROR;
-        }
+//         if(Hashmap_set(&rootHandle->imports, importObject->name, importObject))
+//         {
+//             Shouter_shoutError(cTokenP, "Library \'%s\' is already imported", importObject->name);
+//             return ERROR;
+//         }
 
  
-    }else
-    {
-        Shouter_shoutError(cTokenP, "Forgot to define module path...");
-    }
-    // Log_d(TAG, "Current token \'%d\' after libary parse", cTokenP->tokenType);
+//     }else
+//     {
+//         Shouter_shoutError(cTokenP, "Forgot to define module path...");
+//     }
+//     // Log_d(TAG, "Current token \'%d\' after libary parse", cTokenP->tokenType);
 
-    return SUCCESS;
-}
+//     return SUCCESS;
+// }
 
-static inline bool addLibraryForCompilation_(ParserHandle_t parser, ImportObjectHandle_t* importObject)
-{
-    char* newFilePathToCompile;
+// static inline bool addLibraryForCompilation_(ParserHandle_t parser, ImportObjectHandle_t* importObject)
+// {
+//     char* newFilePathToCompile;
     
-    size_t libraryRelativePathLength;
-    FILE* fileToCheck;
+//     size_t libraryRelativePathLength;
+//     FILE* fileToCheck;
 
-    libraryRelativePathLength = strlen((*importObject)->name);
+//     libraryRelativePathLength = strlen((*importObject)->name);
 
-    // .iguana is longest
-    ALLOC_CHECK(newFilePathToCompile,
-    (parser->currentFolderPathLength + libraryRelativePathLength + LONGEST_POSSIBLE_IGUANA_EXTENSION_LENGTH),
-    ERROR);
+//     // .iguana is longest
+//     ALLOC_CHECK(newFilePathToCompile,
+//     (parser->currentFolderPathLength + libraryRelativePathLength + LONGEST_POSSIBLE_IGUANA_EXTENSION_LENGTH),
+//     ERROR);
 
-    memcpy(newFilePathToCompile, parser->currentFolderPath, parser->currentFolderPathLength);
-    memcpy(newFilePathToCompile + parser->currentFolderPathLength, (*importObject)->name, libraryRelativePathLength);
+//     memcpy(newFilePathToCompile, parser->currentFolderPath, parser->currentFolderPathLength);
+//     memcpy(newFilePathToCompile + parser->currentFolderPathLength, (*importObject)->name, libraryRelativePathLength);
 
-    char* endingExtensionPointer = newFilePathToCompile + parser->currentFolderPathLength + libraryRelativePathLength;
-    *endingExtensionPointer = '.'; // adding extension dot
-    endingExtensionPointer++;
+//     char* endingExtensionPointer = newFilePathToCompile + parser->currentFolderPathLength + libraryRelativePathLength;
+//     *endingExtensionPointer = '.'; // adding extension dot
+//     endingExtensionPointer++;
 
-    for(uint8_t i = 0; i < sizeof(allIguanaExtensions) / sizeof(char*); i++)
-    {
+//     for(uint8_t i = 0; i < sizeof(allIguanaExtensions) / sizeof(char*); i++)
+//     {
 
-        uint8_t j;
-        for(j = 0; j < strlen(allIguanaExtensions[i]); j++)
-        {
-            endingExtensionPointer[j] = allIguanaExtensions[i][j]; 
-        }
-        endingExtensionPointer[j] = '\0';
+//         uint8_t j;
+//         for(j = 0; j < strlen(allIguanaExtensions[i]); j++)
+//         {
+//             endingExtensionPointer[j] = allIguanaExtensions[i][j]; 
+//         }
+//         endingExtensionPointer[j] = '\0';
 
-        fileToCheck = fopen(newFilePathToCompile, "r");
-        if(fileToCheck == NULL)
-        {
-            continue;
-        }else
-        {
-            (*importObject)->realPath = realpath(newFilePathToCompile, NULL);
-            free(newFilePathToCompile);
+//         fileToCheck = fopen(newFilePathToCompile, "r");
+//         if(fileToCheck == NULL)
+//         {
+//             continue;
+//         }else
+//         {
+//             (*importObject)->realPath = realpath(newFilePathToCompile, NULL);
+//             free(newFilePathToCompile);
 
-            int matchedPosition = checkIfPathAlreadyCompiled_(parser->compiler, *importObject);
+//             int matchedPosition = checkIfPathAlreadyCompiled_(parser->compiler, *importObject);
 
-            if(matchedPosition < 0)
-            {
-                ImportObject_generateRandomIDForObject(*importObject);
-                Queue_enqueue(&parser->compiler->filePathsToCompile, *importObject);
-            }else
-            {
-                *importObject = parser->compiler->alreadyCompiledFilePaths.expandable[matchedPosition];
-                NULL_GUARD(*importObject, ERROR, Log_e(TAG, "Something wrong with memory"));
-            }
+//             if(matchedPosition < 0)
+//             {
+//                 ImportObject_generateRandomIDForObject(*importObject);
+//                 Queue_enqueue(&parser->compiler->filePathsToCompile, *importObject);
+//             }else
+//             {
+//                 *importObject = parser->compiler->alreadyCompiledFilePaths.expandable[matchedPosition];
+//                 NULL_GUARD(*importObject, ERROR, Log_e(TAG, "Something wrong with memory"));
+//             }
 
-            return SUCCESS;
-        }
-    }
-    Shouter_shoutError(cTokenP, "lib \'%s\'cannot be found", (*importObject)->name);
-    return SUCCESS;
-}
+//             return SUCCESS;
+//         }
+//     }
+//     Shouter_shoutError(cTokenP, "lib \'%s\'cannot be found", (*importObject)->name);
+//     return SUCCESS;
+// }
 
 
-static inline int checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, ImportObjectHandle_t path)
-{
+// static inline int checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, ImportObjectHandle_t path)
+// {
     
-    for(size_t compiledPathIdx = 0; compiledPathIdx < compiler->alreadyCompiledFilePaths.currentSize; compiledPathIdx++)
-    {
-        // generating absolute paths for better same path checking
-        ImportObjectHandle_t alreadyCompiled = compiler->alreadyCompiledFilePaths.expandable[compiledPathIdx];
-        if(strcmp(alreadyCompiled->realPath, path->realPath) == 0)
-        {
-            return compiledPathIdx;
-        }
-    }
-    return -1;
-}
+//     for(size_t compiledPathIdx = 0; compiledPathIdx < compiler->alreadyCompiledFilePaths.currentSize; compiledPathIdx++)
+//     {
+//         // generating absolute paths for better same path checking
+//         ImportObjectHandle_t alreadyCompiled = compiler->alreadyCompiledFilePaths.expandable[compiledPathIdx];
+//         if(strcmp(alreadyCompiled->realPath, path->realPath) == 0)
+//         {
+//             return compiledPathIdx;
+//         }
+//     }
+//     return -1;
+// }

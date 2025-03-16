@@ -11,7 +11,6 @@
  * @date 2022-10-21
  */
 #include "unix_linker.h"
-#include "../../parser/structures/import_object/import_object.h"
 #include "string.h"
 
 
@@ -21,7 +20,7 @@
 
 ////////////////////////////////
 // PRIVATE CONSTANTS
-static const char* TAG = "UNIX_LINKER";
+// static const char* TAG = "UNIX_LINKER";
 
 ////////////////////////////////
 // PRIVATE TYPES
@@ -34,52 +33,52 @@ static const char* TAG = "UNIX_LINKER";
 ////////////////////////////////
 // IMPLEMENTATION
 
-bool UnixLinker_linkPaths(const VectorHandler_t objectsCompiledExternaly)
-{
-    char* full_command;
-    char* iterator;
+// bool UnixLinker_linkPaths(const VectorHandler_t objectsCompiledExternaly)
+// {
+//     char* full_command;
+//     char* iterator;
 
-    ALLOC_CHECK(full_command, sizeof(LD_LINKER_COMMAND) + CFILES_LENGTH + (OBJECT_ID_LENGTH * objectsCompiledExternaly->currentSize), ERROR);
+//     ALLOC_CHECK(full_command, sizeof(LD_LINKER_COMMAND) + CFILES_LENGTH + (OBJECT_ID_LENGTH * objectsCompiledExternaly->currentSize), ERROR);
 
-    full_command[0] = '\0';//null terminator beggining for strncat
-    iterator = full_command;
+//     full_command[0] = '\0';//null terminator beggining for strncat
+//     iterator = full_command;
 
-    strncat(iterator, LD_LINKER_COMMAND,sizeof(LD_LINKER_COMMAND));
-    iterator += (sizeof(LD_LINKER_COMMAND) - 1);
+//     strncat(iterator, LD_LINKER_COMMAND,sizeof(LD_LINKER_COMMAND));
+//     iterator += (sizeof(LD_LINKER_COMMAND) - 1);
 
-    for(size_t idx = 0; idx < objectsCompiledExternaly->currentSize; idx++)
-    {
-        ImportObjectHandle_t object;
-        object = objectsCompiledExternaly->expandable[idx];
+//     for(size_t idx = 0; idx < objectsCompiledExternaly->currentSize; idx++)
+//     {
+//         ImportObjectHandle_t object;
+//         object = objectsCompiledExternaly->expandable[idx];
 
-        NULL_GUARD(object, ERROR, Log_e(TAG, "Null object in linker passed"));
+//         NULL_GUARD(object, ERROR, Log_e(TAG, "Null object in linker passed"));
 
-        snprintf(iterator, CFILES_LENGTH + sizeof(' '), " %s%s.o", TEMP_PATH, object->objectId.id);
-        iterator += (CFILES_LENGTH);
-    }
-    // char check_command[CFILES_LENGTH];
+//         snprintf(iterator, CFILES_LENGTH + sizeof(' '), " %s%s.o", TEMP_PATH, object->objectId.id);
+//         iterator += (CFILES_LENGTH);
+//     }
+//     // char check_command[CFILES_LENGTH];
 
 
-    // snprintf(check_command, CFILES_LENGTH, "%s%s.o", TEMP_PATH, objectId);
-    // snprintf(full_command, sizeof(GCC_COMPILER_COMMAND) + CFILES_LENGTH, GCC_COMPILER_COMMAND, TEMP_PATH, objectId, objectId);
-    // Log_d(TAG, "Executing command:%s", full_command);
+//     // snprintf(check_command, CFILES_LENGTH, "%s%s.o", TEMP_PATH, objectId);
+//     // snprintf(full_command, sizeof(GCC_COMPILER_COMMAND) + CFILES_LENGTH, GCC_COMPILER_COMMAND, TEMP_PATH, objectId, objectId);
+//     // Log_d(TAG, "Executing command:%s", full_command);
 
-    if(system(full_command) == -1)
-    {
-        free(full_command);
-        return ERROR;
-    }
+//     if(system(full_command) == -1)
+//     {
+//         free(full_command);
+//         return ERROR;
+//     }
 
-    // FILE* objectFile = fopen(check_command, "r");
+//     // FILE* objectFile = fopen(check_command, "r");
 
-    // NULL_GUARD(objectFile, ERROR, Log_e(TAG, "Failed to compile one of c files"));
+//     // NULL_GUARD(objectFile, ERROR, Log_e(TAG, "Failed to compile one of c files"));
 
-    // if(fclose(objectFile) != 0)
-    // {
-    //     Log_w(TAG, "Failed to close file at runtime: %s", objectFile);
-    //     return ERROR;
-    // }
-    free(full_command);
+//     // if(fclose(objectFile) != 0)
+//     // {
+//     //     Log_w(TAG, "Failed to close file at runtime: %s", objectFile);
+//     //     return ERROR;
+//     // }
+//     free(full_command);
 
-    return SUCCESS;
-}
+//     return SUCCESS;
+// }
