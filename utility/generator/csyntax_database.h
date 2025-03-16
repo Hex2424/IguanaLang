@@ -40,6 +40,8 @@ CONST_STRING TYPE_BINDS[] =
     "void"
 };
 
+// These to do operation runtime
+
 CONST_SYMBOL BRACKET_START_CHAR =        '{';
 CONST_SYMBOL BRACKET_END_CHAR =          '}';
 CONST_SYMBOL BRACKET_ROUND_START_CHAR =  '(';
@@ -50,12 +52,27 @@ CONST_SYMBOL COMMA_CHAR =                ',';
 CONST_SYMBOL END_LINE_CHAR =             '\n';
 CONST_SYMBOL NULL_TERMINATOR_CHAR =      '\0';
 
-// #define CCHAR_SIZE               8
-// #define CSHORT_SIZE              16
-// #define CINT_SIZE                32
-// #define CLONG_SIZE               64
+// These to do operation in preprocessor
 
+#define BRACKET_START_DEF         "{"
+#define BRACKET_END_DEF           "}"
+#define BRACKET_ROUND_START_DEF   "("
+#define BRACKET_ROUND_END_DEF     ")"
+#define SEMICOLON_DEF             ";"
+#define COMMA_DEF                 ","
 
+#define END_LINE_DEF              "\n"
+#define NULL_TERMINATOR_DEF       "\0"
+#define DOUBLE_QUOTE_DEF          "\""
 
+// Mangling definitions
+// TODO Make different for each compiler
+
+#define MANGLE_ASM_WRAP_LINE(mangle_format) \
+    "asm(\"" mangle_format "\");"
+
+#define MANGLE_MAGIC_BYTE_DEF    "_Z"
+#define MANGLE_NEST_ID_DEF       "N"
+#define MANGLE_END_DEF           "E"
 
 #endif // UTILITY_GENERATOR_CSYNTAX_DATABASE_H_
