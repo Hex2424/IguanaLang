@@ -39,12 +39,14 @@ static const char* TAG = "C_COMPILER";
 ////////////////////////////////
 // IMPLEMENTATION
 
-bool CExternalCompiler_compile(const char* objectId)
+bool CExternalCompiler_compile(const char* filename)
 {
+    int closeStatus = true;
+
     char full_command[sizeof(GCC_COMPILER_COMMAND) + CFILES_LENGTH] = GCC_COMPILER_COMMAND;
     char check_command[CFILES_LENGTH];
-    snprintf(check_command, CFILES_LENGTH, "%s%s.o", TEMP_PATH, objectId);
-    snprintf(full_command, sizeof(GCC_COMPILER_COMMAND) + CFILES_LENGTH, GCC_COMPILER_COMMAND, TEMP_PATH, objectId, objectId);
+    snprintf(check_command, CFILES_LENGTH, "%s%s.o", TEMP_PATH, filename);
+    snprintf(full_command, sizeof(GCC_COMPILER_COMMAND) + CFILES_LENGTH, GCC_COMPILER_COMMAND, TEMP_PATH, filename, filename);
     Log_d(TAG, "Executing command:%s", full_command);
 
     if(system(full_command) == -1)
@@ -56,25 +58,12 @@ bool CExternalCompiler_compile(const char* objectId)
 
     NULL_GUARD(objectFile, ERROR, Log_e(TAG, "Failed to compile one of c files"));
 
-    if(fclose(objectFile) != 0)
+    closeStatus = fclose(objectFile);
+    
+    if(closeStatus != 0)
     {
-        Log_w(TAG, "Failed to close file at runtime: %s", objectFile);
+        Log_w(TAG, "Failed to close C file at runtime: %d", closeStatus);
         return ERROR;
-    }
-
-    return SUCCESS;
-}
-
-bool CExternalCompiler_compileWhole(const VectorHandler_t pathsOfCompiledIguana)
-{
-    size_t idx;
-    for(idx = 0; idx < pathsOfCompiledIguana->currentSize; idx++)
-    {
-        ImportObjectHandle_t import;
-        import = pathsOfCompiledIguana->expandable[idx];
-
-        NULL_GUARD(import, ERROR, Log_e(TAG, "import is null"));
-        CExternalCompiler_compile(import->objectId.id);
     }
 
     return SUCCESS;
