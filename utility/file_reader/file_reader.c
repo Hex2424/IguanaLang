@@ -66,6 +66,7 @@ size_t FileReader_readToBuffer(const char* fileName, char** buffer)
 
     fread(*buffer, 1, fileSize, igFile);
     fclose(igFile);
+    
     return fileSize;
 }
 
