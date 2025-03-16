@@ -42,7 +42,22 @@ static const char* TAG = "COMPILER";
 
 ////////////////////////////////
 // IMPLEMENTATION
+static void removeExtensionFromFilenameWithCopy_(char* filename, const char* const filenameWithExtension)
+{
+    
+    strcpy(filename, filenameWithExtension);
+    
+    char* dotPointer = strchr(filename, '.');
 
+    if(dotPointer == NULL)
+    {
+        // not found a dot pointer
+        return;
+    }
+
+    // placing NULL terminator so string will count to terminator
+    *dotPointer = '\0';
+}
 
 /**
  * @brief Public method used to compile one Iguana file to C lang
@@ -61,16 +76,9 @@ bool Compiler_compile(const char* iguanaFilePath, const bool isMainFile)
 
     char* codeString;
     size_t length;
-    char* dotPosition;
+
     // Setting a name for currently compile object
-
-    strcpy(root.iguanaObjectName, basename((char*) iguanaFilePath));
-
-    dotPosition = strchr(root.iguanaObjectName, DOT_SYMBOL);
-    if(dotPosition != NULL)
-    {
-        *dotPosition = '\0';
-    }
+    removeExtensionFromFilenameWithCopy_(root.iguanaObjectName, basename((char*) iguanaFilePath));
 
     // TODO: tokenize directly from file
     length = FileReader_readToBuffer(iguanaFilePath, &codeString);
