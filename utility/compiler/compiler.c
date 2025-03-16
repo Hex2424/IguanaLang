@@ -59,6 +59,11 @@ static void removeExtensionFromFilenameWithCopy_(char* filename, const char* con
     *dotPointer = '\0';
 }
 
+static int cfilenameOfObject_(char* cfilename, const char* objectName)
+{
+    return sprintf(cfilename, "%s.c", objectName);
+}
+
 /**
  * @brief Public method used to compile one Iguana file to C lang
  * 
@@ -68,7 +73,7 @@ static void removeExtensionFromFilenameWithCopy_(char* filename, const char* con
  */
 bool Compiler_compile(const char* iguanaFilePath, const bool isMainFile)
 {
-
+    char filenameGenerate[MAX_FILENAME_LENGTH];
     MainFrame_t root;
 
     Vector_t tokensVector;
@@ -79,7 +84,8 @@ bool Compiler_compile(const char* iguanaFilePath, const bool isMainFile)
 
     // Setting a name for currently compile object
     removeExtensionFromFilenameWithCopy_(root.iguanaObjectName, basename((char*) iguanaFilePath));
-
+    cfilenameOfObject_(filenameGenerate, root.iguanaObjectName);
+    
     // TODO: tokenize directly from file
     length = FileReader_readToBuffer(iguanaFilePath, &codeString);
     if(length == -1)
@@ -113,8 +119,9 @@ bool Compiler_compile(const char* iguanaFilePath, const bool isMainFile)
         return ERROR;
     }
 
+
     // Generator generates code out of AST(Abstract syntax tree)
-    if(!Generator_generateCode(&root, "main.c"))
+    if(!Generator_generateCode(&root, filenameGenerate))
     {
         Log_e(TAG, "Failed to generate c language code for Iguana file %s", iguanaFilePath);
         return ERROR;
