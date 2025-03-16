@@ -10,8 +10,8 @@
  *
  * @date 2022-09-06
  */
-#include "vector.h"
-#include "../logger/logger.h"
+#include <vector.h>
+#include <logger.h>
 
 
 ////////////////////////////////
@@ -125,7 +125,7 @@ bool Vector_append(VectorHandler_t object, const void* dataObject)
 
     }else
     {
-        object->expandable[object->currentSize] = dataObject;
+        object->expandable[object->currentSize] = (void*) dataObject;
         object->currentSize++;
         object->availableSize--;
     }
@@ -138,11 +138,13 @@ bool Vector_append(VectorHandler_t object, const void* dataObject)
  * 
  * @param[out] object pointer to vector structure 
  */
-void Vector_fit(VectorHandler_t object)
+bool Vector_fit(VectorHandler_t object)
 {
-    NULL_GUARD(object,, VECTOR_NULL_PRINT);
+    NULL_GUARD(object, ERROR, VECTOR_NULL_PRINT);
     REALLOC_CHECK(object->expandable,object->currentSize * sizeof(void*), ERROR);
     object->availableSize = 0;
+
+    return SUCCESS;
 }
 
 

@@ -42,7 +42,7 @@ typedef InitialSettings_t* InitialSettingsHandler_t;
 
 bool Vector_create(VectorHandler_t object, const InitialSettingsHandler_t initialSettings);
 bool Vector_append(VectorHandler_t object, const void* dataObject);
-void Vector_fit(VectorHandler_t object);
+bool Vector_fit(VectorHandler_t object);
 bool Vector_destroy(VectorHandler_t object);
 void Vector_print(VectorHandler_t object);
 #endif // UTILITY_VECTOR_VECTOR_H_
