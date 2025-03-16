@@ -12,9 +12,9 @@
  */
 #ifndef UTILITY_EXTERNAL_INBUILT_C_COMPILER_C_COMPILER_H_
 #define UTILITY_EXTERNAL_INBUILT_C_COMPILER_C_COMPILER_H_
-#include "../../parser/structures/import_object/import_object.h"
+
 #include <stdbool.h>
-#include "../../vector/vector.h"
+#include <vector.h>
 
 bool CExternalCompiler_compile(const char* objectId);
 bool CExternalCompiler_compileWhole(const VectorHandler_t pathsOfCompiledIguana);
