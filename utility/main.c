@@ -1,10 +1,10 @@
 /**
  * @file main.c
  *
- * MORE INFO ABOUT THE FILE'S CONTENTS
+ * Iguana Compiler - Entry Point
  *
- * @copyright This file is a part of the project Iguana and is distributed under MIT license which
- * should have been included with the project. If not see: https://choosealicense.com/licenses/mit/
+ * @copyright This file is part of the project Iguana and is distributed under MIT license.
+ * See: https://choosealicense.com/licenses/mit/
  *
  * @author Markas Vielavičius (markas.vielavicius@bytewall.com)
  *
@@ -13,61 +13,91 @@
 
 #include "compiler/compiler.h"
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 #include <argp.h>
+#include <string.h>
 
 const char *argp_program_version = "Iguana 1.0";
 const char *argp_program_bug_address = "<markas.vielavicius@gmail.com>";
 static char doc[] = "Iguana compiler options";
 static char args_doc[] = "[FILES]...";
-static struct argp_option options[] = { 
-    { "output", 'o', 0, 0, "Destination executable path"},
-    // { "word", 'w', 0, 0, "Compare words instead of characters."},
-    // { "nocase", 'i', 0, 0, "Compare case insensitive instead of case sensitive."},
-    { 0 } 
+
+static struct argp_option options[] = {
+    { "output", 'o', "FILE", 0, "Destination executable path" },
+    { 0 }
 };
 
+// Define mode enumeration
+enum Mode { CHARACTER_MODE, WORD_MODE, LINE_MODE };
+
 struct arguments {
-    enum { CHARACTER_MODE, WORD_MODE, LINE_MODE } mode;
+    enum Mode mode;
     bool isCaseInsensitive;
+    char *output_path;
+    char **files;
+    int file_count;
 };
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     struct arguments *arguments = state->input;
     switch (key) {
-    case 'l': arguments->mode = LINE_MODE; break;
-    case 'w': arguments->mode = WORD_MODE; break;
-    case 'i': arguments->isCaseInsensitive = true; break;
-    case ARGP_KEY_ARG: return 0;
-    default: return ARGP_ERR_UNKNOWN;
-    }   
+    case 'o':
+        arguments->output_path = arg;
+        break;
+    case 'w':
+        arguments->mode = WORD_MODE;
+        break;
+    case 'i':
+        arguments->isCaseInsensitive = true;
+        break;
+    case ARGP_KEY_ARG:
+        arguments->files = realloc(arguments->files, (arguments->file_count + 1) * sizeof(char *));
+        arguments->files[arguments->file_count++] = arg;
+        break;
+    default:
+        return ARGP_ERR_UNKNOWN;
+    }
     return 0;
 }
 
 static struct argp argp = { options, parse_opt, args_doc, doc, 0, 0, 0 };
 
-
-int main(int argc, char const *argv[])
+int main(int argc, char **argv) 
 {
-    Compiler_t compiler;
-    struct arguments arguments;
-    arguments.mode = CHARACTER_MODE;
-    arguments.isCaseInsensitive = false;
-
+    struct arguments arguments = { CHARACTER_MODE, false, NULL, NULL, 0 };
     argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
-    // if(!Compiler_initialize(&compiler))
-    // {
-    //     exit(-1);
-    // }
-    // compiler.mainIguanaFilePath = realpath(argv[0], NULL);
+    if (arguments.file_count == 0) 
+    {
+        fprintf(stderr, "Error: No files specified for compilation.\n");
+        return EXIT_FAILURE;
+    }
 
-    // if(!Compiler_startCompilingProcessOnRoot(&compiler, filePathToCompile))
-    // {
-    //     Compiler_destroy(&compiler);
-    //     exit(-2);
-    // }
+    // Process each file
+    for (int argIdx = 0; argIdx < arguments.file_count; argIdx++) 
+    {
+        if(argIdx == 0)
+        {
+            // Main file of Iguana need be handled differently
+            // Need some wrapper to call the object
+            if(!Compiler_compile(arguments.files[0], true))
+            {
+                fprintf(stderr, "Error to compile Iguana main file: %s", arguments.files[argIdx]);
+                return EXIT_FAILURE;
+            }
 
-    // exit(Compiler_destroy(&compiler));
+            continue;
+        }
+
+        // After compiled main file, secondary objects also need compile
+        if(!Compiler_compile(arguments.files[argIdx], false))
+        {
+            fprintf(stderr, "Error to compile Iguana path: %s", arguments.files[argIdx]);
+            return EXIT_FAILURE;
+        }
+    }
+
+    free(arguments.files);
+
+    return EXIT_SUCCESS;
 }
