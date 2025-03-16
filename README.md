@@ -21,4 +21,4 @@
 
 ## Syntax
 
-**refer to this tutorial:** https://hex2424.github.io/IguanaTutorial/
+**refer to this tutorial:** https:d//hex2424.github.io/IguanaTutorial/
