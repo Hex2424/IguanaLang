@@ -47,7 +47,7 @@ size_t FileReader_readToBuffer(const char* fileName, char** buffer)
     size_t fileSize = 0;
 
     igFile = fopen(fileName, "r");
-    NULL_GUARD(igFile, -1, Log_e("Failed to open %s", fileName));
+    NULL_GUARD(igFile, -1, Log_e(TAG, "Failed to open %s", fileName));
     
     fseek(igFile, 0L, SEEK_END);
     fileSize = ftell(igFile);

@@ -43,9 +43,9 @@ static int declarationsForEach_(void *key, int count, void* value, void *user);
  * @param[in/out] symbolTable - Symbol table object for initialization
  * @return                    - Success state
  */
-error_t SymbolTable_create(SymbolTableHandle_t symbolTable)
+errors_t SymbolTable_create(SymbolTableHandle_t symbolTable)
 {
-    if(!Hashmap_new(&symbolTable->allSymbolCalls, INITIAL_CALLS_HASHMAP_SIZE));
+    if(!Hashmap_new(&symbolTable->allSymbolCalls, INITIAL_CALLS_HASHMAP_SIZE))
     {
         Log_e(TAG, "Failed to create Declarations hashmap");
         return ERR_ALLOCATION;
@@ -61,7 +61,7 @@ error_t SymbolTable_create(SymbolTableHandle_t symbolTable)
 }
 
 
-error_t SymbolTable_addNewDeclaration(SymbolTableHandle_t symbolTable, const SymbolType_t type, const char* symbolFullName, void* object)
+errors_t SymbolTable_addNewDeclaration(SymbolTableHandle_t symbolTable, const SymbolType_t type, const char* symbolFullName, void* object)
 {
     HashmapHandle_t symbolsHashmap;
     uint32_t classNameLength;
@@ -73,7 +73,7 @@ error_t SymbolTable_addNewDeclaration(SymbolTableHandle_t symbolTable, const Sym
     if(Hashmap_find(&symbolTable->allClasses, symbolFullName, classNameLength))
     {
         // When value gets found setting it to value
-        symbolsHashmap = symbolTable->allClasses.value;
+        symbolsHashmap = (HashmapHandle_t) symbolTable->allClasses.value;
     }else
     {
         ALLOC_CHECK(symbolsHashmap, sizeof(Hashmap_t), ERROR);
@@ -109,7 +109,7 @@ error_t SymbolTable_addNewDeclaration(SymbolTableHandle_t symbolTable, const Sym
 }
 
 
-error_t SymbolTable_addNewDeclarationRequest(SymbolTableHandle_t symbolTable, const SymbolType_t type, const char* className, const char* symbolName, void* object)
+errors_t SymbolTable_addNewDeclarationRequest(SymbolTableHandle_t symbolTable, const SymbolType_t type, const char* className, const char* symbolName, void* object)
 {
  
  

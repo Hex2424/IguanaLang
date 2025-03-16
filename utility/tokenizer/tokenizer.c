@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include "../logger/logger.h"
 #include "../misc/safety_macros.h"
-
+#include <ctype.h>
 ////////////////////////////////
 // DEFINES
 
@@ -58,7 +58,7 @@ TokenHandler_t Tokenizer_wordToCorrespondingToken(const char *seperation, const 
         if(length == bindingsTable_[bindingLinePos].size && memcmp(seperation, bindingsTable_[bindingLinePos].expression, length) == 0)
         {
             tokenHandler->tokenType = bindingsTable_[bindingLinePos].type;
-            tokenHandler->valueString = bindingsTable_[bindingLinePos].expression;
+            tokenHandler->valueString = (char*) bindingsTable_[bindingLinePos].expression;
 
             return tokenHandler;
             // Litterals matching, can proceed to Token creation

@@ -79,7 +79,7 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, Parser
         return ERROR;
     }
 
-
+    return SUCCESS;
 }
 
 

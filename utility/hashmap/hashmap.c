@@ -24,7 +24,7 @@ struct keynode *keynode_new(char*k, const int l) {
 	node->key = malloc(l);
 	memcpy(node->key, k, l);
 	node->next = 0;
-	node->value = -1;
+	node->value = (void*) (-1);
 	return node;
 }
 
@@ -156,7 +156,11 @@ void Hashmap_forEach(const HashmapHandle_t dic, enumFunc f, const void *user) {
 			struct keynode *k = dic->table[i];
 			while (k) {
 				
-				if (!f(k->key, k->len, k->value, user)) return;
+				if (!f(k->key, k->len, k->value, (void*) user))
+				{
+					return;
+				}
+
 				k = k->next;
 			}
 		}
