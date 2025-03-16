@@ -14,7 +14,7 @@
 #ifndef UTILITY_GENERATOR_CSYNTAX_DATABASE_H_
 #define UTILITY_GENERATOR_CSYNTAX_DATABASE_H_
 
-#define CONST_STRING                static const char*
+#define CONST_STRING                static const char* const
 #define CONST_SYMBOL                static const char
 
 // C KEYWORDS

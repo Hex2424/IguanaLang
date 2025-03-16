@@ -15,7 +15,7 @@
 
 ////////////////////////////////
 // DEFINES
-static const char* TAG = "OBJECT_TYPE";
+// static const char* const TAG = "OBJECT_TYPE";
 
 ////////////////////////////////
 // PRIVATE CONSTANTS
@@ -42,7 +42,7 @@ const BindingNotationType_t notationBindingTable[] =
 
 BindingNotationTypeHandle_t ObjectTypes_getNotationBindingById(const uint8_t pos)
 {
-    return notationBindingTable + pos;
+    return (BindingNotationTypeHandle_t) (notationBindingTable + pos);
 }
 
 uint8_t ObjectTypes_getNotationTableSize()

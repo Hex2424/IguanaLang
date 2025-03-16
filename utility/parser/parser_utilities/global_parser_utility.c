@@ -13,7 +13,7 @@
 
 #include "global_parser_utility.h"
 #include "../../misc/safety_macros.h"
-#include <string.>
+#include <string.h>
 ////////////////////////////////
 // DEFINES
 
