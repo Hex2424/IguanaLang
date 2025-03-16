@@ -31,7 +31,6 @@ typedef enum TokenType
     ARROW_RIGHT,         // >
     BRACKET_ROUND_START, // (
     BRACKET_ROUND_END,   // )
-    MODULE_IMPORT,       // import
     NOT,                 // !
     EQUAL,               // =
     OPERATOR_PLUS,       // +
@@ -49,7 +48,7 @@ typedef enum TokenType
     OPERATOR_XOR,        // ^
     OPERATOR_AND,        // &
     OPERATOR_OR,         // |
-    OPERATOR_NOT         // ~
+    OPERATOR_NOT,        // ~
 } TokenType_t;
 
 
