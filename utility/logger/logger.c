@@ -34,8 +34,6 @@
 ////////////////////////////////
 // PRIVATE CONSTANTS
 
-static const char* TAG = "LOGGER";
-
 ////////////////////////////////
 // PRIVATE TYPES
 
@@ -128,7 +126,7 @@ inline void Logc(const char* expression, const char* colorString, ...)
 
 inline void Logcc(const char* expression, const char* colorString, va_list args)
 {
-    printf("%s%s", colorString, TAG);
+    printf("%s", colorString);
     vprintf(expression, args);
     printf("%s\n",END);
 }
