@@ -14,16 +14,20 @@
 #include "compiler_messages.h"
 #include "../../tokenizer/token/token_database/token_bindings.h"
 #include <stdarg.h>
-#include "../../logger/colors.h"
+#include <colors.h>
+#include <logger.h>
+
+
+
 ////////////////////////////////
 // DEFINES
 
 #define SHOUT_MESSAGE(COLOR)                    \
     if(tokenHandle != NULL)                     \
     printLocation_(tokenHandle);                \
-        va_list args;                           \       
-        va_start(args, errorMessage);           \         
-        Logcc(errorMessage, COLOR, args);   \
+        va_list args;                           \
+        va_start(args, errorMessage);           \
+        Logcc(errorMessage, COLOR, args);       \
         va_end(args);                           \
 
 ////////////////////////////////
@@ -59,7 +63,7 @@ void Shouter_shoutInfo(const TokenHandler_t tokenHandle, const char* errorMessag
 
 static void printLocation_(const TokenHandler_t tokenHandle)
 {
-    printf("%s:%u:%u -> ",
+    printf("%s:%lu:%lu -> ",
     tokenHandle->location.filename,
     tokenHandle->location.line,
     tokenHandle->location.column);
