@@ -45,6 +45,11 @@ typedef enum
     VARIABLE_PARAMETER
 }VariableDeclaration_t;
 
+typedef enum
+{
+    PUBLIC_CLASS_METHOD,
+    PRIVATE_CLASS_METHOD
+}NameMangleType_t;
 
 // privateTypes
 static MainFrameHandle_t currentAst_ =   NULL;
@@ -66,6 +71,8 @@ static bool fileWriteMethodBody_(const MethodObjectHandle_t method);
 static bool handleExpressionWriting_(const ExpressionHandle_t expression);
 static void handleOperatorWritingByType_(const TokenType_t type);
 static bool fileWriteVariablesHashmap_(Hashmap_t* scopeVariables);
+
+static bool fileWriteNameMangleMethod_(const char* const className, const MethodObjectHandle_t method, const bool isPublic);
 ////////////////////////////////
 // IMPLEMENTATION
 
@@ -118,16 +125,33 @@ bool Generator_generateCode(const MainFrameHandle_t ast, const char* dstCFileNam
     return SUCCESS;
 }
 
+static bool fileWriteNameMangleMethod_(const char* const className, const MethodObjectHandle_t method, const bool isPublic)
+{
+    // TODO: optimize this so length will be somewhere stored entire generator
+    size_t objectNameLen = strlen(className);
+    size_t methodNameLen = strlen(method->methodName);
+
+    return (fprintf(
+        currentCfile_,
+        //ex: asm("_ZN9wikipedia3fooEv");
+        MANGLE_ASM_WRAP_LINE(MANGLE_MAGIC_BYTE_DEF MANGLE_NEST_ID_DEF "%ld%s%ld%s" MANGLE_END_DEF),
+        objectNameLen,
+        className,
+        methodNameLen,
+        method->methodName) >= 0);
+}
+
+
 static bool fileWriteVariablesHashmap_(Hashmap_t* scopeVariables)
 {
     if(Hashmap_size(scopeVariables) != 0)
     {
         // generator for typedef struct{ variables };
-        fprintf(currentCfile_, "%s %s%c", TYPEDEF_KEYWORD, STRUCT_KEYWORD, BRACKET_START_CHAR);
+        fprintf(currentCfile_, "%s %s" BRACKET_START_DEF, TYPEDEF_KEYWORD, STRUCT_KEYWORD);
 
         Hashmap_forEach(scopeVariables, methodBodyVariableIteratorCallback_, NULL);
 
-        fprintf(currentCfile_, "%c%s_t%c%c", BRACKET_END_CHAR, currentAst_->iguanaObjectName, SEMICOLON_CHAR, END_LINE_CHAR);
+        fprintf(currentCfile_, BRACKET_END_DEF "%s_t" SEMICOLON_DEF END_LINE_DEF, currentAst_->iguanaObjectName);
     }
     return SUCCESS;
 
@@ -153,17 +177,14 @@ static bool fileWriteVariableDeclaration_(const VariableObjectHandle_t variable,
         switch (declareType)
         {
             case VARIABLE_STRUCT:
-                fprintf(currentCfile_, "%s %s:%d%c", variableTypeKeywordToUse, variable->variableName, variable->bitpack, SEMICOLON_CHAR);
+                fprintf(currentCfile_, "%s %s:%d" SEMICOLON_DEF, variableTypeKeywordToUse, variable->variableName, variable->bitpack);
                 break;
             
             case VARIABLE_METHOD:
-
-                fprintf(currentCfile_,"%s ", variableTypeKeywordToUse);
-                fwrite(currentAst_->iguanaObjectName, 1, OBJECT_ID_LENGTH, currentCfile_);
-                fprintf(currentCfile_, "_%s%c", variable->variableName, BRACKET_ROUND_START_CHAR);
+                fprintf(currentCfile_, "%s %s" BRACKET_ROUND_START_DEF, variableTypeKeywordToUse, variable->variableName);
                 break;
             case VARIABLE_NORMAL:
-                fprintf(currentCfile_, "%s %s%c", variableTypeKeywordToUse, variable->variableName, SEMICOLON_CHAR);
+                fprintf(currentCfile_, "%s %s" SEMICOLON_DEF, variableTypeKeywordToUse, variable->variableName);
                 break;
             case VARIABLE_PARAMETER:
                 fprintf(currentCfile_, "%s %s", variableTypeKeywordToUse, variable->variableName);
@@ -232,12 +253,15 @@ static inline bool fileWriteMethodBody_(const MethodObjectHandle_t method)
             }
 
         }
-        fprintf(currentCfile_, "%c", SEMICOLON_CHAR);
-        
+
+        fwrite(&SEMICOLON_CHAR, BYTE_SIZE, 1, currentCfile_);
+
         Queue_destroy(expressionQueue);
         
     }
-    fprintf(currentCfile_, "%c\n", BRACKET_END_CHAR);
+    
+    fwrite(BRACKET_END_DEF END_LINE_DEF, BYTE_SIZE, 2, currentCfile_);
+
     return SUCCESS;
 }
 
@@ -249,7 +273,7 @@ static int methodBodyVariableInitializerForIterator_(void *key, int count, void*
 
     if(variable->hasAssignedValue)
     {
-        fprintf(currentCfile_, "%s.%s = %ld%c", LOCAL_VARIABLES_STRUCT_NAME, variable->variableName, variable->assignedValue, SEMICOLON_CHAR);
+        fprintf(currentCfile_, "%s.%s = %ld" SEMICOLON_DEF, LOCAL_VARIABLES_STRUCT_NAME, variable->variableName, variable->assignedValue);
     }
     return SUCCESS;
 }
@@ -313,7 +337,7 @@ static int methodDeclarationIteratorCallback_(void *key, int count, void* value,
     {
         if(method->containsBody)
         {
-            fwrite(&COMMA_CHAR, 1, 1, currentCfile_);
+            fwrite(COMMA_DEF, BYTE_SIZE, 1, currentCfile_);
         }
 
     }
@@ -341,7 +365,7 @@ static int methodDeclarationIteratorCallback_(void *key, int count, void* value,
 
         if((paramIdx + 1) != method->parameters->currentSize)
         {
-            fwrite(&COMMA_CHAR, BYTE_SIZE, sizeof(COMMA_CHAR), currentCfile_);
+            fwrite(COMMA_DEF, BYTE_SIZE, 1, currentCfile_);
         }
 
     }
@@ -350,11 +374,15 @@ static int methodDeclarationIteratorCallback_(void *key, int count, void* value,
     //     BRACKET_ROUND_END_CHAR,
     //     filePathToModulePath_(generator),
     //     method->methodName,SEMICOLON_CHAR);
-    
-    
+
+    fwrite(BRACKET_ROUND_END_DEF, BYTE_SIZE, 1, currentCfile_);
+
+    fileWriteNameMangleMethod_(currentAst_->iguanaObjectName, method, true);
+
     if(method->containsBody)
     {
-        fprintf(currentCfile_, "%c\n", BRACKET_ROUND_END_CHAR);
+        fwrite(END_LINE_DEF, BYTE_SIZE, 1, currentCfile_);
+
         if(!fileWriteMethodBody_(method))
         {
             Log_e(TAG, "Failed to write method body to IO");
@@ -363,7 +391,7 @@ static int methodDeclarationIteratorCallback_(void *key, int count, void* value,
     }else
     {
         // TODO abstracting fwrites
-        fwrite(&SEMICOLON_CHAR, 1, 1, currentCfile_);
+        fwrite(SEMICOLON_DEF, BYTE_SIZE, 1, currentCfile_);
     }
     return SUCCESS;
 }
