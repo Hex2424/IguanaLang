@@ -63,6 +63,7 @@ static char writingBufferC_[FOUT_BUFFER_LENGTH];
 // iterator callbacks
 static int methodBodyVariableInitializerForIterator_(void *key, int count, void* value, void *user);
 static int methodDeclarationIteratorCallback_(void *key, int count, void* value, void *user);
+static int methodDefinitionIteratorCallback_(void *key, int count, void* value, void *user);
 static int methodBodyVariableIteratorCallback_(void *key, int count, void* value, void *user);
 
 static bool fileWriteVariableDeclaration_(const VariableObjectHandle_t variable, const VariableDeclaration_t declareType);
@@ -71,6 +72,7 @@ static bool fileWriteMethodBody_(const MethodObjectHandle_t method);
 static bool handleExpressionWriting_(const ExpressionHandle_t expression);
 static void handleOperatorWritingByType_(const TokenType_t type);
 static bool fileWriteVariablesHashmap_(Hashmap_t* scopeVariables);
+static bool generateMethodHeader_(const MethodObjectHandle_t method);
 
 static bool fileWriteNameMangleMethod_(const char* const className, const MethodObjectHandle_t method, const bool isPublic);
 ////////////////////////////////
@@ -202,7 +204,10 @@ static bool fileWriteVariableDeclaration_(const VariableObjectHandle_t variable,
 
 static inline bool fileWriteMethods_()
 {
+    // generating function definitions
+    Hashmap_forEach(&currentAst_->methods, methodDefinitionIteratorCallback_, NULL);
 
+    // Generating function declarations
     Hashmap_forEach(&currentAst_->methods, methodDeclarationIteratorCallback_, NULL);
 
     return SUCCESS;
@@ -288,6 +293,83 @@ static int methodBodyVariableIteratorCallback_(void *key, int count, void* value
     return SUCCESS;
 }
 
+static int methodDefinitionIteratorCallback_(void *key, int count, void* value, void *user)
+{
+    MethodObjectHandle_t method;
+    method = value;
+    if(!generateMethodHeader_(method))
+    {
+        Log_e(TAG, "Failed to write method %s header", method->methodName);
+        return ERROR;
+    }
+
+    if(!fileWriteNameMangleMethod_(currentAst_->iguanaObjectName, method, true))
+    {
+        Log_e(TAG, "Failed to write name mangling for method %s", method->methodName);
+        return ERROR;
+    }
+
+    fwrite(END_LINE_DEF, BYTE_SIZE, 1, currentCfile_);    
+
+    return SUCCESS;
+}
+
+
+static bool generateMethodHeader_(const MethodObjectHandle_t method)
+{
+    if(method->containsBody)
+    {
+        if(!fileWriteVariableDeclaration_(&method->returnVariable, VARIABLE_METHOD))
+        {
+            Log_e(TAG, "Failed to write method %s return type", method->methodName);
+            return ERROR;
+        }
+    }
+
+    if(Hashmap_size(&currentAst_->classVariables) != 0)
+    {
+        if(method->containsBody)
+        {
+            fprintf(currentCfile_, "%s_t* root", currentAst_->iguanaObjectName);
+        }
+    }
+
+    if(method->parameters->currentSize > 0)
+    {
+        if(method->containsBody)
+        {
+            fwrite(COMMA_DEF, BYTE_SIZE, 1, currentCfile_);
+        }
+
+    }
+
+    for(size_t paramIdx = 0; paramIdx < method->parameters->currentSize; paramIdx++)
+    {
+        VariableObjectHandle_t parameter;
+        parameter = method->parameters->expandable[paramIdx];
+        NULL_GUARD(parameter, ERROR, Log_e(TAG, "AST method %s %d nth is NULL", method->methodName, paramIdx));
+
+        if(method->containsBody)
+        {
+            if(!fileWriteVariableDeclaration_(parameter, VARIABLE_PARAMETER))
+            {
+                Log_e(TAG, "Failed to write method %s return type", method->methodName);
+                return ERROR;
+            }
+        }
+
+        if((paramIdx + 1) != method->parameters->currentSize)
+        {
+            fwrite(COMMA_DEF, BYTE_SIZE, 1, currentCfile_);
+        }
+
+    }
+
+    fwrite(BRACKET_ROUND_END_DEF, BYTE_SIZE, 1, currentCfile_);
+
+    return SUCCESS;
+}
+
 static int methodDeclarationIteratorCallback_(void *key, int count, void* value, void *user)
 {
     MethodObjectHandle_t method;
@@ -315,69 +397,11 @@ static int methodDeclarationIteratorCallback_(void *key, int count, void* value,
     //     return ERROR;
     // }
     
-    if(method->containsBody)
+    if(!generateMethodHeader_(method))
     {
-        if(!fileWriteVariableDeclaration_(&method->returnVariable, VARIABLE_METHOD))
-        {
-            Log_e(TAG, "Failed to write method %s return type", method->methodName);
-            return ERROR;
-        }
+        Log_e(TAG, "Failed to generate method %s header", method->methodName);
+        return ERROR;
     }
-
-
-    if(Hashmap_size(&currentAst_->classVariables) != 0)
-    {
-        if(method->containsBody)
-        {
-            fprintf(currentCfile_, "%s_t* root", currentAst_->iguanaObjectName);
-        }
-    }
- 
-    if(method->parameters->currentSize > 0)
-    {
-        if(method->containsBody)
-        {
-            fwrite(COMMA_DEF, BYTE_SIZE, 1, currentCfile_);
-        }
-
-    }
-
-    for(size_t paramIdx = 0; paramIdx < method->parameters->currentSize; paramIdx++)
-    {
-        VariableObjectHandle_t parameter;
-        parameter = method->parameters->expandable[paramIdx];
-        NULL_GUARD(parameter, ERROR, Log_e(TAG, "AST method %s %d nth is NULL", method->methodName, paramIdx));
-
-        // if(!fileWriteVariableDeclaration_(parameter, VARIABLE_PARAMETER))
-        // {
-        //     Log_e(TAG, "Failed to write method %s return type", method->methodName);
-        //     return ERROR;
-        // }
-
-        if(method->containsBody)
-        {
-            if(!fileWriteVariableDeclaration_(parameter, VARIABLE_PARAMETER))
-            {
-                Log_e(TAG, "Failed to write method %s return type", method->methodName);
-                return ERROR;
-            }
-        }
-
-        if((paramIdx + 1) != method->parameters->currentSize)
-        {
-            fwrite(COMMA_DEF, BYTE_SIZE, 1, currentCfile_);
-        }
-
-    }
-
-    // fprintf(generator->hFile, "%casm(\"%s___%s\")%c\n",
-    //     BRACKET_ROUND_END_CHAR,
-    //     filePathToModulePath_(generator),
-    //     method->methodName,SEMICOLON_CHAR);
-
-    fwrite(BRACKET_ROUND_END_DEF, BYTE_SIZE, 1, currentCfile_);
-
-    fileWriteNameMangleMethod_(currentAst_->iguanaObjectName, method, true);
 
     if(method->containsBody)
     {
