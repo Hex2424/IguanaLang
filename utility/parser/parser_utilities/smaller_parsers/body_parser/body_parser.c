@@ -62,33 +62,65 @@ bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** 
     while (cTokenType != BRACKET_END)
     {
 
-        ALLOC_CHECK(expressionQueue, sizeof(Queue_t), ERROR);
-        
-        if(!Queue_create(expressionQueue))
+        switch (cTokenType)
         {
-            Log_e(TAG, "Failed to create expression Queue");
-            return ERROR;
-        }
-
-        if(!parseExpressionLine_(scopeBody, expressionQueue, currentTokenHandle))
-        {
-            Log_e(TAG, "Failed to parse expression sequence");
-            return ERROR;
-        }
-
-        if(expressionQueue->count != 0)
-        {
-            if(!Vector_append(&scopeBody->expressions, expressionQueue))
+            case ALLOC_STATIC_STACK:
             {
-                Log_e(TAG, "Failed to append expression Queue to expressions vector");
-                return ERROR;
-            }
-        }else
-        {
-            // deallocating unecessary queue
-            Queue_destroy(expressionQueue);
-            free(expressionQueue);
+                if(ParserUtils_tryParseSequence(currentTokenHandle, PATTERN_STATIC_STACK_OBJECT, PATTERN_STATIC_STACK_OBJECT_SIZE))
+                {
+                    (*currentTokenHandle)++;
+                    
+                };
+            }break;
+            case ALLOC_DYNAMIC_STACK:
+            {
+                if(!ParserUtils_tryParseSequence(currentTokenHandle, PATTERN_DYNAMIC_STACK_OBJECT, PATTERN_DYNAMIC_STACK_OBJECT_SIZE))
+                {
+
+                }
+            }break;
+
+            case ALLOC_DYNAMIC_HEAP:
+            {
+                if(!ParserUtils_tryParseSequence(currentTokenHandle, PATTERN_DYNAMIC_HEAP_OBJECT, PATTERN_DYNAMIC_HEAP_OBJECT_SIZE))
+                {
+
+                }
+            }break;
+            
+            default:
+            {
+                // by Default trying parse expressions
+                ALLOC_CHECK(expressionQueue, sizeof(Queue_t), ERROR);
+        
+                if(!Queue_create(expressionQueue))
+                {
+                    Log_e(TAG, "Failed to create expression Queue");
+                    return ERROR;
+                }
+
+                if(!parseExpressionLine_(scopeBody, expressionQueue, currentTokenHandle))
+                {
+                    Log_e(TAG, "Failed to parse expression sequence");
+                    return ERROR;
+                }
+
+                if(expressionQueue->count != 0)
+                {
+                    if(!Vector_append(&scopeBody->expressions, expressionQueue))
+                    {
+                        Log_e(TAG, "Failed to append expression Queue to expressions vector");
+                        return ERROR;
+                    }
+                }else
+                {
+                    // deallocating unecessary queue
+                    Queue_destroy(expressionQueue);
+                    free(expressionQueue);
+                }
+            }break;
         }
+        
         (*currentTokenHandle)++;
         // if(cTokenType != BRACKET_END)
         // {

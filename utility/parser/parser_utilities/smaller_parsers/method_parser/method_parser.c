@@ -221,6 +221,7 @@ static bool parseMethodBody_(TokenHandler_t** currentTokenHandle, MethodObjectHa
             Log_e(TAG, "Failed to parse scope for method \'%s\'", methodHandle->methodName);
             return ERROR;
         }
+        
         methodHandle->containsBody = true;
         
     }else if(cTokenType == SEMICOLON)

@@ -57,7 +57,11 @@ static const BindingType_t bindingsTable_[] =
         DECLARE_TYPE("^", OPERATOR_XOR),
         DECLARE_TYPE("&", OPERATOR_AND),
         DECLARE_TYPE("|", OPERATOR_OR),
-        DECLARE_TYPE("~", OPERATOR_NOT)
+        DECLARE_TYPE("~", OPERATOR_NOT),
+        DECLARE_TYPE("ss", ALLOC_STATIC_STACK),
+        DECLARE_TYPE("ds", ALLOC_DYNAMIC_STACK),
+        DECLARE_TYPE("dh", ALLOC_DYNAMIC_HEAP),
+        DECLARE_TYPE("file", FILE_OBJECT)
     };
 
 #endif // UTILITY_TOKENIZER_TOKEN_TOKEN_DATABASE_TOKEN_BINDINGS_H_

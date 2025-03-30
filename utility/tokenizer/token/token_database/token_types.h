@@ -49,6 +49,10 @@ typedef enum TokenType
     OPERATOR_AND,        // &
     OPERATOR_OR,         // |
     OPERATOR_NOT,        // ~
+    ALLOC_STATIC_STACK,  // ss
+    ALLOC_DYNAMIC_STACK, // ds
+    ALLOC_DYNAMIC_HEAP,  // dh
+    FILE_OBJECT          // file
 } TokenType_t;
 
 

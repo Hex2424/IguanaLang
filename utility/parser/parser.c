@@ -17,6 +17,8 @@
 #include "parser_utilities/smaller_parsers/method_parser/method_parsers.h"
 #include "string.h"
 #include "../hash/random/random.h"
+#include "structures/fileobject/fileobject.h"
+
 ////////////////////////////////
 // DEFINES
 
@@ -54,6 +56,7 @@ static bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_t rootH
 // static bool addLibraryForCompilation_(ParserHandle_t parser, ImportObjectHandle_t* importObject);
 // static int checkIfPathAlreadyCompiled_(CompilerHandle_t compiler, ImportObjectHandle_t path);
 static inline bool handleNotation_(ParserHandle_t parser, MainFrameHandle_t rootHandle);
+static inline bool handleFileObject_(ParserHandle_t parser, MainFrameHandle_t rootHandle, const Accessibility_t notation);
 // static inline bool addDeclaredMethodsToGlobalLinkList_(ParserHandle_t parser, const MainFrameHandle_t root);
 // static inline bool addDeclaredMethodsToGlobalLinkListIteratorCallback_(void *key, int count, void *value, void *user);
 ////////////////////////////////
@@ -100,8 +103,9 @@ bool Parser_parseTokens(ParserHandle_t parser, MainFrameHandle_t root, const Vec
     {
         switch(cTokenType)
         {
-            case BIT_TYPE: handleKeywordInteger_(parser, root, NO_NOTATION);break;  // detected bit keyword
-            case NOTATION: handleNotation_(parser, root);break;                     // detected annotation
+            case BIT_TYPE:      handleKeywordInteger_(parser, root, NO_NOTATION);break;  // detected bit keyword
+            case NOTATION:      handleNotation_(parser, root);break;                     // detected annotation
+            case FILE_OBJECT:   handleFileObject_(parser, root, NO_NOTATION);break;      // detected iguana file definition
 
             default : Shouter_shoutUnrecognizedToken(cTokenP);break;                // error case
         }
@@ -226,6 +230,95 @@ static inline bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_
 
 }
 
+static inline bool handleFileObject_(ParserHandle_t parser, MainFrameHandle_t rootHandle, const Accessibility_t notation)
+{
+    FileObjectHandle_t objectDefine;
+
+    if(!ParserUtils_tryParseSequence(&currentToken, PATTERN_FILE_OBJECT_DEFINE, PATTERN_FILE_OBJECT_DEFINE_SIZE))
+    {
+        return SUCCESS;
+    }
+
+    ALLOC_CHECK(objectDefine, sizeof(FileObject_t), ERROR);
+
+    if(!Vector_create(&objectDefine->bitTypes, NULL))
+    {
+        Log_e(TAG, "Failed to allocate heap for object define %s types vector", (*(currentToken - 1))->valueString);
+        return ERROR;
+    }
+
+    objectDefine->objectActualName = (*(currentToken - 1))->valueString;
+    
+    while ((cTokenType != BRACKET_ROUND_END) && (cTokenType != SEMICOLON))
+    {
+        if(!ParserUtils_tryParseSequence(&currentToken, PATTERN_VAR_TYPE, PATTERN_VAR_TYPE_SIZE))
+        {
+            // Failed to parse type continue
+            currentToken++;
+            continue;
+        }
+
+        // Succeeded recognising a type
+        // Adding it to a vector
+        if(!Vector_append(&objectDefine->bitTypes, ((*(currentToken - 1))->valueString)))
+        {
+            Log_e(TAG, "Failed to append to parameters vector");
+            return ERROR;
+        }
+
+        if(cTokenType == COMMA)
+        {
+            currentToken++;
+        }
+        
+    }
+
+    currentToken++;
+
+    if(cTokenType == NAMING)
+    {
+        const char* aliasFileObject = cTokenP->valueString;
+        currentToken++;
+
+        if(cTokenType == SEMICOLON)
+        {
+            if(Hashmap_set(&rootHandle->classFiles, aliasFileObject, objectDefine))
+            {
+                Shouter_shoutError(cTokenP, "File was defined previously");
+                
+                if(!Vector_destroy(&objectDefine->bitTypes))
+                {
+                    Log_e(TAG, "Failed to destroy bit sizes vector for file definition alias: %s", aliasFileObject);
+                    return ERROR;
+                }
+
+                free(objectDefine);
+            }
+        }else
+        {
+            Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
+        }
+
+    }else if(cTokenType == SEMICOLON)
+    {
+
+        // Defined without alias
+        
+        if(!Vector_destroy(&objectDefine->bitTypes))
+        {
+            Log_e(TAG, "Failed to destroy bit sizes vector for file definition: %s", objectDefine->objectActualName);
+            return ERROR;
+        }
+
+        free(objectDefine);
+
+    }else 
+    {
+        Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
+    }
+
+    return SUCCESS;
+}
 
 // static inline bool handleKeywordImport_(ParserHandle_t parser, MainFrameHandle_t rootHandle)
 // {

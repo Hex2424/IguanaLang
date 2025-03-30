@@ -18,6 +18,8 @@
 typedef struct
 {
     Hashmap_t localVariables;
+    Hashmap_t objectAllocations;
+
     Vector_t expressions;
 }LocalScopeObject_t;
 

@@ -165,7 +165,6 @@ bool Vector_destroy(VectorHandler_t vector)
         Log_e(TAG, "Passed wrong pointer for vector destruction");
         return ERROR;
     }
-
     
     for(idx = 0; idx < vector->currentSize; idx++)
     {
