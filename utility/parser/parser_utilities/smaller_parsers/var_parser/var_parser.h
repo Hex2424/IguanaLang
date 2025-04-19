@@ -1,5 +1,5 @@
 /**
- * @file method_parsers.h
+ * @file var_parser.h
  *
  * MORE INFO ABOUT THE FILE'S CONTENTS
  *
@@ -8,11 +8,11 @@
  *
  * @author Markas Vielavičius (markas.vielavicius@bytewall.com)
  *
- * @date 2022-10-09
+ * @date 2025-04-19
  */
 
-#ifndef UTILITY_PARSER_PARSER_UTILITIES_SMALLER_PARSERS_METHOD_PARSERS_H_
-#define UTILITY_PARSER_PARSER_UTILITIES_SMALLER_PARSERS_METHOD_PARSERS_H_
+#ifndef UTILITY_PARSER_PARSER_UTILITIES_SMALLER_PARSERS_VAR_PARSER_H_
+#define UTILITY_PARSER_PARSER_UTILITIES_SMALLER_PARSERS_VAR_PARSER_H_
 
 #include "../../../structures/method/method.h"
 #include "../../../structures/main_frame/main_frame.h"
@@ -20,7 +20,6 @@
 #include "../../../../parser/parser.h"
 
 
+bool VarParser_parseVariable(TokenHandler_t** currentToken, VariableObjectHandle_t variableHolder);
 
-bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, const VariableObjectHandle_t returnVariable, ParserHandle_t parser, MainFrameHandle_t root, const Accessibility_t notation);
-
-#endif // UTILITY_PARSER_PARSER_UTILITIES_SMALLER_PARSERS_METHOD_PARSERS_H_
+#endif // UTILITY_PARSER_PARSER_UTILITIES_SMALLER_PARSERS_VAR_PARSER_H_

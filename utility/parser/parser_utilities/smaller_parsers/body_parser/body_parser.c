@@ -213,7 +213,7 @@ static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t exp
     ALLOC_CHECK(variable, sizeof(VariableObject_t), ERROR);
 
     variable->hasAssignedValue = false;
-    variable->variableName = NULL;
+    variable->objectName = NULL;
 
     (*currentTokenHandle)++;
 
@@ -229,10 +229,10 @@ static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t exp
             if(cTokenType == NAMING)
             {
                 // no assigning
-                variable->variableName = cTokenP->valueString;
-                if(!Hashmap_set(&scopeBody->localVariables, variable->variableName, variable))
+                variable->objectName = cTokenP->valueString;
+                if(!Hashmap_set(&scopeBody->localVariables, variable->objectName, variable))
                 {
-                    if(!queueAppendExprObject_(expressions, VARIABLE_NAME, variable->variableName))
+                    if(!queueAppendExprObject_(expressions, VARIABLE_NAME, variable->objectName))
                     {
                         Log_e(TAG, "Failed to put variable name to expressions");
                         return ERROR;
@@ -240,7 +240,7 @@ static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t exp
 
                 }else
                 {
-                    Shouter_shoutError(cTokenP, "Variable '%s' is already declared", variable->variableName);   
+                    Shouter_shoutError(cTokenP, "Variable '%s' is already declared", variable->objectName);   
                 }
 
             }else if(cTokenType == BRACKET_ROUND_START)
@@ -250,7 +250,7 @@ static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t exp
                 if(cTokenType == NUMBER_VALUE)
                 {
                     // Calculating overflow also to prevent it
-                    variable->variableName = cTokenP->valueString;  //(atoll(cTokenP->valueString) % (2 << (variable->bitpack - 1)));
+                    variable->objectName = cTokenP->valueString;  //(atoll(cTokenP->valueString) % (2 << (variable->bitpack - 1)));
                     
                     (*currentTokenHandle)++;
 
@@ -259,19 +259,19 @@ static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t exp
                         (*currentTokenHandle)++;
                         if(cTokenType == NAMING)
                         {
-                            variable->variableName = cTokenP->valueString;
+                            variable->objectName = cTokenP->valueString;
                             variable->hasAssignedValue = true;
 
-                            if(!Hashmap_set(&scopeBody->localVariables, variable->variableName, variable))
+                            if(!Hashmap_set(&scopeBody->localVariables, variable->objectName, variable))
                             {
-                                if(!queueAppendExprObject_(expressions, VARIABLE_NAME, variable->variableName))
+                                if(!queueAppendExprObject_(expressions, VARIABLE_NAME, variable->objectName))
                                 {
                                     Log_e(TAG, "Failed to put variable name to expressions");
                                     return ERROR;
                                 }   
                             }else
                             {
-                                Shouter_shoutError(cTokenP, "Variable '%s' is already declared", variable->variableName);
+                                Shouter_shoutError(cTokenP, "Variable '%s' is already declared", variable->objectName);
                             }
 
                         }else

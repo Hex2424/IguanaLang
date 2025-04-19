@@ -21,6 +21,7 @@ set(SRC
     utility/parser/structures/main_frame/main_frame.c
     utility/parser/parser_utilities/compiler_messages.c
     utility/parser/parser_utilities/smaller_parsers/method_parser/method_parser.c
+    utility/parser/parser_utilities/smaller_parsers/var_parser/var_parser.c
     utility/parser/parser_utilities/global_parser_utility.c
     utility/generator/generator.c
     utility/queue/queue.c

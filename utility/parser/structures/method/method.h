@@ -24,7 +24,7 @@ typedef struct
     Accessibility_t accessType : 4;
     char* methodName;
     VectorHandler_t parameters;
-    VariableObject_t returnVariable;
+    VariableObjectHandle_t returnVariable;
     LocalScopeObject_t body;
     bool containsBody : 1;
     bool hasInfinityParams : 1;

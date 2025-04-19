@@ -47,7 +47,24 @@ bool ParserUtils_tryParseSequence(TokenHandler_t** currentTokenHandle, const Tok
         }
         
     }
+
     return parseCorrect;
+}
+
+
+bool ParserUtils_skipUntil(TokenHandler_t** currentTokenHandle, const TokenHandler_t* endToken, const TokenType_t untilTokenType)
+{
+    while((*currentTokenHandle) < endToken)
+    {
+        if((**currentTokenHandle)->tokenType == untilTokenType)
+        {
+            return true;
+        }
+
+        (*currentTokenHandle)++;
+    }
+
+    return false;
 }
 
 /**

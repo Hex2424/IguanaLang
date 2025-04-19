@@ -67,7 +67,8 @@ static int methodDefinitionIteratorCallback_(void *key, int count, void* value, 
 static int methodBodyVariableIteratorCallback_(void *key, int count, void* value, void *user);
 
 static bool fileWriteVariableDeclaration_(const VariableObjectHandle_t variable, const VariableDeclaration_t declareType);
-static bool fileWriteMethods_();    
+static bool fileWriteMethods_();
+
 static bool fileWriteMethodBody_(const MethodObjectHandle_t method);
 static bool handleExpressionWriting_(const ExpressionHandle_t expression);
 static void handleOperatorWritingByType_(const TokenType_t type);
@@ -179,17 +180,17 @@ static bool fileWriteVariableDeclaration_(const VariableObjectHandle_t variable,
         switch (declareType)
         {
             case VARIABLE_STRUCT:
-                fprintf(currentCfile_, "%s %s:%d" SEMICOLON_DEF, variableTypeKeywordToUse, variable->variableName, variable->bitpack);
+                fprintf(currentCfile_, "%s %s:%lu" SEMICOLON_DEF, variableTypeKeywordToUse, variable->objectName, variable->bitpack);
                 break;
             
             case VARIABLE_METHOD:
-                fprintf(currentCfile_, "%s %s" BRACKET_ROUND_START_DEF, variableTypeKeywordToUse, variable->variableName);
+                fprintf(currentCfile_, "%s %s" BRACKET_ROUND_START_DEF, variableTypeKeywordToUse, variable->objectName);
                 break;
             case VARIABLE_NORMAL:
-                fprintf(currentCfile_, "%s %s" SEMICOLON_DEF, variableTypeKeywordToUse, variable->variableName);
+                fprintf(currentCfile_, "%s %s" SEMICOLON_DEF, variableTypeKeywordToUse, variable->objectName);
                 break;
             case VARIABLE_PARAMETER:
-                fprintf(currentCfile_, "%s %s", variableTypeKeywordToUse, variable->variableName);
+                fprintf(currentCfile_, "%s %s", variableTypeKeywordToUse, variable->objectName);
                 break;
 
             default:
@@ -278,7 +279,7 @@ static int methodBodyVariableInitializerForIterator_(void *key, int count, void*
 
     if(variable->hasAssignedValue)
     {
-        fprintf(currentCfile_, "%s.%s = %ld" SEMICOLON_DEF, LOCAL_VARIABLES_STRUCT_NAME, variable->variableName, variable->assignedValue);
+        fprintf(currentCfile_, "%s.%s = %ld" SEMICOLON_DEF, LOCAL_VARIABLES_STRUCT_NAME, variable->objectName, variable->assignedValue);
     }
     return SUCCESS;
 }
@@ -289,8 +290,7 @@ static int methodBodyVariableIteratorCallback_(void *key, int count, void* value
 
     variable = value;
 
-    fileWriteVariableDeclaration_(variable, VARIABLE_STRUCT);
-    return SUCCESS;
+    return fileWriteVariableDeclaration_(variable, VARIABLE_STRUCT);
 }
 
 static int methodDefinitionIteratorCallback_(void *key, int count, void* value, void *user)
@@ -319,7 +319,7 @@ static bool generateMethodHeader_(const MethodObjectHandle_t method)
 {
     if(method->containsBody)
     {
-        if(!fileWriteVariableDeclaration_(&method->returnVariable, VARIABLE_METHOD))
+        if(!fileWriteVariableDeclaration_(method->returnVariable, VARIABLE_METHOD))
         {
             Log_e(TAG, "Failed to write method %s return type", method->methodName);
             return ERROR;

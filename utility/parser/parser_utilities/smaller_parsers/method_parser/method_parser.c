@@ -12,6 +12,7 @@
  */
 
 #include "method_parsers.h"
+#include "../var_parser/var_parser.h"
 #include "../../global_parser_utility.h"
 #include "../body_parser/body_parser.h"
 #include "../../../parser.h"
@@ -20,6 +21,7 @@
 #define cTokenP (**currentTokenHandle)
 #define cTokenType cTokenP -> tokenType
 #define cTokenIncrement (*currentTokenHandle)++
+
 ////////////////////////////////
 // PRIVATE CONSTANTS
 static const char* TAG = "METHOD_PARSER";
@@ -33,13 +35,12 @@ static const char* TAG = "METHOD_PARSER";
 
 static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodObjectHandle_t methodHandle);
 static bool parseMethodBody_(TokenHandler_t** currentTokenHandle, MethodObjectHandle_t methodHandle);
-static bool parseMethodReturnVariable_(TokenHandler_t** currentTokenHandle, MethodObjectHandle_t methodHandle);
 
 ////////////////////////////////
 // IMPLEMENTATION
 
 // TODO: make parser contain currentTokenHandle to prevent it always pass through parameters
-inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, ParserHandle_t parser, MainFrameHandle_t root, const Accessibility_t notation)
+inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, const VariableObjectHandle_t returnVariable, ParserHandle_t parser, MainFrameHandle_t root, const Accessibility_t notation)
 {
     MethodObjectHandle_t methodHandle;
 
@@ -48,12 +49,9 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, Parser
     methodHandle->containsBody = false;
     methodHandle->hasInfinityParams = false;
 
-    // setting up method name
-
-    if(!parseMethodReturnVariable_(currentTokenHandle, methodHandle))
-    {
-        return ERROR;
-    }
+    // setting up method name and return variables which already parsed
+    methodHandle->returnVariable = returnVariable;
+    methodHandle->methodName = returnVariable->objectName;
     
     if(!parseMethodParameters_(currentTokenHandle, methodHandle))
     {
@@ -83,21 +81,6 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, Parser
 }
 
 
-
-static bool parseMethodReturnVariable_(TokenHandler_t** currentTokenHandle, MethodObjectHandle_t methodHandle)
-{
-
-    methodHandle->methodName = (*(*currentTokenHandle - 2))->valueString;
-    
-    methodHandle->returnVariable.variableName = methodHandle->methodName;
-    methodHandle->returnVariable.bitpack = atoi((*((*currentTokenHandle) - 3))->valueString);
-    methodHandle->returnVariable.assignedValue = 0;
-    methodHandle->returnVariable.assignedVariable = NULL;
-    
-    return SUCCESS;
-}
-
-
 static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodObjectHandle_t methodHandle)
 {
 
@@ -117,14 +100,12 @@ static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodOb
 
         if(cTokenType == BIT_TYPE)
         {
-            if(!ParserUtils_tryParseSequence(currentTokenHandle, PATTERN_DECLARE, PATTERN_DECLARE_SIZE))
+            if(!VarParser_parseVariable(currentTokenHandle, parameter))
             {
-                cTokenIncrement;
-                continue;
+                return ERROR;
             }
             
-            parameter->variableName = (*((*currentTokenHandle) - 1))->valueString;
-            parameter->bitpack = atoi((*((*currentTokenHandle) - 2))->valueString);
+            cTokenIncrement;
 
             if(!Vector_append(methodHandle->parameters, parameter))
             {

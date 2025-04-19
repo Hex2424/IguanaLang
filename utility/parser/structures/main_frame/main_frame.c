@@ -17,7 +17,6 @@
 // DEFINES
 #define NAME_VARIABLES_VECTOR   "variables"
 #define NAME_METHODS_VECTOR     "methods"
-#define NAME_FILES_VECTOR       "files"
 
 
 #define FAILED_CREATION_LOG     "Could not create '%s' hashmap"
@@ -54,12 +53,6 @@ bool MainFrame_init(MainFrameHandle_t handle)
         return ERROR;
     }
 
-    if(!Hashmap_new(&handle->classFiles, 5))
-    {
-        Log_e(TAG, FAILED_CREATION_LOG, NAME_FILES_VECTOR);
-        return ERROR;
-    }
-
     if(!Hashmap_new(&handle->methods, 5))
     {
         Log_e(TAG, FAILED_CREATION_LOG, NAME_METHODS_VECTOR);
@@ -80,7 +73,6 @@ bool MainFrame_init(MainFrameHandle_t handle)
 bool MainFrame_destroy(MainFrameHandle_t handle)
 {
     Hashmap_delete(&handle->classVariables);
-    Hashmap_delete(&handle->classFiles);
     Hashmap_delete(&handle->methods);
 
     return SUCCESS;

@@ -14,8 +14,8 @@
 #ifndef UTILITY_GENERATOR_GENERATOR_H_
 #define UTILITY_GENERATOR_GENERATOR_H_
 
-#include "stdint.h"
-#include "stdbool.h"
+#include <stdint.h>
+#include <stdbool.h>
 #include "../parser/structures/main_frame/main_frame.h"
 #include <stdio.h>
 #include "../global_config/global_config.h"

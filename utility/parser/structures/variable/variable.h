@@ -19,10 +19,11 @@
 
 typedef struct
 {
-    char* variableName;
-    uint8_t bitpack : 7;
+    char* objectName;
+    char* castedFile;
+    uint64_t bitpack;
     int64_t assignedValue;
-    bool hasAssignedValue : 1;
+    bool hasAssignedValue;
     void* assignedVariable;
 }VariableObject_t;
 

@@ -19,7 +19,9 @@
 #include "../structures/pattern/pattern.h"
 #include "stdbool.h"
 
-bool ParserUtils_tryParseSequence(TokenHandler_t** currentToken, const TokenType_t* pattern,const size_t patternSize);
+
+bool ParserUtils_skipUntil(TokenHandler_t** currentTokenHandle, const TokenHandler_t* endToken, const TokenType_t untilTokenType);
+bool ParserUtils_tryParseSequence(TokenHandler_t** currentTokenHandle, const TokenType_t* pattern,const size_t patternSize);
 bool ParserUtils_assignTokenValue(char** to, const char* from);
 
 #endif // UTILITY_PARSER_PARSER_UTILITIES_GLOBAL_PARSER_UTILITY_H_
