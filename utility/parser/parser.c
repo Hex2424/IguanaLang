@@ -104,7 +104,7 @@ bool Parser_parseTokens(ParserHandle_t parser, MainFrameHandle_t root, const Vec
         {
             case BIT_TYPE:      handleKeywordInteger_(parser, root, NO_NOTATION);break;  // detected bit keyword
             case NOTATION:      handleNotation_(parser, root);break;                     // detected annotation
-
+            case SEMICOLON:     break;                                                   // detected random semicolon, skip it
             default : Shouter_shoutUnrecognizedToken(cTokenP);break;                // error case
         }
         currentToken++;
@@ -116,6 +116,7 @@ bool Parser_parseTokens(ParserHandle_t parser, MainFrameHandle_t root, const Vec
 
     return SUCCESS;
 }
+
 
 // static inline bool addDeclaredMethodsToGlobalLinkListIteratorCallback_(void *key, int count, void *value, void *user)
 // {
