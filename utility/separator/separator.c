@@ -90,10 +90,10 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
     uint32_t existWordBuild;
     size_t tokenCount;
 
+    size_t currentLine = 1;
     size_t currentColumn = 1;
-    size_t currentLine = 0;
 
-    size_t lastLine = 0;
+    size_t lastLine = 1;
     size_t lastColumn = 1;
 
     isLiteral = false;
@@ -137,6 +137,7 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
             {
                 case '\n':
                 {
+                    printf("s %lu %lu\n", currentLine, currentColumn);
                     currentLine++;
                     currentColumn = 1;
                     isLiteral = false;
@@ -156,6 +157,7 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
                 break;
             }
         }
+
         if (breakTag)
         {
             if (existWordBuild != 0)
@@ -217,6 +219,8 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
         {
             isLiteral = !isLiteral;
         }
+
+        currentColumn++;
     }
 
     if(existWordBuild != 0)
