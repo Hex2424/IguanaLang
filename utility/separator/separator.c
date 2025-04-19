@@ -137,7 +137,6 @@ static const size_t tokenize_(const char *begginingIterator, const char *maxIter
             {
                 case '\n':
                 {
-                    printf("s %lu %lu\n", currentLine, currentColumn);
                     currentLine++;
                     currentColumn = 1;
                     isLiteral = false;
