@@ -16,17 +16,23 @@
 
 #define SIZEOF_NOTERM(string) (sizeof(string) - 1)
 
+
 #define CONST_STRING                static const char* const
 #define CONST_SYMBOL                static const char
 
 // C KEYWORDS
-CONST_STRING NDEF_KEYWORD =      "#ifndef";
-CONST_STRING DEF_KEYWORD =       "#define";
-CONST_STRING ENDIF_KEYWORD =     "#endif";
-CONST_STRING INCLUDE_KEYWORD =   "#include";
-CONST_STRING TYPEDEF_KEYWORD =   "typedef";
-CONST_STRING STRUCT_KEYWORD =    "struct";
-CONST_STRING UNSIGNED_KEYWORD =  "unsigned";
+
+#define NDEF_KEYWORD_DEF            "#ifndef"
+#define DEF_KEYWORD_DEF             "#define"
+#define ENDIF_KEYWORD_DEF           "#endif"
+#define INCLUDE_KEYWORD_DEF         "#include"
+#define TYPEDEF_KEYWORD_DEF         "typedef"
+#define STRUCT_KEYWORD_DEF          "struct"
+#define UNSIGNED_KEYWORD_DEF        "unsigned"
+
+
+#define INCLUDE_WRAP(lib) INCLUDE_KEYWORD_DEF "<" lib ".h>" END_LINE_DEF
+#define TYPEDEF_WRAP(from, to) TYPEDEF_KEYWORD_DEF " " from " " to SEMICOLON_DEF
 
 // IMPORTANT! database order should be from smallest to highest
 CONST_STRING TYPE_BINDS[] = 
@@ -44,15 +50,15 @@ CONST_STRING TYPE_BINDS[] =
 
 // These to do operation runtime
 
-CONST_SYMBOL BRACKET_START_CHAR =        '{';
-CONST_SYMBOL BRACKET_END_CHAR =          '}';
-CONST_SYMBOL BRACKET_ROUND_START_CHAR =  '(';
-CONST_SYMBOL BRACKET_ROUND_END_CHAR =    ')';
-CONST_SYMBOL SEMICOLON_CHAR =            ';';
-CONST_SYMBOL COMMA_CHAR =                ',';
+// CONST_SYMBOL BRACKET_START_CHAR =        '{';
+// CONST_SYMBOL BRACKET_END_CHAR =          '}';
+// CONST_SYMBOL BRACKET_ROUND_START_CHAR =  '(';
+// CONST_SYMBOL BRACKET_ROUND_END_CHAR =    ')';
+// CONST_SYMBOL SEMICOLON_CHAR =            ';';
+// CONST_SYMBOL COMMA_CHAR =                ',';
 
-CONST_SYMBOL END_LINE_CHAR =             '\n';
-CONST_SYMBOL NULL_TERMINATOR_CHAR =      '\0';
+// CONST_SYMBOL END_LINE_CHAR =             '\n';
+// CONST_SYMBOL NULL_TERMINATOR_CHAR =      '\0';
 
 // These to do operation in preprocessor
 
@@ -68,6 +74,8 @@ CONST_SYMBOL NULL_TERMINATOR_CHAR =      '\0';
 #define NULL_TERMINATOR_DEF       "\0"
 #define DOUBLE_QUOTE_DEF          "\""
 
+#define POINTER_SIGN_DEF          "*"            
+
 // Mangling definitions
 // TODO Make different for each compiler
 #define ASM_HEADER_MANGLE         "asm(\""
@@ -82,5 +90,12 @@ CONST_SYMBOL NULL_TERMINATOR_CHAR =      '\0';
 #define MANGLE_TYPE_INT_DEF      "i"
 #define MANGLE_TYPE_SHORT_DEF    "s"
 #define MANGLE_TYPE_CHAR_DEF     "c"
+
+
+#define TYPE_BIT64_DEF           "uint64_t"
+#define TYPE_BIT32_DEF           "uint32_t"
+#define TYPE_BIT16_DEF           "uint16_t"
+#define TYPE_BIT8_DEF            "uint8_t"
+#define TYPE_BIT0_DEF            "void"
 
 #endif // UTILITY_GENERATOR_CSYNTAX_DATABASE_H_
