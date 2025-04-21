@@ -46,6 +46,7 @@ static const char* TAG = "MAIN_FRAME";
  */
 bool MainFrame_init(MainFrameHandle_t handle)
 {
+    handle->objectSizeBits = 0;
 
     if(!Hashmap_new(&handle->classVariables, 10))
     {

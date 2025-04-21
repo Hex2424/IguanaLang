@@ -105,14 +105,15 @@ bool Parser_parseTokens(ParserHandle_t parser, MainFrameHandle_t root, const Vec
             case BIT_TYPE:      handleKeywordInteger_(parser, root, NO_NOTATION);break;  // detected bit keyword
             case NOTATION:      handleNotation_(parser, root);break;                     // detected annotation
             case SEMICOLON:     break;                                                   // detected random semicolon, skip it
-            default : Shouter_shoutUnrecognizedToken(cTokenP);break;                // error case
+            default : Shouter_shoutUnrecognizedToken(cTokenP);break;                     // error case
         }
+
         currentToken++;
 
     }
 
     // Hashmap_forEach(&root->methods, addDeclaredMethodsToGlobalLinkListIteratorCallback_, parser);
-    
+
 
     return SUCCESS;
 }
@@ -179,37 +180,49 @@ static inline bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_
             Shouter_shoutError(cTokenP, "Variable \'%s\' is declared several times", variable->objectName);
             return ERROR;
         }
+
+        if(variable->objectName != NULL)
+        {
+            // If variable fully valid with naming, it counts as space occupying variable, it increases overall object spawn size
+            rootHandle->objectSizeBits += variable->bitpack;
+        }
         
     }else if(cTokenType == EQUAL)
     {
-        currentToken++;
-        if(cTokenType == NUMBER_VALUE)   // assignableValue
+        Shouter_shoutError(cTokenP, "Variables can be manipulated or assigned only in function scopes");
+
+        if(!ParserUtils_skipUntil(&currentToken, endToken, SEMICOLON))
         {
-            NULL_GUARD(cTokenP->valueString, ERROR, Log_e(TAG, "Cannot parse token value cause its NULL"));
-            
-            variable->assignedValue = atoll(cTokenP->valueString);
-
-            currentToken++;
-
-            if(cTokenType == SEMICOLON)
-            {
-
-                if(Hashmap_set(&rootHandle->classVariables, variable->objectName, variable))
-                {
-                    Shouter_shoutError(cTokenP, "Variable \'%s\' is declared several times", variable->objectName);
-                    return ERROR;
-                }
-
-            }else
-            {
-                Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
-                ParserUtils_skipUntil(&currentToken, endToken, SEMICOLON);
-            }
-
-        }else
-        {
-            Shouter_shoutError(cTokenP, "To variable can be assigned constant number or other variable only");
+            return ERROR;
         }
+        
+        // if(cTokenType == NUMBER_VALUE)   // assignableValue
+        // {
+        //     NULL_GUARD(cTokenP->valueString, ERROR, Log_e(TAG, "Cannot parse token value cause its NULL"));
+            
+        //     variable->assignedValue = atoll(cTokenP->valueString);
+
+        //     currentToken++;
+
+        //     if(cTokenType == SEMICOLON)
+        //     {
+
+        //         if(Hashmap_set(&rootHandle->classVariables, variable->objectName, variable))
+        //         {
+        //             Shouter_shoutError(cTokenP, "Variable \'%s\' is declared several times", variable->objectName);
+        //             return ERROR;
+        //         }
+
+        //     }else
+        //     {
+        //         Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
+        //         ParserUtils_skipUntil(&currentToken, endToken, SEMICOLON);
+        //     }
+
+        // }else
+        // {
+        //     Shouter_shoutError(cTokenP, "To variable can be assigned constant number or other variable only");
+        // }
 
     }else if(cTokenType == BRACKET_ROUND_START)   // identified method
     {

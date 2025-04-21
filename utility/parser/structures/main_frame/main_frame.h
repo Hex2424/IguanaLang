@@ -22,6 +22,7 @@
 typedef struct
 {
     char iguanaObjectName[MAX_FILENAME_LENGTH];
+    uint32_t objectSizeBits;
     Hashmap_t classVariables;
     Hashmap_t methods;
 }MainFrame_t;

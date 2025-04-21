@@ -36,6 +36,11 @@ static const char* TAG = "VAR_PARSER";
 
 bool VarParser_parseVariable(TokenHandler_t** currentTokenHandle, VariableObjectHandle_t variableHolder)
 {
+    variableHolder->assignedVariable = NULL;
+    variableHolder->castedFile = NULL;
+    variableHolder->objectName = NULL;
+    variableHolder->bitpack = 0;
+
     if(!ParserUtils_tryParseSequence(currentTokenHandle, PATTERN_VAR_TYPE, PATTERN_VAR_TYPE_SIZE))
     {
         return SUCCESS;
@@ -44,7 +49,6 @@ bool VarParser_parseVariable(TokenHandler_t** currentTokenHandle, VariableObject
     NULL_GUARD((*(*currentTokenHandle - 1))->valueString, ERROR, Log_e(TAG, "Cannot parse token value cause its NULL"));
 
     variableHolder->bitpack = atoll((*(*currentTokenHandle - 1))->valueString);
-    variableHolder->assignedVariable = NULL;
 
     if(cTokenType == NAMING)        
     {

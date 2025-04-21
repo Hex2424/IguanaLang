@@ -14,6 +14,8 @@
 #ifndef UTILITY_GENERATOR_CSYNTAX_DATABASE_H_
 #define UTILITY_GENERATOR_CSYNTAX_DATABASE_H_
 
+#define SIZEOF_NOTERM(string) (sizeof(string) - 1)
+
 #define CONST_STRING                static const char* const
 #define CONST_SYMBOL                static const char
 
@@ -60,6 +62,7 @@ CONST_SYMBOL NULL_TERMINATOR_CHAR =      '\0';
 #define BRACKET_ROUND_END_DEF     ")"
 #define SEMICOLON_DEF             ";"
 #define COMMA_DEF                 ","
+#define BIT_DEF                   "bit"
 
 #define END_LINE_DEF              "\n"
 #define NULL_TERMINATOR_DEF       "\0"
@@ -67,12 +70,17 @@ CONST_SYMBOL NULL_TERMINATOR_CHAR =      '\0';
 
 // Mangling definitions
 // TODO Make different for each compiler
+#define ASM_HEADER_MANGLE         "asm(\""
+#define ASM_FOOTER_MANGLE         "\")"
 
-#define MANGLE_ASM_WRAP_LINE(mangle_format) \
-    "asm(\"" mangle_format "\");"
 
 #define MANGLE_MAGIC_BYTE_DEF    "_Z"
 #define MANGLE_NEST_ID_DEF       "N"
 #define MANGLE_END_DEF           "E"
+
+#define MANGLE_TYPE_VOID_DEF     "v"
+#define MANGLE_TYPE_INT_DEF      "i"
+#define MANGLE_TYPE_SHORT_DEF    "s"
+#define MANGLE_TYPE_CHAR_DEF     "c"
 
 #endif // UTILITY_GENERATOR_CSYNTAX_DATABASE_H_
