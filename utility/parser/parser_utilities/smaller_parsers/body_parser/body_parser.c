@@ -59,6 +59,8 @@ bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** 
 {
     QueueHandle_t expressionQueue;
 
+    scopeBody->sizeBits = 0;
+
     while (cTokenType != BRACKET_END)
     {
 
@@ -299,10 +301,16 @@ static bool handleBitType_(LocalScopeObjectHandle_t scopeBody, QueueHandle_t exp
             Shouter_shoutError(cTokenP, "After colon ':' need specify constant bitpack field");
         }
 
-        }else
-        {
-            Shouter_shoutExpectedToken(cTokenP, COLON);
-        }
+    }else
+    {
+        Shouter_shoutExpectedToken(cTokenP, COLON);
+    }
+
+    if(variable->objectName != NULL)
+    {
+        scopeBody->sizeBits += variable->bitpack;
+    }
+
 
     return SUCCESS;
     

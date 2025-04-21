@@ -16,13 +16,14 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <platform_specific.h>
 
 typedef struct
 {
     char* objectName;
     char* castedFile;
-    uint64_t bitpack;
-    int64_t assignedValue;
+    BitpackSize_t bitpack;
+    AssignValue_t assignedValue;
     bool hasAssignedValue;
     void* assignedVariable;
 }VariableObject_t;

@@ -15,11 +15,12 @@
 
 #include <hashmap.h>
 #include <vector.h>
+#include <platform_specific.h>
+
 typedef struct
 {
     Hashmap_t localVariables;
-    Hashmap_t objectAllocations;
-
+    BitpackSize_t sizeBits; 
     Vector_t expressions;
 }LocalScopeObject_t;
 
