@@ -36,7 +36,6 @@ static const char* TAG = "VAR_PARSER";
 
 bool VarParser_parseVariable(TokenHandler_t** currentTokenHandle, VariableObjectHandle_t variableHolder)
 {
-    variableHolder->assignedVariable = NULL;
     variableHolder->castedFile = NULL;
     variableHolder->objectName = NULL;
     variableHolder->bitpack = 0;

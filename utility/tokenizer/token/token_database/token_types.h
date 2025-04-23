@@ -52,7 +52,9 @@ typedef enum TokenType
     ALLOC_STATIC_STACK,  // ss
     ALLOC_DYNAMIC_STACK, // ds
     ALLOC_DYNAMIC_HEAP,  // dh
-    NONE                 // none
+    NONE,                // none
+
+    END_FILE
 } TokenType_t;
 
 

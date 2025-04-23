@@ -30,6 +30,8 @@ static const char* TAG = "SEPARATOR";
 typedef uint64_t MAX_TOKENS;
 typedef uint64_t MAX_CODE_LENGTH;
 
+static const Token_t END_FILE_TOKEN = {END_FILE, {(size_t) 0, (size_t) 0, NULL}, NULL};
+
 ////////////////////////////////
 // PRIVATE TYPES
 
@@ -60,6 +62,8 @@ bool Separator_getSeparatedWords(const char *codeString, const size_t length, Ve
     settings.expandableConstant = (1.0f / 3.0f);
     settings.containsVectors = false; 
 
+
+    
     if(!Vector_create(vector, &settings))
     {
         Log_e(TAG, "Failed to create vector object");
@@ -68,6 +72,13 @@ bool Separator_getSeparatedWords(const char *codeString, const size_t length, Ve
 
     tokenCount = tokenize_(codeString, codeString + length, vector, filePath);
     Log_i(TAG, "Token Count: %d", (int)tokenCount);
+
+    
+    if(!Vector_append(vector, &END_FILE_TOKEN))
+    {
+        Log_e(TAG, "Failed to END_FILE token");
+        return ERROR;
+    }
 
     return SUCCESS;
 }

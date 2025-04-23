@@ -20,7 +20,7 @@
 
 ////////////////////////////////
 // PRIVATE CONSTANTS
-static const char* TAG = "GLOBAL_PARSER_UTILITY";
+// static const char* TAG = "GLOBAL_PARSER_UTILITY";
 
 ////////////////////////////////
 // PRIVATE TYPES
@@ -38,6 +38,11 @@ bool ParserUtils_tryParseSequence(TokenHandler_t** currentTokenHandle, const Tok
     bool parseCorrect = true;
     for(uint8_t patternIdx = 0; patternIdx < patternSize; patternIdx++, (*currentTokenHandle)++)
     {
+        if((**currentTokenHandle)->tokenType == END_FILE)
+        {
+            break;
+        }
+
         if((**currentTokenHandle)->tokenType != pattern[patternIdx])
         {
             // Log_d(TAG, "%d %d", cTokenType,  pattern[patternIdx]);
@@ -52,9 +57,9 @@ bool ParserUtils_tryParseSequence(TokenHandler_t** currentTokenHandle, const Tok
 }
 
 
-bool ParserUtils_skipUntil(TokenHandler_t** currentTokenHandle, const TokenHandler_t* endToken, const TokenType_t untilTokenType)
+bool ParserUtils_skipUntil(TokenHandler_t** currentTokenHandle, const TokenType_t untilTokenType)
 {
-    while((*currentTokenHandle) < endToken)
+    while((**currentTokenHandle)->tokenType != END_FILE)
     {
         if((**currentTokenHandle)->tokenType == untilTokenType)
         {
@@ -66,23 +71,3 @@ bool ParserUtils_skipUntil(TokenHandler_t** currentTokenHandle, const TokenHandl
 
     return false;
 }
-
-/**
- * @brief Private method for copying and doing malloc manually from token value
- * 
- * @param[out] to   Pointer to Pointer which all bytes will be coppied also being allocated dynamically
- * @param[in] from  Pointer from which all bytes will be coppied
- * @return          Success state
- */
-bool ParserUtils_assignTokenValue(char** to, const char* from)
-{
-    ALLOC_CHECK(*to, strlen(from), ERROR);
-    if(strcpy(*to, from) == NULL)
-    {
-        Log_e(TAG, "For some reason couldn't copy from token value");
-        return ERROR;
-    }
-
-    return SUCCESS;
-}
-
