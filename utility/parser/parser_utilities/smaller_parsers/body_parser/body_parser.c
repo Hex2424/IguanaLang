@@ -179,6 +179,12 @@ static inline bool parseVariableInstance_(LocalScopeObjectHandle_t scopeBody, To
     {
         // it is insta initialized
         // getting back to name of variable, so it gets added to expression
+        if(Hashmap_set(&scopeBody->localVariables, variable->objectName, variable))
+        {
+            Shouter_shoutError(cTokenP, "Variable \'%s\' is declared several times", variable->objectName);
+            return ERROR;
+        }
+        
         (*currentTokenHandle) -= 2;
         
     }else
