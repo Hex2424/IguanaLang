@@ -22,7 +22,9 @@ typedef enum
     EXP_CONST_NUMBER,
     EXP_VARIABLE,
     EXP_PARENTHESES_LEFT,
-    EXP_PARENTHESES_RIGHT
+    EXP_PARENTHESES_RIGHT,
+
+    EXP_TMP_VAR
 }ExpressionType_t;
 
 
@@ -52,6 +54,10 @@ typedef struct
 }Expression_t;
 
 typedef Expression_t* ExpressionHandle_t;
+
+
+bool Expression_isSymbolOperand(const ExpressionHandle_t symbol);
+bool Expression_isSymbolOperator(const ExpressionHandle_t symbol);
 
 
 #endif // UTILITY_PARSER_STRUCTURES_EXPRESSION_EXPRESSIONS_H_

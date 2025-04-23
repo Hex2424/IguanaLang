@@ -19,7 +19,7 @@
 #include "../../../../parser/parser_utilities/post_parsing_utility/bitfit.h"
 
 #include "../../../../parser/structures/expression/expressions.h"
-#include <stack.h>
+#include <dstack.h>
 ////////////////////////////////
 // DEFINES
 
@@ -46,7 +46,6 @@ static inline bool handleObjectDeclaration_(LocalScopeObjectHandle_t scopeBody, 
 static inline bool handleMethodCallParameterization_(MethodObjectHandle_t methodHandle, TokenHandler_t** currentTokenHandle);
 static bool handleOperator_(ExpressionHandle_t symbolHandle, TokenHandler_t** currentTokenHandle);
 static bool isTokenOperator_(TokenHandler_t** currentTokenHandle);
-static bool isSymbolOperand_(const ExpressionHandle_t symbol);
 static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHandle_t symbol, TokenHandler_t** currentTokenHandle);
 // static bool handleOperations_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
 static bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, TokenHandler_t** currentTokenHandle);
@@ -184,7 +183,7 @@ static inline bool parseVariableInstance_(LocalScopeObjectHandle_t scopeBody, To
             Shouter_shoutError(cTokenP, "Variable \'%s\' is declared several times", variable->objectName);
             return ERROR;
         }
-        
+
         (*currentTokenHandle) -= 2;
         
     }else
@@ -259,7 +258,7 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
 
         // If the scanned character is 
         // an operand, add it to the output string.
-        if (isSymbolOperand_(symbol))
+        if (Expression_isSymbolOperand(symbol))
         {
             if(!Vector_append(expressionVector, symbol))
             {
@@ -583,15 +582,6 @@ static bool isTokenOperator_(TokenHandler_t** currentTokenHandle)
             cTokenType == OPERATOR_NOT      ||
             cTokenType == EQUAL;             
             // cTokenType == OPERATOR_DIVIDE;
-
-    // TODO: Add binary operators
-}
-
-static bool isSymbolOperand_(const ExpressionHandle_t symbol)
-{
-    return (symbol->type == EXP_METHOD_CALL) ||
-        (symbol->type == EXP_CONST_NUMBER)   ||
-        (symbol->type == EXP_VARIABLE);
 
     // TODO: Add binary operators
 }

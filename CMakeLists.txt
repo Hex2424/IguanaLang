@@ -26,13 +26,14 @@ set(SRC
     utility/parser/parser_utilities/post_parsing_utility/bitfit.c
     utility/generator/generator.c
     utility/queue/queue.c
-    utility/stack/stack.c
+    utility/stack/dstack.c
     utility/hash/random/random.c
     utility/external/inbuilt_c_compiler/c_compiler.c
     utility/external/unix_linker/unix_linker.c
     utility/hashmap/hashmap.c
     utility/parser/parser_utilities/smaller_parsers/body_parser/body_parser.c
     utility/parser/structures/object_type/object_type.c
+    utility/parser/structures/expression/expressions.c
     utility/symbol_table/symbol_table.c
 )
 
