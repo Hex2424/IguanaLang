@@ -21,7 +21,8 @@
 #include "arch_specific.h"
 #include "../parser/structures/expression/expressions.h"
 #include "bit_arithmetic/fit_arithmetic.h"
-
+#include "bit_arithmetic/plt_arithmetic.h"
+#include <dstack.h>
 
 ////////////////////////////////
 // DEFINES
@@ -69,7 +70,7 @@ static char writingBufferC_[FOUT_BUFFER_LENGTH];
 static int methodDeclarationIteratorCallback_(void *key, int count, void* value, void *user);
 static int methodDefinitionIteratorCallback_(void *key, int count, void* value, void *user);
 
-static bool fileWriteVariableDeclaration_(const VariableObjectHandle_t variable, const VariableDeclaration_t declareType);
+// static bool fileWriteVariableDeclaration_(const VariableObjectHandle_t variable, const VariableDeclaration_t declareType);
 static bool fileWriteMethods_();
 
 static bool fileWriteMethodBody_(const MethodObjectHandle_t method);
@@ -82,7 +83,11 @@ static bool fileWriteNameMangleMethod_(const char* const className, const Method
 static bool fileWriteIncludes_(void);
 static bool fileWriteMainHTypedefs_(void);
 static bool fileWriteMainHeader_(void);
-static inline bool fileWriteVariablesAllocation_(const BitpackSize_t bitsize, const char* scopeName);
+
+static bool fileWriteExpression_(const VectorHandler_t expression);
+static inline bool fileWriteVariablesAllocation_(const BitpackSize_t bitsize, const uint32_t scopeIndex);
+static bool printBitVariableReading_(const ExpressionHandle_t operand);
+static bool generateCodeForOperation_(const ExpressionHandle_t left, const ExpressionHandle_t right, const OperatorType_t operator);
 ////////////////////////////////
 // IMPLEMENTATION
 
@@ -92,6 +97,8 @@ bool Generator_generateCode(const MainFrameHandle_t ast, const char* dstCFileNam
     NULL_GUARD(ast, ERROR, Log_e(TAG, "Null AST"));
 
     currentAst_ = ast;
+    
+    Log_i(TAG, "Starting C code generation in file: \"%s\"", dstCFileName);
 
     if(dstCFileName == NULL)
     {
@@ -232,49 +239,6 @@ static bool fileWriteNameMangleMethod_(const char* const className, const Method
     return SUCCESS;
 }
 
-static bool fileWriteVariableDeclaration_(const VariableObjectHandle_t variable, const VariableDeclaration_t declareType)
-{
-    char* variableTypeKeywordToUse;
-
-    NULL_GUARD(variable, ERROR, Log_e(TAG, "AST variableDeclaration expandable is null"));
-
-
-    if(variable->bitpack != 0)
-    {
-        // Checking if its not some kind of object
-      
-        if(variable->bitpack < ((sizeof(uint64_t) * 8) + 1))
-        {
-            variableTypeKeywordToUse = (char*) TYPE_BINDS[(variable->bitpack - 1)/ BYTE_SIZE_BITS]; 
-        }else
-        {
-            Log_e(TAG, "Error occured bitpack is too big");
-        }
-  
-        switch (declareType)
-        {
-            case VARIABLE_STRUCT:
-                fprintf(currentCfile_, "%s %s:%lu" SEMICOLON_DEF, variableTypeKeywordToUse, variable->objectName, variable->bitpack);
-                break;
-            case VARIABLE_METHOD:
-                fprintf(currentCfile_, "void %s" BRACKET_ROUND_START_DEF, variable->objectName);
-                break;
-            case VARIABLE_NORMAL:
-                fprintf(currentCfile_, "%s %s" SEMICOLON_DEF, variableTypeKeywordToUse, variable->objectName);
-                break;
-            case VARIABLE_PARAMETER:
-                fprintf(currentCfile_, "%s %s", variableTypeKeywordToUse, variable->objectName);
-                break;
-
-            default:
-                Log_e(TAG, "Error occured on identifying declaration enum type");
-                return ERROR;
-        }
-    }
-    return SUCCESS;
-}
-
-
 
 static inline bool fileWriteMethods_()
 {
@@ -287,9 +251,9 @@ static inline bool fileWriteMethods_()
     return SUCCESS;
 }
 
-static inline bool fileWriteVariablesAllocation_(const BitpackSize_t bitsize, const char* scopeName)
+static inline bool fileWriteVariablesAllocation_(const BitpackSize_t bitsize, const uint32_t scopeId)
 {
-    const int status = fprintf(currentCfile_, BITPACK_TYPE_NAME " " ALLOCATION_ARRAY_PREFIX"%s[%lu]" SEMICOLON_DEF READABILITY_ENDLINE, scopeName, bitsize / BIT_SIZE_BITPACK + 1);
+    const int status = fprintf(currentCfile_, BITPACK_TYPE_NAME " " STRINGIFY(ALLOCATION_ARRAY_PREFIX)"%u[%lu]" SEMICOLON_DEF READABILITY_ENDLINE, scopeId, bitsize / BIT_SIZE_BITPACK + 1);
     return (status >= 0);
 }
 
@@ -297,74 +261,171 @@ static inline bool fileWriteMethodBody_(const MethodObjectHandle_t method)
 {
     fwrite(READABILITY_ENDLINE BRACKET_START_DEF READABILITY_ENDLINE, BYTE_SIZE, SIZEOF_NOTERM(READABILITY_ENDLINE BRACKET_START_DEF READABILITY_ENDLINE), currentCfile_);
 
-     if(!fileWriteVariablesAllocation_(method->body.sizeBits, method->methodName))
+     if(!fileWriteVariablesAllocation_(method->body.sizeBits, 0))
     {
         Log_e(TAG, "Failed to write method scope variables");
         return ERROR;
     }
-    // if(!fileWriteVariablesHashmap_(&method->body.localVariables))
-    // {
-    //     Log_e(TAG, "Failed to write method scope variables");
-    //     return ERROR;
-    // }
-
-    // writing structure Initializator
-    if(Hashmap_size(&method->body.localVariables) != 0)
-    {
-        //fprintf(currentCfile_, "%s_t %s%c", generator->iguanaImport->objectId.id, LOCAL_VARIABLES_STRUCT_NAME, SEMICOLON_CHAR);
-    }
-
     
-    // for(size_t expressionQ = 0; expressionQ < method->body.expressions.currentSize; expressionQ++)
-    // {
-    //     QueueHandle_t expressionQueue;
+    for(size_t expressionQ = 0; expressionQ < method->body.expressionList.currentSize; expressionQ++)
+    {
+        VectorHandler_t expression;
 
-    //     expressionQueue = method->body.expressions.expandable[expressionQ];
-    //     if(expressionQueue == NULL)
-    //     {
-    //         return ERROR;
-    //     }
-
-    //     while (true)
-    //     {
-    //         ExpressionHandle_t expression;
-    //         expression = Queue_dequeue(expressionQueue);
-    //         if(expression == NULL)
-    //         {
-    //             break;
-    //         }
-
-    //         if(!handleExpressionWriting_(expression))
-    //         {
-    //             Log_e(TAG, "Failed to write expression");
-    //             return ERROR;
-    //         }
-
-    //     }
-
-    //     fwrite(SEMICOLON_DEF, BYTE_SIZE, sizeof(SEMICOLON_DEF), currentCfile_);
-
-    //     Queue_destroy(expressionQueue);
+        expression = method->body.expressionList.expandable[expressionQ];
         
-    // }
+        if(expression == NULL)
+        {
+            return ERROR;
+        }
+
+        if(!fileWriteExpression_(expression))
+        {
+            Log_e(TAG, "Failed to write expression");
+            return ERROR;
+        }
+        
+        
+    }
     
     fwrite(READABILITY_ENDLINE BRACKET_END_DEF READABILITY_ENDLINE, BYTE_SIZE, SIZEOF_NOTERM(READABILITY_ENDLINE BRACKET_END_DEF READABILITY_ENDLINE), currentCfile_);
 
     return SUCCESS;
 }
 
-// static int methodBodyVariableInitializerForIterator_(void *key, int count, void* value, void *user)
-// {
-//     VariableObjectHandle_t variable;
 
-//     variable = value;
+static bool fileWriteExpression_(const VectorHandler_t expression)
+{
+    DynamicStack_t symbolStack;
 
-//     if(variable->hasAssignedValue)
-//     {
-//         fprintf(currentCfile_, "%s.%s = %ld" SEMICOLON_DEF, LOCAL_VARIABLES_STRUCT_NAME, variable->objectName, variable->assignedValue);
-//     }
-//     return SUCCESS;
-// }
+    Expression_t tmpVar = {EXP_TMP_VAR, STRINGIFY(TMP_VAR)};
+
+    if(!Stack_create(&symbolStack))
+    {
+        Log_e(TAG, "Failed to create dynamic stack for postfix handling");
+        return ERROR;
+    }
+
+    fwrite(BRACKET_START_DEF READABILITY_ENDLINE BIT_TYPE_DEF " " STRINGIFY(TMP_VAR) SEMICOLON_DEF READABILITY_ENDLINE,
+        BYTE_SIZE,
+        SIZEOF_NOTERM(BRACKET_START_DEF READABILITY_ENDLINE BIT_TYPE_DEF " " STRINGIFY(TMP_VAR) SEMICOLON_DEF READABILITY_ENDLINE),
+        currentCfile_);
+
+    for(size_t symbolIdx = 0; symbolIdx < expression->currentSize; symbolIdx++)
+    {
+        const ExpressionHandle_t symbol = (ExpressionHandle_t) expression->expandable[symbolIdx];
+
+        if(Expression_isSymbolOperand(symbol))
+        {
+            Stack_push(&symbolStack, symbol);
+        }else if(Expression_isSymbolOperator(symbol))
+        {
+            const ExpressionHandle_t right = Stack_pop(&symbolStack);
+            const ExpressionHandle_t left = Stack_pop(&symbolStack);
+
+            const OperatorType_t operand = (OperatorType_t) symbol->expressionObject;
+
+            // DO STUFF
+            if(!generateCodeForOperation_(left, right, operand))
+            {
+                return ERROR;
+            }
+   
+            if(!Stack_push(&symbolStack, &tmpVar))
+            {
+                Log_e(TAG, "Failed to push stack expression");
+                return ERROR;
+            }
+        }
+    }
+
+    fwrite(BRACKET_END_DEF,
+        BYTE_SIZE,
+        SIZEOF_NOTERM(BRACKET_END_DEF),
+        currentCfile_);
+    
+    Stack_destroy(&symbolStack);
+    
+    return SUCCESS;
+}
+
+static bool generateCodeForOperation_(const ExpressionHandle_t left, const ExpressionHandle_t right, const OperatorType_t operator)
+{
+    char* operatorString = NULL;
+    int status;
+
+    status = fwrite(STRINGIFY(TMP_VAR) C_OPERATOR_EQUAL_DEF, BYTE_SIZE, SIZEOF_NOTERM(STRINGIFY(TMP_VAR) C_OPERATOR_EQUAL_DEF), currentCfile_);
+
+    if(!printBitVariableReading_(left))
+    {
+        return ERROR;
+    }
+
+    switch (operator)
+    {
+        case OP_PLUS: operatorString = C_OPERATOR_PLUS_DEF; break;
+        case OP_MINUS: operatorString = C_OPERATOR_MINUS_DEF; break;
+        case OP_MULTIPLY: operatorString = C_OPERATOR_MULTIPLY_DEF; break;
+        case OP_DIVIDE: operatorString = C_OPERATOR_DIVIDE_DEF; break;
+        case OP_MODULUS: operatorString = C_OPERATOR_MODULUS_DEF; break;
+        case OP_SET: operatorString = C_OPERATOR_EQUAL_DEF; break;
+
+        case OP_BIN_AND: operatorString = C_OPERATOR_BIN_AND_DEF; break;
+        // case OP_BIN_NOT: operatorString = C_OPERATOR_DIVIDE_DEF; break;
+        case OP_BIN_OR: operatorString = C_OPERATOR_BIN_OR_DEF; break;
+        case OP_BIN_XOR: operatorString = C_OPERATOR_BIN_XOR_DEF; break;
+
+        default: operatorString = NULL; break;
+    }
+
+    status = fwrite(operatorString, BYTE_SIZE, strlen(operatorString), currentCfile_);
+
+    if(status < 0)
+    {
+        Log_e(TAG, "Failed to write");
+        return ERROR;
+    }
+
+    if(!printBitVariableReading_(right))
+    {
+        return ERROR;
+    }
+
+    status = fwrite(SEMICOLON_DEF READABILITY_ENDLINE, BYTE_SIZE, SIZEOF_NOTERM(SEMICOLON_DEF READABILITY_ENDLINE), currentCfile_);
+
+    if(status < 0)
+    {
+        Log_e(TAG, "Failed to write");
+        return ERROR;
+    }
+
+    return SUCCESS;
+}
+
+static bool printBitVariableReading_(const ExpressionHandle_t operand)
+{
+    int status;
+    if (operand->type == EXP_VARIABLE)
+    {
+        const VariableObjectHandle_t variable = (VariableObjectHandle_t) operand->expressionObject;
+ 
+        if(variable->bitpack < ARCHITECTURE_DEFAULT_BITS)
+        {
+            status = fprintf(currentCfile_, STRINGIFY(AFIT_READ(s_%u[%u], %u, %lu)), 0, variable->belongToGroup, variable->posBit, variable->bitpack);
+        }else if (variable->bitpack == ARCHITECTURE_DEFAULT_BITS)
+        {
+            status = fprintf(currentCfile_, STRINGIFY(APLT_READ(s_%u[%u])), 0, variable->belongToGroup);
+        }
+
+    }else if(operand->type == EXP_TMP_VAR)
+    {
+        status = fprintf(currentCfile_, STRINGIFY(APLT_READ(tmp)));
+    }else if(operand->type == EXP_CONST_NUMBER)
+    {
+        status = fprintf(currentCfile_, STRINGIFY(APLT_READ(%lu)), (AssignValue_t) operand->expressionObject);
+    }
+
+    return status > 0;
+}
 
 static int methodDefinitionIteratorCallback_(void *key, int count, void* value, void *user)
 {
@@ -393,11 +454,7 @@ static bool generateMethodHeader_(const MethodObjectHandle_t method)
     
     if(method->containsBody)
     {
-        if(!fileWriteVariableDeclaration_(method->returnVariable, VARIABLE_METHOD))
-        {
-            Log_e(TAG, "Failed to write method %s return type", method->methodName);
-            return ERROR;
-        }
+        fprintf(currentCfile_, "void %s" BRACKET_ROUND_START_DEF, method->returnVariable->objectName);
     }
 
     if(Hashmap_size(&currentAst_->classVariables) != 0)
@@ -416,36 +473,6 @@ static bool generateMethodHeader_(const MethodObjectHandle_t method)
         BYTE_SIZE,
         SIZEOF_NOTERM(PARAM_TYPE_DEF READABILITY_SPACE FUNCTION_PARAM_NAME), currentCfile_);
 
-    // if(method->parameters->currentSize > 0)
-    // {
-    //     if(method->containsBody)
-    //     {
-    //         fwrite(COMMA_DEF, BYTE_SIZE, 1, currentCfile_);
-    //     }
-
-    // }
-
-    // for(size_t paramIdx = 0; paramIdx < method->parameters->currentSize; paramIdx++)
-    // {
-    //     VariableObjectHandle_t parameter;
-    //     parameter = method->parameters->expandable[paramIdx];
-    //     NULL_GUARD(parameter, ERROR, Log_e(TAG, "AST method %s %d nth is NULL", method->methodName, paramIdx));
-
-    //     if(method->containsBody)
-    //     {
-    //         if(!fileWriteVariableDeclaration_(parameter, VARIABLE_PARAMETER))
-    //         {
-    //             Log_e(TAG, "Failed to write method %s return type", method->methodName);
-    //             return ERROR;
-    //         }
-    //     }
-
-    //     if((paramIdx + 1) != method->parameters->currentSize)
-    //     {
-    //         fwrite(COMMA_DEF, BYTE_SIZE, 1, currentCfile_);
-    //     }
-
-    // }
 
     fwrite(BRACKET_ROUND_END_DEF, BYTE_SIZE, 1, currentCfile_);
 

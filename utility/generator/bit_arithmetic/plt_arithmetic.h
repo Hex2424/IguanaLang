@@ -19,7 +19,7 @@
 
 #include "../csyntax_database.h"
 #include "../config_generator.h"
-#include "../arch_specific.h"
+#include <arch_specific.h>
 
 // ALL THESE ARITHMETICS WORKS IF BIT_WIDTH == BIT_TYPE_EXP
 // Otherwise other arithmetic should be used

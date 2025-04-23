@@ -32,3 +32,18 @@
 ////////////////////////////////
 // IMPLEMENTATION
 
+bool Expression_isSymbolOperand(const ExpressionHandle_t symbol)
+{
+    return (symbol->type == EXP_METHOD_CALL) ||
+        (symbol->type == EXP_CONST_NUMBER)   ||
+        (symbol->type == EXP_VARIABLE);
+
+    // TODO: Add binary operators
+}
+
+bool Expression_isSymbolOperator(const ExpressionHandle_t symbol)
+{
+    return (symbol->type == EXP_OPERATOR);
+
+    // TODO: Add binary operators
+}

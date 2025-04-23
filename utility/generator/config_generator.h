@@ -17,8 +17,10 @@
 #define ENABLE_READABILITY          1
 
 #define BITPACK_TYPE_NAME           "Bitpack_t"
-#define ALLOCATION_ARRAY_PREFIX     "s_"
+#define ALLOCATION_ARRAY_PREFIX     s_
 #define FUNCTION_OBJ_NAME           "o"
 #define FUNCTION_PARAM_NAME         "p"
+
+#define TMP_VAR                     tmp
 
 #endif // UTILITY_MISC_CONFIG_GENERATOR_H_

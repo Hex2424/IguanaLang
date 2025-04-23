@@ -90,6 +90,23 @@ CONST_STRING TYPE_BINDS[] =
 #define MANGLE_TYPE_SHORT_DEF    "s"
 #define MANGLE_TYPE_CHAR_DEF     "c"
 
+
+// Operators supported by C language
+
+#define C_OPERATOR_PLUS_DEF      "+"
+#define C_OPERATOR_MINUS_DEF     "-"
+#define C_OPERATOR_DIVIDE_DEF    "/"
+#define C_OPERATOR_MULTIPLY_DEF  "*"
+#define C_OPERATOR_MODULUS_DEF   "%"
+#define C_OPERATOR_EQUAL_DEF     "="
+
+// Binary Operators supported by C language
+
+#define C_OPERATOR_BIN_XOR_DEF   "^"
+#define C_OPERATOR_BIN_AND_DEF   "&"
+#define C_OPERATOR_BIN_OR_DEF    "|"
+#define C_OPERATOR_BIN_NOT_DEF   "~"
+
 #if ARCHITECTURE_DEFAULT_BITS == 64
     #define BIT_TYPE_EXP              TYPE_BIT64_EXP
     #define BIT_SIZE_BITPACK          64
@@ -125,5 +142,6 @@ CONST_STRING TYPE_BINDS[] =
 #define TYPE_BIT16_DEF           STRINGIFY(TYPE_BIT16_EXP)
 #define TYPE_BIT8_DEF            STRINGIFY(TYPE_BIT8_EXP)
 #define TYPE_BIT0_DEF            STRINGIFY(TYPE_BIT0_EXP)
+
 
 #endif // UTILITY_GENERATOR_CSYNTAX_DATABASE_H_
