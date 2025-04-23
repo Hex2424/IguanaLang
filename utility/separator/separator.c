@@ -30,7 +30,6 @@ static const char* TAG = "SEPARATOR";
 typedef uint64_t MAX_TOKENS;
 typedef uint64_t MAX_CODE_LENGTH;
 
-static const Token_t END_FILE_TOKEN = {END_FILE, {(size_t) 0, (size_t) 0, NULL}, NULL};
 
 ////////////////////////////////
 // PRIVATE TYPES
@@ -41,7 +40,7 @@ static const char allowedNamingSymbols_[] = "qwertyuiopasdfghjklzxcvbnmQWERTYUIO
 // PRIVATE METHODS
 
 static const size_t tokenize_(const char *begginingIterator, const char *maxIterator, VectorHandler_t vectorHandle,const char* currentFile);
-
+static TokenHandler_t createEndFileToken_(void);
 ////////////////////////////////
 // IMPLEMENTATION
 
@@ -62,7 +61,7 @@ bool Separator_getSeparatedWords(const char *codeString, const size_t length, Ve
     settings.expandableConstant = (1.0f / 3.0f);
     settings.containsVectors = false; 
 
-
+    TokenHandler_t endFileToken = createEndFileToken_();
     
     if(!Vector_create(vector, &settings))
     {
@@ -73,8 +72,9 @@ bool Separator_getSeparatedWords(const char *codeString, const size_t length, Ve
     tokenCount = tokenize_(codeString, codeString + length, vector, filePath);
     Log_i(TAG, "Token Count: %d", (int)tokenCount);
 
+
     
-    if(!Vector_append(vector, &END_FILE_TOKEN))
+    if(!Vector_append(vector, endFileToken))
     {
         Log_e(TAG, "Failed to END_FILE token");
         return ERROR;
@@ -83,6 +83,21 @@ bool Separator_getSeparatedWords(const char *codeString, const size_t length, Ve
     return SUCCESS;
 }
 
+
+static TokenHandler_t createEndFileToken_(void)
+{
+    TokenHandler_t endFileToken;
+
+    ALLOC_CHECK(endFileToken, sizeof(Token_t), NULL);
+
+    endFileToken->tokenType = END_FILE;
+    endFileToken->location.column = 0;
+    endFileToken->location.line = 0;
+    endFileToken->valueString = NULL;
+
+    return endFileToken;
+
+}
 
 /**
  * @brief Public method for converting buffer to corresponding tokens vector list
