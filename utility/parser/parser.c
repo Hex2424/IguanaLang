@@ -83,7 +83,6 @@ bool Parser_parseTokens(ParserHandle_t parser, MainFrameHandle_t root, const Vec
     tokens = (TokenHandler_t*) tokenVector->expandable;
     tokensCount = tokenVector->currentSize;
     currentToken = tokens;
-    endToken = tokens + tokenVector->currentSize;
 
     if(!MainFrame_init(root))
     {
@@ -92,7 +91,7 @@ bool Parser_parseTokens(ParserHandle_t parser, MainFrameHandle_t root, const Vec
         return ERROR;
     }
 
-    while (currentToken < endToken)
+    while (cTokenType != END_FILE)
     {
         switch(cTokenType)
         {

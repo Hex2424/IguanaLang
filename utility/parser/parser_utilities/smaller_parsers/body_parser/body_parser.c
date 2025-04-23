@@ -25,7 +25,7 @@
 
 #define cTokenP (**currentTokenHandle)
 #define cTokenType cTokenP -> tokenType
-#define tokenOffsetType(offset) (*((*currentTokenHandle) + 1))->tokenType
+#define tokenOffset(offset) (*((*currentTokenHandle) + offset))
 
 ////////////////////////////////
 // PRIVATE CONSTANTS
@@ -59,27 +59,44 @@ static bool handleNumber_(ExpressionHandle_t symbolHandle, TokenHandler_t** curr
 
 static inline int32_t expressionPrecedence_(ExpressionHandle_t symbol) 
 {
-    
+    int32_t prec = -1;
+
     if(symbol->type == EXP_OPERATOR)
     {
         OperatorType_t operatorType = (OperatorType_t) symbol->expressionObject;
 
-        if ((operatorType == OP_DIVIDE) || (operatorType == OP_MULTIPLY))
+        switch (operatorType)
         {
-            return 2;
+            case OP_MULTIPLY:
+            case OP_DIVIDE:
+            {
+                prec = 3;
+            }break;
+
+            case OP_PLUS:
+            case OP_MINUS:
+            {
+                prec = 2;
+            }break;
+
+            case OP_BIN_AND:
+            case OP_BIN_OR:
+            case OP_BIN_NOT:
+            case OP_BIN_XOR:
+            case OP_MODULUS:
+            case OP_AND:
+            case OP_OR:
+            case OP_SET:
+            {
+                prec = 1;
+            }break;
+            
+            default:break;
         }
-        else if ((operatorType == OP_PLUS) || (operatorType == OP_MINUS))
-        {
-            return 1;
-        }else
-        {
-            return -1;
-        }
+        
     }
-    else
-    {
-        return -1;
-    }
+
+    return prec;
 }
 
 bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle)
@@ -91,6 +108,7 @@ bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** 
 
         switch (cTokenType)
         {
+            // TODO: handling ERRORS
             case BIT_TYPE: parseVariableInstance_(scopeBody, currentTokenHandle); break;
 
             case NAMING:
@@ -108,7 +126,7 @@ bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** 
         (*currentTokenHandle)++;
     
     }
-    
+
     return SUCCESS;
 }
 
@@ -123,6 +141,8 @@ static inline bool parseVariableInstance_(LocalScopeObjectHandle_t scopeBody, To
     {
         return ERROR;
     }
+    
+    Log_d(TAG, "Parsed variable instance: %s", variable->objectName);
 
     (*currentTokenHandle)++;
 
@@ -159,7 +179,7 @@ static inline bool parseVariableInstance_(LocalScopeObjectHandle_t scopeBody, To
 static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, TokenHandler_t** currentTokenHandle)
 {
     VectorHandler_t expressionVector;
-    ExpressionHandle_t stack[1024];
+    ExpressionHandle_t stack[1024] = {NULL};
 
     ExpressionHandle_t lastSymbol = NULL;
     ExpressionHandle_t currentSymbol = NULL;
@@ -173,7 +193,6 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
         Log_e(TAG, "Failed to create expression vector");
         return NULL;
     }
-    
 
     while ((cTokenType != BRACKET_END) && (cTokenType != END_FILE) && (cTokenType != SEMICOLON))
     {
@@ -181,8 +200,11 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
 
         ALLOC_CHECK(symbol, sizeof(Expression_t), ERROR);
         
+        Log_d(TAG, "Parsing symbol in expression line");
+        Log_d(TAG, "Symbol vector current size %d available: %d", expressionVector->currentSize, expressionVector->availableSize);
         if(!parseSymbolExpression_(localScope, symbol, currentTokenHandle))
         {
+            Shouter_shoutError(cTokenP, "Parse error");
             ParserUtils_skipUntil(currentTokenHandle, SEMICOLON);
             free(symbol);
             return SUCCESS;
@@ -191,11 +213,27 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
         lastSymbol = currentSymbol;
         currentSymbol = symbol;
 
+        if(lastSymbol != NULL)
+        {
+            Log_d(TAG, "symbols1 check %d", lastSymbol->type);
+        }else
+        {
+            Log_d(TAG, "symbols1 check (null)");
+        }
+
+        if(currentSymbol != NULL)
+        {
+            Log_d(TAG, "symbols2 check %d", currentSymbol->type);
+        }else
+        {
+            Log_d(TAG, "symbols2 check (null)");
+        }
+
         if(!isSymbolsLegalToExistTogether_(lastSymbol, currentSymbol))
         {
-            Shouter_shoutUnrecognizedToken(cTokenP);
+            Shouter_shoutError(cTokenP, "Illegal token to use after prev token");
             ParserUtils_skipUntil(currentTokenHandle, SEMICOLON);
-            continue;
+            return SUCCESS;
         }
 
         // If the scanned character is 
@@ -218,9 +256,12 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
         // If the scanned character is an ‘)’,
         // pop and add to the output string from the stack 
         // until an ‘(‘ is encountered.
-        else if (symbol->type == EXP_PARENTHESES_RIGHT) {
-            while (top != -1 && stack[top]->type != EXP_PARENTHESES_LEFT) {
-                if(!Vector_append(expressionVector, symbol))
+        else if (symbol->type == EXP_PARENTHESES_RIGHT) 
+        {
+            while (top != -1 && stack[top]->type != EXP_PARENTHESES_LEFT) 
+            {
+                Log_d(TAG, "Symbol vector current size %d available: %d", expressionVector->currentSize, expressionVector->availableSize);
+                if(!Vector_append(expressionVector, stack[top--]))
                 {
                     return ERROR;
                 }
@@ -231,10 +272,12 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
         // If an operator is scanned
         else 
         {
-            while ((top != -1) && (expressionPrecedence_(symbol) < expressionPrecedence_(stack[top]) ||
-                                 expressionPrecedence_(symbol) == expressionPrecedence_(stack[top]))) 
+            
+            while ((top != -1) && ((expressionPrecedence_(symbol) < expressionPrecedence_(stack[top])) ||
+                                 (expressionPrecedence_(symbol) == expressionPrecedence_(stack[top])))) 
             {
-                if(!Vector_append(expressionVector, symbol))
+                Log_d(TAG, "Symbol vector current size %d available: %d", expressionVector->currentSize, expressionVector->availableSize);
+                if(!Vector_append(expressionVector, stack[top--]))
                 {
                     return ERROR;
                 }
@@ -243,20 +286,27 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
             stack[++top] = symbol;
         }
 
-        (**currentTokenHandle)++;
+        (*currentTokenHandle)++;
     }
 
     currentSymbol = NULL;
 
-
     // Pop all the remaining elements from the stack
     while (top != -1) 
     {
+        Log_d(TAG, "Symbol vector current size %d available: %d", expressionVector->currentSize, expressionVector->availableSize);
         if(!Vector_append(expressionVector, stack[top--]))
         {
             return ERROR;
         }
     }
+
+    for(int i = 0; i < expressionVector->currentSize; i++)
+    {
+        ExpressionHandle_t handle =  expressionVector->expandable[i];
+        Log_d(TAG, "symbol: %d", handle->type);
+    }
+
 
     if(!Vector_append(&localScope->expressionList, expressionVector))
     {
@@ -264,7 +314,7 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
         return ERROR;
     }
     
-    Log_d(TAG, "Finished expression line");
+    Log_d(TAG, "Finished expression line %d %d", tokenOffset(0)->tokenType, tokenOffset(1)->tokenType);
     return SUCCESS;
 }
 
@@ -296,6 +346,8 @@ static inline bool parseSymbolExpression_(LocalScopeObjectHandle_t scopeBody, Ex
 {
     if(isTokenOperator_(currentTokenHandle))
     {
+        Log_d(TAG, "parsing operator: %s", cTokenP->valueString);
+
         if(!handleOperator_(symbolHandle, currentTokenHandle))
         {
             Log_e(TAG, "Operator parsing malfunction");
@@ -308,15 +360,20 @@ static inline bool parseSymbolExpression_(LocalScopeObjectHandle_t scopeBody, Ex
         {
             case NAMING: 
             {
+                Log_d(TAG, "parsing naming: %s", cTokenP->valueString);
+
                 if(!handleNaming_(scopeBody, symbolHandle, currentTokenHandle))
                 {
                     Log_e(TAG, "Error happened while handling variable%s in expression", cTokenP->valueString);
                     return ERROR;
                 }
+
             }break;
 
             case NUMBER_VALUE:
             {
+                Log_d(TAG, "parsing number: %s", cTokenP->valueString);
+
                 if(!handleNumber_(symbolHandle, currentTokenHandle))
                 {
                     Log_e(TAG, "Error happened while handling number%s in expression", cTokenP->valueString);
@@ -377,7 +434,7 @@ static bool handleOperator_(ExpressionHandle_t symbolHandle, TokenHandler_t** cu
 static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHandle_t symbol, TokenHandler_t** currentTokenHandle)
 {
     // TokenHandler_t currentNamingToken;
-    (**currentTokenHandle)++;
+    (*currentTokenHandle)++;
 
     if(cTokenType== BRACKET_ROUND_START)
     {
@@ -385,26 +442,34 @@ static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHan
 
         ALLOC_CHECK(methodHandle, sizeof(ExMethodCall_t), ERROR);
 
+        (*currentTokenHandle)--;
+        Log_d(TAG, "Parsing method call: %s", cTokenP->valueString);
+
         if(!handleMethodCall_(methodHandle, currentTokenHandle, true))
         {
             Log_e(TAG, "Failed to handle method parsing");
             return ERROR;
         }
-        
+
         symbol->type = EXP_METHOD_CALL;
         symbol->expressionObject = methodHandle;
 
     }else
-    {
+    {   
+        (*currentTokenHandle)--;
         symbol->type = EXP_VARIABLE;
 
-        if(Hashmap_find(&localScopeBody->localVariables, cTokenP->valueString, strlen(cTokenP->valueString)))
+        const char* varName = cTokenP->valueString;
+
+        Log_d(TAG, "Parsing variable: %s", varName);
+
+        if(Hashmap_find(&localScopeBody->localVariables, varName, strlen(varName)))
         {
             symbol->expressionObject = localScopeBody->localVariables.value;
         }else
         {
             symbol->expressionObject = NULL;
-            Shouter_shoutError(cTokenP, "Variable '%s' is not declared previously", cTokenP->valueString);
+            Shouter_shoutError(cTokenP, "Variable '%s' is not declared previously", varName);
         }
 
     }
@@ -490,6 +555,7 @@ static bool isTokenOperator_(TokenHandler_t** currentTokenHandle)
             cTokenType == OPERATOR_MINUS    ||
             cTokenType == OPERATOR_MODULUS  ||
             cTokenType == OPERATOR_MULTIPLY ||
+            cTokenType == OPERATOR_DIVIDE   ||
             cTokenType == OPERATOR_XOR      ||
             cTokenType == OPERATOR_AND      ||
             cTokenType == OPERATOR_OR       ||
