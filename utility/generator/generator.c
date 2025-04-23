@@ -20,6 +20,9 @@
 #include <queue.h>
 #include "arch_specific.h"
 #include "../parser/structures/expression/expressions.h"
+#include "bit_arithmetic/fit_arithmetic.h"
+
+
 ////////////////////////////////
 // DEFINES
 #if ENABLE_READABILITY
@@ -158,7 +161,7 @@ static bool fileWriteMainHeader_(void)
 static bool fileWriteIncludes_(void)
 {
     int writeStatus;
-    writeStatus = fwrite(INCLUDE_WRAP("stdint") READABILITY_ENDLINE, BYTE_SIZE, SIZEOF_NOTERM(INCLUDE_WRAP("stdint") READABILITY_ENDLINE), currentCfile_);
+    writeStatus = fwrite(INCLUDE_WRAP("stdint") READABILITY_ENDLINE , BYTE_SIZE, SIZEOF_NOTERM(INCLUDE_WRAP("stdint") READABILITY_ENDLINE), currentCfile_);
 
     if(writeStatus < 0)
     {
@@ -312,9 +315,6 @@ static inline bool fileWriteMethodBody_(const MethodObjectHandle_t method)
     }
 
     
-    // Hashmap_forEach(&method->body.localVariables, methodBodyVariableInitializerForIterator_, NULL);
-    // writing variables assignings
-
     // for(size_t expressionQ = 0; expressionQ < method->body.expressions.currentSize; expressionQ++)
     // {
     //     QueueHandle_t expressionQueue;
@@ -464,20 +464,6 @@ static int methodDeclarationIteratorCallback_(void *key, int count, void* value,
         // If annotated as ignored, lets call it as generated without generation
         return SUCCESS;
     }
-
-    // if(method->returnVariable.bitpack != 0)
-    // {
-    //     variableTypeKeywordToUse = (char*) TYPE_BINDS[(method->returnVariable.bitpack - 1) / BYTE_SIZE_BITS]; 
-        
-    //     fprintf(currentCfile_,"%s %s_%s%c",
-    //         variableTypeKeywordToUse,
-    //         currentAst_->iguanaObjectName,
-    //         method->methodName, BRACKET_ROUND_START_CHAR);
-    // }else
-    // {
-    //     Log_e(TAG, "Failed to write method %s return type", method->methodName);
-    //     return ERROR;
-    // }
     
     if(!generateMethodHeader_(method))
     {

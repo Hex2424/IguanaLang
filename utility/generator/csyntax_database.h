@@ -14,8 +14,7 @@
 #ifndef UTILITY_GENERATOR_CSYNTAX_DATABASE_H_
 #define UTILITY_GENERATOR_CSYNTAX_DATABASE_H_
 
-#define SIZEOF_NOTERM(string) (sizeof(string) - 1)
-
+#include <helper_macros.h>
 
 #define CONST_STRING                static const char* const
 #define CONST_SYMBOL                static const char
@@ -91,11 +90,40 @@ CONST_STRING TYPE_BINDS[] =
 #define MANGLE_TYPE_SHORT_DEF    "s"
 #define MANGLE_TYPE_CHAR_DEF     "c"
 
+#if ARCHITECTURE_DEFAULT_BITS == 64
+    #define BIT_TYPE_EXP              TYPE_BIT64_EXP
+    #define BIT_SIZE_BITPACK          64
+#elif ARCHITECTURE_DEFAULT_BITS == 32
+    #define BIT_TYPE_EXP              TYPE_BIT32_EXP
+    #define BIT_SIZE_BITPACK          32
+#elif ARCHITECTURE_DEFAULT_BITS == 16
+    #define BIT_TYPE_EXP              TYPE_BIT16_EXP
+    #define BIT_SIZE_BITPACK          16
+#elif ARCHITECTURE_DEFAULT_BITS == 8
+    #define BIT_TYPE_EXP              TYPE_BIT8_EXP
+    #define BIT_SIZE_BITPACK          8
+#else
+    #define BIT_TYPE_EXP              TYPE_BIT32_EXP
+    #define BIT_SIZE_BITPACK          32
+#endif
 
-#define TYPE_BIT64_DEF           "uint64_t"
-#define TYPE_BIT32_DEF           "uint32_t"
-#define TYPE_BIT16_DEF           "uint16_t"
-#define TYPE_BIT8_DEF            "uint8_t"
-#define TYPE_BIT0_DEF            "void"
+#define BIT_TYPE_DEF              STRINGIFY(BIT_TYPE_EXP)
+
+
+#define PARAM_TYPE_DEF            TYPE_BIT0_DEF POINTER_SIGN_DEF
+#define BITPACK_TYPE_TYPEDEF_DEF  TYPEDEF_WRAP(BIT_TYPE_DEF, BITPACK_TYPE_NAME)
+
+
+#define TYPE_BIT64_EXP            uint64_t
+#define TYPE_BIT32__EXP           uint32_t
+#define TYPE_BIT16__EXP           uint16_t
+#define TYPE_BIT8_EXP             uint8_t
+#define TYPE_BIT0_EXP             void
+
+#define TYPE_BIT64_DEF           STRINGIFY(TYPE_BIT64_EXP)
+#define TYPE_BIT32_DEF           STRINGIFY(TYPE_BIT32_EXP)
+#define TYPE_BIT16_DEF           STRINGIFY(TYPE_BIT16_EXP)
+#define TYPE_BIT8_DEF            STRINGIFY(TYPE_BIT8_EXP)
+#define TYPE_BIT0_DEF            STRINGIFY(TYPE_BIT0_EXP)
 
 #endif // UTILITY_GENERATOR_CSYNTAX_DATABASE_H_

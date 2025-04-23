@@ -1,5 +1,5 @@
 /**
- * @file typedefs.h
+ * @file helper_macros.h
  *
  * MORE INFO ABOUT THE FILE'S CONTENTS
  *
@@ -8,19 +8,22 @@
  *
  * @author Markas Vielavičius (markas.vielavicius@bytewall.com)
  *
- * @date 2025-04-21
+ * @date 2025-04-22
  */
 
-#ifndef UTILITY_MISC_TYPEDEFS_H_
-#define UTILITY_MISC_TYPEDEFS_H_
-#include <stdbool.h>
-#include <stdint.h>
+#ifndef UTILITY_MISC_HELPER_MACROS_H_
+#define UTILITY_MISC_HELPER_MACROS_H_
 
 
-typedef uint64_t    BitpackSize_t;
-typedef uint8_t     BitpackPos_t;
-typedef uint32_t    GroupID_t;
+// STRING HELPERS
 
-typedef int64_t AssignValue_t;
+#define STRINGIFY(exp) str__(exp)
+#define str__(exp) #exp
 
-#endif // UTILITY_MISC_TYPEDEFS_H_
+#define SIZEOF_NOTERM(string) (sizeof(string) - 1)
+
+
+
+
+
+#endif // UTILITY_MISC_HELPER_MACROS_H_
