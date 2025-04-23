@@ -25,6 +25,7 @@ set(SRC
     utility/parser/parser_utilities/global_parser_utility.c
     utility/generator/generator.c
     utility/queue/queue.c
+    utility/stack/stack.c
     utility/hash/random/random.c
     utility/external/inbuilt_c_compiler/c_compiler.c
     utility/external/unix_linker/unix_linker.c
@@ -38,6 +39,7 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/utility/vector
     ${CMAKE_SOURCE_DIR}/utility/hashmap
     ${CMAKE_SOURCE_DIR}/utility/queue
+    ${CMAKE_SOURCE_DIR}/utility/stack
     ${CMAKE_SOURCE_DIR}/utility/global_config
     ${CMAKE_SOURCE_DIR}/utility/logger
     ${CMAKE_SOURCE_DIR}/utility/misc)
