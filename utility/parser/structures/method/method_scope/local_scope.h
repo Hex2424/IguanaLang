@@ -21,7 +21,7 @@ typedef struct
 {
     Hashmap_t localVariables;
     BitpackSize_t sizeBits; 
-    Vector_t expressions;
+    Vector_t expressionList;
 }LocalScopeObject_t;
 
 typedef LocalScopeObject_t* LocalScopeObjectHandle_t;

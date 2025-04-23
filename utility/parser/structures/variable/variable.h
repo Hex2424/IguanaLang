@@ -23,9 +23,8 @@ typedef struct
     char* objectName;
     char* castedFile;
     BitpackSize_t bitpack;
-    AssignValue_t assignedValue;
-    bool hasAssignedValue;
-    void* assignedVariable;
+    GroupID_t belongToGroup;
+    BitpackPos_t posBit;
 }VariableObject_t;
 
 typedef VariableObject_t* VariableObjectHandle_t;

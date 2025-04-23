@@ -14,16 +14,36 @@
 #define UTILITY_PARSER_STRUCTURES_EXPRESSION_EXPRESSIONS_H_
 
 #include "../expression/expression_list/method_call.h"
-#include "../expression/expression_list/single_operator.h"
-#include "../expression/expression_list/constant_value.h"
 
 typedef enum
 {
-    OPERATOR,
-    CONSTANT_NUMBER,
-    VARIABLE_NAME,
-    METHOD_CALL,
+    EXP_OPERATOR,
+    EXP_METHOD_CALL,
+    EXP_CONST_NUMBER,
+    EXP_VARIABLE,
+    EXP_PARENTHESES_LEFT,
+    EXP_PARENTHESES_RIGHT
 }ExpressionType_t;
+
+
+typedef enum
+{
+    OP_PLUS,
+    OP_MINUS,
+    OP_MULTIPLY,
+    OP_DIVIDE,
+    OP_MODULUS,
+    OP_NOT,
+    OP_AND,
+    OP_OR,
+
+    OP_BIN_XOR,
+    OP_BIN_NOT,
+    OP_BIN_AND,
+    OP_BIN_OR,
+
+    OP_SET
+}OperatorType_t;
 
 typedef struct
 {
