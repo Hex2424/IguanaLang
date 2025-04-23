@@ -58,7 +58,7 @@ bool Separator_getSeparatedWords(const char *codeString, const size_t length, Ve
     size_t tokenCount;
     InitialSettings_t settings;
     settings.initialSize = length / 2;
-    settings.expandableConstant = (1.0f / 3.0f);
+    settings.expandableConstant = EXPANDABLE_CONSTANT_DEFAULT;
     settings.containsVectors = false; 
 
     TokenHandler_t endFileToken = createEndFileToken_();
