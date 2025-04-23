@@ -119,12 +119,18 @@ bool Compiler_compile(const char* iguanaFilePath, const bool isMainFile)
         return ERROR;
     }
 
-
-    // Generator generates code out of AST(Abstract syntax tree)
-    if(!Generator_generateCode(&root, filenameGenerate))
+    if(Shouter_getErrorCount() == NO_ERROR)
     {
-        Log_e(TAG, "Failed to generate c language code for Iguana file %s", iguanaFilePath);
-        return ERROR;
+        // Generator generates code out of AST(Abstract syntax tree)
+        if(!Generator_generateCode(&root, filenameGenerate))
+        {
+            Log_e(TAG, "Failed to generate c language code for Iguana file %s", iguanaFilePath);
+            return ERROR;
+        }
+
+    }else
+    {
+        Shouter_shoutError(NULL, "Compiling completed with %d errors", Shouter_getErrorCount());
     }
 
     // cleanTempCFile_(filePath);
