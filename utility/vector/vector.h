@@ -19,6 +19,9 @@
 #include "stdbool.h"
 #include "../misc/safety_macros.h"
 
+
+#define EXPANDABLE_CONSTANT_DEFAULT     (1.0f / 3.0f)
+
 typedef struct
 {
     bool containsVectors;

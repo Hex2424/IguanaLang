@@ -23,6 +23,7 @@ set(SRC
     utility/parser/parser_utilities/smaller_parsers/method_parser/method_parser.c
     utility/parser/parser_utilities/smaller_parsers/var_parser/var_parser.c
     utility/parser/parser_utilities/global_parser_utility.c
+    utility/parser/parser_utilities/post_parsing_utility/bitfit.c
     utility/generator/generator.c
     utility/queue/queue.c
     utility/stack/stack.c

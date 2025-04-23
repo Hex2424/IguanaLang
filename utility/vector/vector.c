@@ -85,7 +85,7 @@ bool Vector_create(VectorHandler_t object, const InitialSettingsHandler_t initia
     }else
     {
         Log_i(TAG, "Initial settings is NULL, restoring defaults");
-        object->expandableConstant = 1.0f / 3.0f; // default expandable constant
+        object->expandableConstant = EXPANDABLE_CONSTANT_DEFAULT; // default expandable constant
         ALLOC_CHECK(object->expandable, INITIAL_SIZE_DEFAULT * sizeof(void*), ERROR);
 
         object->availableSize = INITIAL_SIZE_DEFAULT;

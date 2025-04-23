@@ -16,6 +16,8 @@
 #include "parser_utilities/global_parser_utility.h"
 #include "parser_utilities/smaller_parsers/method_parser/method_parsers.h"
 #include "parser_utilities/smaller_parsers/var_parser/var_parser.h"
+#include "parser_utilities/post_parsing_utility/bitfit.h"
+
 #include <string.h>
 #include "../hash/random/random.h"
 
@@ -52,6 +54,7 @@ size_t tokensCount;
 
 static bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_t rootHandle, const Accessibility_t notation);
 static inline bool handleNotation_(ParserHandle_t parser, MainFrameHandle_t rootHandle);
+static inline bool postParsingJobsAST_(MainFrameHandle_t mainframe);
 
 ////////////////////////////////
 // IMPLEMENTATION
@@ -105,7 +108,8 @@ bool Parser_parseTokens(ParserHandle_t parser, MainFrameHandle_t root, const Vec
 
     }
 
-    
+    // Post parsing AST stuff 
+    postParsingJobsAST_(root);
 
     return SUCCESS;
 }
@@ -162,12 +166,6 @@ static inline bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_
             Shouter_shoutError(cTokenP, "Variable \'%s\' is declared several times", variable->objectName);
             return ERROR;
         }
-
-        if(variable->objectName != NULL)
-        {
-            // If variable fully valid with naming, it counts as space occupying variable, it increases overall object spawn size
-            rootHandle->objectSizeBits += variable->bitpack;
-        }
         
     }else if(cTokenType == EQUAL)
     {
@@ -190,4 +188,20 @@ static inline bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_
 
     return SUCCESS;
 
+}
+
+
+static inline bool postParsingJobsAST_(MainFrameHandle_t mainframe)
+{
+
+    // Categorizing each bit pack variable to corresponding group
+    // Assigning bitpack positions
+    // Algorithm of packing should be decided depending on optimization
+    if(!Bitfit_assignGroupsAndPositionForVariableHashmap_(&mainframe->classVariables, FIRST_FIT, &mainframe->objectSizeBits))
+    {
+        Log_e(TAG, "Failed to do bitfitting");
+        return ERROR;
+    }
+
+    return SUCCESS;
 }

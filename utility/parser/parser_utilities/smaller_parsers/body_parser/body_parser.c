@@ -16,6 +16,8 @@
 #include "../../../../parser/parser_utilities/global_parser_utility.h"
 #include "../../../../parser/parser_utilities/compiler_messages.h"
 #include "../../../../parser/parser_utilities/smaller_parsers/var_parser/var_parser.h"
+#include "../../../../parser/parser_utilities/post_parsing_utility/bitfit.h"
+
 #include "../../../../parser/structures/expression/expressions.h"
 #include <stack.h>
 ////////////////////////////////
@@ -53,6 +55,7 @@ static inline bool parseVariableInstance_(LocalScopeObjectHandle_t scopeBody, To
 static inline int32_t expressionPrecedence_(ExpressionHandle_t symbol);
 static inline bool parseSymbolExpression_(LocalScopeObjectHandle_t scopeBody, ExpressionHandle_t symbolHandle, TokenHandler_t** currentTokenHandle);
 static bool handleNumber_(ExpressionHandle_t symbolHandle, TokenHandler_t** currentTokenHandle);
+static inline bool postParsingJobsScope_(LocalScopeObjectHandle_t scopeBody);
 ////////////////////////////////
 // IMPLEMENTATION
 
@@ -101,8 +104,6 @@ static inline int32_t expressionPrecedence_(ExpressionHandle_t symbol)
 
 bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle)
 {
-    scopeBody->sizeBits = 0;
-
     while ((cTokenType != BRACKET_END) && (cTokenType != END_FILE))
     {
 
@@ -127,9 +128,29 @@ bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** 
     
     }
 
+    // Doing some post processing after function parsed
+    if(!postParsingJobsScope_(scopeBody))
+    {
+        Log_e(TAG, "Failed to posprocess scope body");
+        return ERROR;
+    }
+
     return SUCCESS;
 }
 
+static bool postParsingJobsScope_(LocalScopeObjectHandle_t scopeBody)
+{
+    // Categorizing each bit pack variable to corresponding group
+    // Assigning bitpack positions
+    // Algorithm of packing should be decided depending on optimization
+    if(!Bitfit_assignGroupsAndPositionForVariableHashmap_(&scopeBody->localVariables, FIRST_FIT, &scopeBody->sizeBits))
+    {
+        Log_e(TAG, "Failed to do bitfitting in scope");
+        return ERROR;
+    }
+
+    return SUCCESS;
+}
 
 static inline bool parseVariableInstance_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle)
 {
@@ -152,12 +173,6 @@ static inline bool parseVariableInstance_(LocalScopeObjectHandle_t scopeBody, To
         {
             Shouter_shoutError(cTokenP, "Variable \'%s\' is declared several times", variable->objectName);
             return ERROR;
-        }
-
-        if(variable->objectName != NULL)
-        {
-            // If variable fully valid with naming, it counts as space occupying variable, it increases overall object spawn size
-            scopeBody->sizeBits += variable->bitpack;
         }
         
     }else if(cTokenType == EQUAL)
