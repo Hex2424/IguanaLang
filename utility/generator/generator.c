@@ -34,6 +34,10 @@
     #define READABILITY_SPACE               ""
 #endif
 
+
+
+#define FWRITE_STRING(string) {if(fwrite(string, BYTE_SIZE, SIZEOF_NOTERM(string), currentCfile_) < 0) return ERROR;}
+
 ////////////////////////////////
 // PRIVATE CONSTANTS
 
@@ -88,6 +92,7 @@ static bool fileWriteExpression_(const VectorHandler_t expression);
 static inline bool fileWriteVariablesAllocation_(const BitpackSize_t bitsize, const uint32_t scopeIndex);
 static bool printBitVariableReading_(const ExpressionHandle_t operand);
 static bool generateCodeForOperation_(const ExpressionHandle_t left, const ExpressionHandle_t right, const OperatorType_t operator);
+static bool fileWriteBitVariableSet_(const ExpressionHandle_t left, const ExpressionHandle_t right);
 ////////////////////////////////
 // IMPLEMENTATION
 
@@ -353,12 +358,20 @@ static bool generateCodeForOperation_(const ExpressionHandle_t left, const Expre
     char* operatorString = NULL;
     int status;
 
-    status = fwrite(STRINGIFY(TMP_VAR) C_OPERATOR_EQUAL_DEF, BYTE_SIZE, SIZEOF_NOTERM(STRINGIFY(TMP_VAR) C_OPERATOR_EQUAL_DEF), currentCfile_);
-
-    if(!printBitVariableReading_(left))
+    // Set handling differently
+    if(operator != OP_SET)
     {
-        return ERROR;
+        status = fwrite(STRINGIFY(TMP_VAR) C_OPERATOR_EQUAL_DEF, BYTE_SIZE, SIZEOF_NOTERM(STRINGIFY(TMP_VAR) C_OPERATOR_EQUAL_DEF), currentCfile_);
+        
+        if(!printBitVariableReading_(left))
+        {
+            return ERROR;
+        }
+    }else
+    {
+        return fileWriteBitVariableSet_(left, right);
     }
+
 
     switch (operator)
     {
@@ -408,10 +421,10 @@ static bool printBitVariableReading_(const ExpressionHandle_t operand)
     {
         const VariableObjectHandle_t variable = (VariableObjectHandle_t) operand->expressionObject;
  
-        if(variable->bitpack < ARCHITECTURE_DEFAULT_BITS)
+        if(variable->bitpack < BIT_SIZE_BITPACK)
         {
             status = fprintf(currentCfile_, STRINGIFY(AFIT_READ(s_%u[%u], %u, %lu)), 0, variable->belongToGroup, variable->posBit, variable->bitpack);
-        }else if (variable->bitpack == ARCHITECTURE_DEFAULT_BITS)
+        }else if (variable->bitpack == BIT_SIZE_BITPACK)
         {
             status = fprintf(currentCfile_, STRINGIFY(APLT_READ(s_%u[%u])), 0, variable->belongToGroup);
         }
@@ -426,6 +439,50 @@ static bool printBitVariableReading_(const ExpressionHandle_t operand)
 
     return status > 0;
 }
+
+
+static bool fileWriteBitVariableSet_(const ExpressionHandle_t left, const ExpressionHandle_t right)
+{
+    int status;
+    const VariableObjectHandle_t leftVar = (VariableObjectHandle_t) left->expressionObject;
+    const VariableObjectHandle_t rightVar = (VariableObjectHandle_t) right->expressionObject;
+        
+    if(left->type == EXP_VARIABLE)
+    {
+        if(leftVar->bitpack < BIT_SIZE_BITPACK)
+        {
+            status = fprintf(currentCfile_, STRINGIFY(s_%u[%u] = AFIT_RESET(s_%u[%u], %u, %lu)) READABILITY_SPACE C_OPERATOR_BIN_OR_DEF READABILITY_SPACE, 0, leftVar->belongToGroup, 0, leftVar->belongToGroup, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
+        }else if (leftVar->bitpack == BIT_SIZE_BITPACK)
+        {
+            status = fprintf(currentCfile_, STRINGIFY(s_%u[%u]) READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE, 0, leftVar->belongToGroup);
+        }else
+        {
+            Log_e(TAG, "Unhandled case vars cant be now bigger than %u", BIT_SIZE_BITPACK);
+            return ERROR;
+        }
+    }
+    
+    if(right->type == EXP_TMP_VAR)
+    {
+        status = fprintf(currentCfile_, STRINGIFY(((TMP_VAR & AFIT_MASK(%lu)) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
+    }else if (right->type == EXP_VARIABLE)
+    {
+        if(rightVar->bitpack < BIT_SIZE_BITPACK)
+        {
+            status = fprintf(currentCfile_, STRINGIFY(((AFIT_READ(s_%u[%u], %u, %lu) & AFIT_MASK(%lu)) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, 0, rightVar->belongToGroup, rightVar->posBit, rightVar->bitpack, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
+        }else if (rightVar->bitpack == BIT_SIZE_BITPACK)
+        {
+            status = fprintf(currentCfile_, STRINGIFY(((s_%u[%u] & AFIT_MASK(%lu)) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, 0, rightVar->belongToGroup, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
+        }else
+        {   
+            Log_e(TAG, "Unhandled case vars cant be now bigger than %u", BIT_SIZE_BITPACK);
+            return ERROR;
+        }
+    }
+   
+    return (status > 0);
+}
+
 
 static int methodDefinitionIteratorCallback_(void *key, int count, void* value, void *user)
 {
@@ -469,12 +526,7 @@ static bool generateMethodHeader_(const MethodObjectHandle_t method)
         }
     }
 
-    fwrite(PARAM_TYPE_DEF READABILITY_SPACE FUNCTION_PARAM_NAME,
-        BYTE_SIZE,
-        SIZEOF_NOTERM(PARAM_TYPE_DEF READABILITY_SPACE FUNCTION_PARAM_NAME), currentCfile_);
-
-
-    fwrite(BRACKET_ROUND_END_DEF, BYTE_SIZE, 1, currentCfile_);
+    FWRITE_STRING(PARAM_TYPE_DEF READABILITY_SPACE FUNCTION_PARAM_NAME BRACKET_ROUND_END_DEF);
 
     return SUCCESS;
 }
@@ -512,108 +564,6 @@ static int methodDeclarationIteratorCallback_(void *key, int count, void* value,
     }
     return SUCCESS;
 }
-
-// static bool handleExpressionWriting_(const ExpressionHandle_t expression)
-// {
-//     if(expression == NULL)
-//     {
-//         Log_e(TAG, "Expression pointer is NULL");
-//         return ERROR;
-//     }
-
-//     if(expression->type == METHOD_CALL)
-//     {
-//         ExMethodCallHandle_t methodCallHandle;
-//         methodCallHandle = expression->expressionObject;
-//         if(methodCallHandle->isMethodSelf)
-//         {
-//             //fprintf(currentCfile_, "%s_%s((void*)0)",generator->iguanaImport->objectId.id, methodCallHandle->method.methodName);
-//         }else
-//         {
-//             // not implemented yet
-//         }
-
-//         free(methodCallHandle);
-
-//     }else if(expression->type == CONSTANT_NUMBER)
-//     {
-//         ConstantNumberHandle_t numberHandle;
-//         numberHandle = expression->expressionObject;
-//         NULL_GUARD(numberHandle, ERROR, Log_e(TAG, "Constant number handle is null somehow"));
-
-//         fprintf(currentCfile_, "%s", numberHandle->valueAsString);
-
-//     }else if(expression->type == OPERATOR)
-//     {
-//         OperatorHandle_t operatorHandle;
-//         operatorHandle = expression->expressionObject;
-//         NULL_GUARD(operatorHandle, ERROR, Log_e(TAG, "Operator handle is null somehow"));
-//         handleOperatorWritingByType_(operatorHandle->operatorTokenType);
-
-//     }else if(expression->type == VARIABLE_NAME)
-//     {
-//         char* variableName;
-//         variableName = expression->expressionObject;
-//         NULL_GUARD(variableName, ERROR, Log_e(TAG, "Variable name handle is null somehow"));
-
-//         // fprintf(currentCfile_, "%s.%s", LOCAL_VARIABLES_STRUCT_NAME, variableName);
-//     }else
-//     {
-//         Log_e(TAG, "Unrecognised expression \'ID:%d\'", expression->type);
-//         return ERROR;
-//     }
-    
-//     return SUCCESS;
-// }
-
-
-// static void handleOperatorWritingByType_(const TokenType_t type)
-// {
- 
-//         switch (type)
-//         {
-//             case OPERATOR_PLUS:
-//                 {
-//                     fprintf(currentCfile_, "+");
-//                 }break;
-
-//             case OPERATOR_MINUS:
-//                 {
-//                     fprintf(currentCfile_, "-");
-//                 }break;
-
-//             case OPERATOR_MULTIPLY:
-//                 {
-//                     fprintf(currentCfile_, "*");
-//                 }break;
-            
-//             case OPERATOR_DIVIDE:
-//                 {
-//                     fprintf(currentCfile_, "/");
-//                 }break;
-//             case OPERATOR_MODULUS:
-//                 {
-//                     fprintf(currentCfile_, "%%");
-//                 }break;
-//             case EQUAL:
-//                 {
-//                     fprintf(currentCfile_, "=");
-//                 }break;
-//             case OPERATOR_XOR:
-//                 {
-//                     fprintf(currentCfile_, "^");
-//                 }break;
-//             case OPERATOR_OR:
-//                 {
-//                     fprintf(currentCfile_, "|");
-//                 }break;
-//             case OPERATOR_AND:
-//             {
-//                 fprintf(currentCfile_, "&");
-//             }break;
-//             default:break;
-//         }
-// }
 
 
 static inline uint8_t getDigitCountU64_(uint64_t number) 
