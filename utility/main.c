@@ -128,8 +128,8 @@ int main(int argc, char **argv)
         }
 
     }
-
-    free(arguments.files);
     
+    free(arguments.files);
+
     return EXIT_SUCCESS;
 }

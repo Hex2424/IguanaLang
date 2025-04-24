@@ -41,9 +41,9 @@ static DynamicStack_t symbolStack;
 // PRIVATE METHODS
 
 // static inline bool handleDotAccess_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
-static bool handleMethodCall_(ExMethodCallHandle_t methodCall, TokenHandler_t** currentTokenHandle, const bool isMethodSelf);
+static bool handleMethodCall_(LocalScopeObjectHandle_t localScopeBody, ExMethodCallHandle_t methodCall, TokenHandler_t** currentTokenHandle, const bool isMethodSelf);
 static inline bool handleObjectDeclaration_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
-static inline bool handleMethodCallParameterization_(MethodObjectHandle_t methodHandle, TokenHandler_t** currentTokenHandle);
+static inline bool handleMethodCallParameterization_(LocalScopeObjectHandle_t localScopeBody, MethodObjectHandle_t methodHandle, TokenHandler_t** currentTokenHandle);
 static bool handleOperator_(ExpressionHandle_t symbolHandle, TokenHandler_t** currentTokenHandle);
 static bool isTokenOperator_(TokenHandler_t** currentTokenHandle);
 static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHandle_t symbol, TokenHandler_t** currentTokenHandle);
@@ -220,8 +220,9 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
     ExpressionHandle_t currentSymbol = NULL;
     int appendsCount = 0;
 
-    ALLOC_CHECK(expressionVector, sizeof(Vector_t), ERROR);
+    expressionVector = Vector_createDynamic(NULL);
 
+    NULL_GUARD(expressionVector, ERROR, Log_e(TAG, "Failed to create/ allocate expression Vector"));
 
     while ((cTokenType != BRACKET_END) && (cTokenType != END_FILE) && (cTokenType != SEMICOLON))
     {
@@ -253,6 +254,7 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
         if (Expression_isSymbolOperand(symbol))
         {
             appendsCount++;
+
             if(!Vector_append(expressionVector, symbol))
             {
                 Log_e(TAG, "Failed to apped operand");
@@ -292,6 +294,7 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
         {
             while (!Stack_isEmpty(&symbolStack) && (expressionPrecedence_(symbol) <= expressionPrecedence_(Stack_peek(&symbolStack)))) 
             {
+
                 if(!Vector_append(expressionVector, Stack_pop(&symbolStack)))
                 {
                     Log_e(TAG, "Failed to append pop from stack");
@@ -313,6 +316,7 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
     // Pop all the remaining elements from the stack
     while (!Stack_isEmpty(&symbolStack)) 
     {
+
         if(!Vector_append(expressionVector, Stack_pop(&symbolStack)))
         {
             return ERROR;
@@ -337,7 +341,6 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
         }
         
     }
-
 
     if(!Vector_append(&localScope->expressionList, expressionVector))
     {
@@ -476,14 +479,14 @@ static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHan
         (*currentTokenHandle)--;
         Log_d(TAG, "Parsing method call: %s", cTokenP->valueString);
 
-        if(!handleMethodCall_(methodHandle, currentTokenHandle, true))
+        if(!handleMethodCall_(localScopeBody, methodHandle, currentTokenHandle, true))
         {
             Log_e(TAG, "Failed to handle method parsing");
             return ERROR;
         }
-        // TODO: Add normal implementation of function
-        symbol->type = EXP_CONST_NUMBER;
-        symbol->expressionObject = NULL;
+
+        symbol->type = EXP_METHOD_CALL;
+        symbol->expressionObject = methodHandle;
 
     }else
     {   
@@ -509,21 +512,18 @@ static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHan
 }
 
 
-static bool handleMethodCall_(ExMethodCallHandle_t methodCall, TokenHandler_t** currentTokenHandle, const bool isMethodSelf)
+static bool handleMethodCall_(LocalScopeObjectHandle_t localScopeBody, ExMethodCallHandle_t methodCall, TokenHandler_t** currentTokenHandle, const bool isMethodSelf)
 {
     // TODO: method existance check
 
     methodCall->method.methodName = cTokenP->valueString;
     methodCall->isMethodSelf = isMethodSelf;
-    ALLOC_CHECK(methodCall->method.parameters, sizeof(Vector_t),ERROR);
+    methodCall->method.parameters = Vector_createDynamic(NULL);
 
-    if(!Vector_create(methodCall->method.parameters, NULL))
-    {
-        return ERROR;
-    }
+    NULL_GUARD(methodCall->method.parameters, ERROR, Log_e(TAG, "Failed to create function call %s params vector", methodCall->method.methodName));
 
     (*currentTokenHandle)++; 
-    if(!handleMethodCallParameterization_(&methodCall->method, currentTokenHandle))
+    if(!handleMethodCallParameterization_(localScopeBody, &methodCall->method, currentTokenHandle))
     {
         return ERROR;
     }
@@ -532,37 +532,63 @@ static bool handleMethodCall_(ExMethodCallHandle_t methodCall, TokenHandler_t** 
     return SUCCESS;
 }
 
-static inline bool handleMethodCallParameterization_(MethodObjectHandle_t methodHandle, TokenHandler_t** currentTokenHandle)
+static inline bool handleMethodCallParameterization_(LocalScopeObjectHandle_t localScopeBody, MethodObjectHandle_t methodHandle, TokenHandler_t** currentTokenHandle)
 {
     
     if(cTokenType == BRACKET_ROUND_START)
     {
         (*currentTokenHandle)++;
 
-        while (true)
+        while ((cTokenType != BRACKET_ROUND_END) && (cTokenType != END_FILE) && (cTokenType != BRACKET_END))
         {
             
-        //    if(cTokenType == NAMING)
-        //    {
-        //         // do necesary checking for existing variable (later expression parsing)
-
-        //    }else if(cTokenType == BRACKET_ROUND_END)
-        //    {
-        //         // parameters end
-
-        //         break;
-        //    }else if(cTokenType == COMMA)
-        //    {
-        //         if()
-        //         {
-
-        //         }
-        //    }
-            if(cTokenType == BRACKET_ROUND_END)
+            if(cTokenType == NAMING)
             {
+                // do necesary checking for existing variable (later expression parsing)
+                if(Hashmap_find(&localScopeBody->localVariables, cTokenP->valueString, strlen(cTokenP->valueString)))
+                {
+                    ExpressionHandle_t symbol;
+                    ALLOC_CHECK(symbol, sizeof(Expression_t), ERROR);
+
+                    symbol->type = EXP_VARIABLE;
+                    symbol->expressionObject = *localScopeBody->localVariables.value;
+                    
+                    if(!Vector_append(methodHandle->parameters, symbol))
+                    {
+                        Log_e(TAG, "Failed to append function param to vector");
+                        return ERROR;
+                    }
+                }else
+                {
+                    Shouter_shoutError(cTokenP, "Variable '%s' is not declared previously", cTokenP->valueString);
+                }
+
+            }else if(cTokenType == NUMBER_VALUE)
+            {
+                ExpressionHandle_t symbol;
+                ALLOC_CHECK(symbol, sizeof(Expression_t), ERROR);
+
+                if(!handleNumber_(symbol, currentTokenHandle))
+                {
+                    Log_e(TAG, "Error happened while handling number%s in expression", cTokenP->valueString);
+                    return ERROR;
+                }
+
+                if(!Vector_append(methodHandle->parameters, symbol))
+                {
+                    Log_e(TAG, "Failed to append function param to vector");
+                    return ERROR;
+                }
+            }
+            
+            if(cTokenType != COMMA)
+            {
+                // If next symbol not comma, break, because there shouldnt be anything more
                 break;
             }
-           
+
+            (*currentTokenHandle)++;
+
         }
         
 

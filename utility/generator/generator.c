@@ -93,6 +93,9 @@ static inline bool fileWriteVariablesAllocation_(const BitpackSize_t bitsize, co
 static bool printBitVariableReading_(const ExpressionHandle_t operand);
 static bool generateCodeForOperation_(const ExpressionHandle_t left, const ExpressionHandle_t right, const OperatorType_t operator);
 static bool fileWriteBitVariableSet_(const ExpressionHandle_t left, const ExpressionHandle_t right);
+static bool generateCodeForOneOperand_(const ExpressionHandle_t symbol);
+static bool filewriteMethodCall_(const ExMethodCallHandle_t methodCallHandle);
+
 ////////////////////////////////
 // IMPLEMENTATION
 
@@ -175,14 +178,8 @@ static bool fileWriteMainHeader_(void)
 
 static bool fileWriteIncludes_(void)
 {
-    int writeStatus;
-    writeStatus = fwrite(INCLUDE_WRAP("stdint") READABILITY_ENDLINE , BYTE_SIZE, SIZEOF_NOTERM(INCLUDE_WRAP("stdint") READABILITY_ENDLINE), currentCfile_);
-
-    if(writeStatus < 0)
-    {
-        Log_e(TAG, "Failed to write lib \"%s\" in object:%s", "stdint", currentAst_->iguanaObjectName);
-        return ERROR;
-    }
+    FWRITE_STRING(INCLUDE_WRAP("stdint"));
+    FWRITE_STRING(INCLUDE_WRAP("stdio") READABILITY_ENDLINE);
 
     return SUCCESS;
 }
@@ -318,33 +315,58 @@ static bool fileWriteExpression_(const VectorHandler_t expression)
         SIZEOF_NOTERM(BRACKET_START_DEF READABILITY_ENDLINE BIT_TYPE_DEF " " STRINGIFY(TMP_VAR) SEMICOLON_DEF READABILITY_ENDLINE),
         currentCfile_);
 
-    for(size_t symbolIdx = 0; symbolIdx < expression->currentSize; symbolIdx++)
+    // there is one element pushed in postfix
+    // May be a operand just laying around
+    if(expression->currentSize == 1)
     {
-        const ExpressionHandle_t symbol = (ExpressionHandle_t) expression->expandable[symbolIdx];
+        const ExpressionHandle_t symbol = (ExpressionHandle_t) expression->expandable[0];
 
+        // If operand handle it, if operator or something else ignore, it shouldn't safely passby from parser side
         if(Expression_isSymbolOperand(symbol))
         {
-            Stack_push(&symbolStack, symbol);
-        }else if(Expression_isSymbolOperator(symbol))
-        {
-            const ExpressionHandle_t right = Stack_pop(&symbolStack);
-            const ExpressionHandle_t left = Stack_pop(&symbolStack);
-
-            const OperatorType_t operand = (OperatorType_t) symbol->expressionObject;
-
-            // DO STUFF
-            if(!generateCodeForOperation_(left, right, operand))
+            if(!generateCodeForOneOperand_(symbol))
             {
-                return ERROR;
-            }
-   
-            if(!Stack_push(&symbolStack, &tmpVar))
-            {
-                Log_e(TAG, "Failed to push stack expression");
+                Log_e(TAG, "Failed to generate code for 1 operand");
                 return ERROR;
             }
         }
+        
+    }else
+    {
+        for(size_t symbolIdx = 0; symbolIdx < expression->currentSize; symbolIdx++)
+        {
+            const ExpressionHandle_t symbol = (ExpressionHandle_t) expression->expandable[symbolIdx];
+
+            if(Expression_isSymbolOperand(symbol))
+            {
+                Stack_push(&symbolStack, symbol);
+            }else if(Expression_isSymbolOperator(symbol))
+            {
+                const ExpressionHandle_t right = Stack_pop(&symbolStack);
+                const ExpressionHandle_t left = Stack_pop(&symbolStack);
+
+                
+
+                const OperatorType_t operator = (OperatorType_t) symbol->expressionObject;
+
+                // DO STUFF
+                if(!generateCodeForOperation_(left, right, operator))
+                {
+                    return ERROR;
+                }
+    
+                if(!Stack_push(&symbolStack, &tmpVar))
+                {
+                    Log_e(TAG, "Failed to push stack expression");
+                    return ERROR;
+                }
+            }
+        }
     }
+
+
+
+    
 
     FWRITE_STRING(BRACKET_END_DEF READABILITY_ENDLINE);
 
@@ -352,6 +374,34 @@ static bool fileWriteExpression_(const VectorHandler_t expression)
     
     return SUCCESS;
 }
+
+
+static bool generateCodeForOneOperand_(const ExpressionHandle_t symbol)
+{
+
+    switch (symbol->type)
+    {
+        case EXP_TMP_VAR:            // Ignoring solo temp variable without operator is same as nothing
+        case EXP_VARIABLE:           // Ignoring solo variable without operator is same as nothing
+        case EXP_CONST_NUMBER:break; // Ignoring solo const number without operator is same as nothing
+        
+        case EXP_METHOD_CALL:        // Method call need handling, it does things
+        {
+            const ExMethodCallHandle_t methodCallHandle = symbol->expressionObject;
+
+            if(!filewriteMethodCall_(methodCallHandle))
+            {
+                Log_e(TAG, "Failed to write method call symbol");
+                return ERROR;
+            }
+        }break;
+
+        default: Log_e(TAG, "Unhandled operator in 1 operator parse type: %d", symbol->type);break;
+    }
+
+    return SUCCESS;
+}
+
 
 static bool generateCodeForOperation_(const ExpressionHandle_t left, const ExpressionHandle_t right, const OperatorType_t operator)
 {
@@ -573,6 +623,37 @@ static int methodDeclarationIteratorCallback_(void *key, int count, void* value,
         // TODO abstracting fwrites
         fwrite(SEMICOLON_DEF, BYTE_SIZE, 1, currentCfile_);
     }
+    return SUCCESS;
+}
+
+
+static bool filewriteMethodCall_(const ExMethodCallHandle_t methodCallHandle)
+{
+    // TODO: when implemented function normal calls will be, will add better handling, for now lets leave
+    if(strcmp(methodCallHandle->method.methodName, "print") == 0)
+    {
+        FWRITE_STRING("printf(\"");
+        for(uint16_t paramIdx = 0; paramIdx < methodCallHandle->method.parameters->currentSize; paramIdx++)
+        {
+            FWRITE_STRING("%lu ");
+        }
+        FWRITE_STRING("\"");
+
+        for(uint16_t paramIdx = 0; paramIdx < methodCallHandle->method.parameters->currentSize; paramIdx++)
+        {
+            FWRITE_STRING("," READABILITY_SPACE);
+
+            const ExpressionHandle_t param = methodCallHandle->method.parameters->expandable[paramIdx];
+            if(!printBitVariableReading_(param))
+            {
+                Log_e(TAG, "Failed to generate param for print");
+                return ERROR;
+            }
+        
+        }
+        FWRITE_STRING(BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE);
+    }
+
     return SUCCESS;
 }
 
