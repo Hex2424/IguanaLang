@@ -141,7 +141,6 @@ bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** 
     
     }
 
-
     // Doing some post processing after function parsed
     if(!postParsingJobsScope_(scopeBody))
     {
@@ -220,6 +219,7 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
     ExpressionHandle_t lastSymbol = NULL;
     ExpressionHandle_t currentSymbol = NULL;
     int appendsCount = 0;
+
     ALLOC_CHECK(expressionVector, sizeof(Vector_t), ERROR);
 
 
@@ -481,9 +481,9 @@ static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHan
             Log_e(TAG, "Failed to handle method parsing");
             return ERROR;
         }
-
-        symbol->type = EXP_METHOD_CALL;
-        symbol->expressionObject = methodHandle;
+        // TODO: Add normal implementation of function
+        symbol->type = EXP_CONST_NUMBER;
+        symbol->expressionObject = NULL;
 
     }else
     {   

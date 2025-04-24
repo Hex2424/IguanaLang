@@ -343,11 +343,8 @@ static bool fileWriteExpression_(const VectorHandler_t expression)
         }
     }
 
-    fwrite(BRACKET_END_DEF,
-        BYTE_SIZE,
-        SIZEOF_NOTERM(BRACKET_END_DEF),
-        currentCfile_);
-    
+    FWRITE_STRING(BRACKET_END_DEF READABILITY_ENDLINE);
+
     Stack_destroy(&symbolStack);
     
     return SUCCESS;
@@ -446,7 +443,9 @@ static bool fileWriteBitVariableSet_(const ExpressionHandle_t left, const Expres
     int status;
     const VariableObjectHandle_t leftVar = (VariableObjectHandle_t) left->expressionObject;
     const VariableObjectHandle_t rightVar = (VariableObjectHandle_t) right->expressionObject;
-        
+    
+
+
     if(left->type == EXP_VARIABLE)
     {
         if(leftVar->bitpack < BIT_SIZE_BITPACK)
@@ -460,6 +459,10 @@ static bool fileWriteBitVariableSet_(const ExpressionHandle_t left, const Expres
             Log_e(TAG, "Unhandled case vars cant be now bigger than %u", BIT_SIZE_BITPACK);
             return ERROR;
         }
+    }else if(left->type == EXP_CONST_NUMBER)
+    {
+        Log_e(TAG, "Unhandled case %ld = value", (AssignValue_t) left->expressionObject);
+        return ERROR;
     }
     
     if(right->type == EXP_TMP_VAR)
@@ -478,6 +481,11 @@ static bool fileWriteBitVariableSet_(const ExpressionHandle_t left, const Expres
             Log_e(TAG, "Unhandled case vars cant be now bigger than %u", BIT_SIZE_BITPACK);
             return ERROR;
         }
+    }else if(right->type == EXP_CONST_NUMBER)
+    {
+        const AssignValue_t constValue = (AssignValue_t)right->expressionObject;
+
+        status = fprintf(currentCfile_, STRINGIFY(((%ld & AFIT_MASK(%lu)) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, constValue, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
     }
    
     return (status > 0);
