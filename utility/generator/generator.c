@@ -36,7 +36,7 @@
 
 
 
-#define FWRITE_STRING(string) {if(fwrite(string, BYTE_SIZE, SIZEOF_NOTERM(string), currentCfile_) < 0) return ERROR;}
+#define FWRITE_STRING(string) {if(fwrite(string, BYTE_SIZE, SIZEOF_NOTERM(string), currentCfile_) < 0) {Log_e(TAG, "fwrite failed to write \"%s\"", string);return ERROR;}}
 
 ////////////////////////////////
 // PRIVATE CONSTANTS
@@ -291,9 +291,9 @@ static inline bool fileWriteMethodBody_(const MethodObjectHandle_t method)
         
         
     }
-    
-    fwrite(READABILITY_ENDLINE BRACKET_END_DEF READABILITY_ENDLINE, BYTE_SIZE, SIZEOF_NOTERM(READABILITY_ENDLINE BRACKET_END_DEF READABILITY_ENDLINE), currentCfile_);
 
+    FWRITE_STRING(READABILITY_ENDLINE BRACKET_END_DEF READABILITY_ENDLINE);
+    
     return SUCCESS;
 }
 
@@ -352,6 +352,7 @@ static bool fileWriteExpression_(const VectorHandler_t expression)
                 // DO STUFF
                 if(!generateCodeForOperation_(left, right, operator))
                 {
+                    Log_e(TAG, "Failed to generate code for operation");
                     return ERROR;
                 }
     
@@ -363,10 +364,6 @@ static bool fileWriteExpression_(const VectorHandler_t expression)
             }
         }
     }
-
-
-
-    
 
     FWRITE_STRING(BRACKET_END_DEF READABILITY_ENDLINE);
 
@@ -394,6 +391,8 @@ static bool generateCodeForOneOperand_(const ExpressionHandle_t symbol)
                 Log_e(TAG, "Failed to write method call symbol");
                 return ERROR;
             }
+
+            FWRITE_STRING(SEMICOLON_DEF READABILITY_ENDLINE);
         }break;
 
         default: Log_e(TAG, "Unhandled operator in 1 operator parse type: %d", symbol->type);break;
@@ -466,7 +465,8 @@ static bool generateCodeForOperation_(const ExpressionHandle_t left, const Expre
 
 static bool printBitVariableReading_(const ExpressionHandle_t operand)
 {
-    int status;
+    int status = SUCCESS;
+    
     if (operand->type == EXP_VARIABLE)
     {
         const VariableObjectHandle_t variable = (VariableObjectHandle_t) operand->expressionObject;
@@ -485,6 +485,15 @@ static bool printBitVariableReading_(const ExpressionHandle_t operand)
     }else if(operand->type == EXP_CONST_NUMBER)
     {
         status = fprintf(currentCfile_, STRINGIFY(APLT_READ(%lu)), (AssignValue_t) operand->expressionObject);
+    }else if(operand->type == EXP_METHOD_CALL)
+    {
+        const ExMethodCallHandle_t call = operand->expressionObject;
+
+        if(!filewriteMethodCall_(call))
+        {
+            Log_e(TAG, "Failed to write method call");
+            return ERROR;   
+        }
     }
 
     return status > 0;
@@ -497,8 +506,6 @@ static bool fileWriteBitVariableSet_(const ExpressionHandle_t left, const Expres
     const VariableObjectHandle_t leftVar = (VariableObjectHandle_t) left->expressionObject;
     const VariableObjectHandle_t rightVar = (VariableObjectHandle_t) right->expressionObject;
     
-
-
     if(left->type == EXP_VARIABLE)
     {
         if(leftVar->bitpack < BIT_SIZE_BITPACK)
@@ -651,7 +658,7 @@ static bool filewriteMethodCall_(const ExMethodCallHandle_t methodCallHandle)
             }
         
         }
-        FWRITE_STRING(BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE);
+        FWRITE_STRING(BRACKET_ROUND_END_DEF);
     }
 
     return SUCCESS;
