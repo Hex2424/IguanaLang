@@ -30,25 +30,6 @@
 // VALUE READING
 #define APLT_READ(platform_var) ((BIT_TYPE_EXP) platform_var)
 
-// VALUE BINARY OR (|)
-#define APLT_OR(src, dest) (((BIT_TYPE_EXP) platform_var) | ((BIT_TYPE_EXP) dest))
-
-// VALUE BINARY AND (&)
-#define APLT_AND(src, dest) (((BIT_TYPE_EXP) src) & ((BIT_TYPE_EXP) dest))
-
-// VALUE BINARY XOR (^)
-#define APLT_XOR(src, dest) (((BIT_TYPE_EXP) src) ^ ((BIT_TYPE_EXP) dest))
-
-// VALUE BINARY NOT (~)
-#define APLT_NOT(src) (~((BIT_TYPE_EXP) src))
-
-// VALUE BINARY SUM (+)
-#define APLT_SUM(src, dest) (((BIT_TYPE_EXP) src) + ((BIT_TYPE_EXP) dest))
-
-// VALUE BINARY MINUS (-)
-#define APLT_MINUS(src, dest) (((BIT_TYPE_EXP) src) - ((BIT_TYPE_EXP) dest))
-
-
 // VALUE SET
 #define APLT_SET_VAR(src, dest) (dest = src)
 
