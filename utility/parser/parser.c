@@ -98,10 +98,24 @@ bool Parser_parseTokens(ParserHandle_t parser, MainFrameHandle_t root, const Vec
     {
         switch(cTokenType)
         {
-            case BIT_TYPE:      handleKeywordInteger_(parser, root, NO_NOTATION);break;  // detected bit keyword
-            case NOTATION:      handleNotation_(parser, root);break;                     // detected annotation
-            case SEMICOLON:     break;                                                   // detected random semicolon, skip it
-            default : Shouter_shoutUnrecognizedToken(cTokenP);break;                     // error case
+            case BIT_TYPE: // detected bit keyword
+            {
+                if(!handleKeywordInteger_(parser, root, NO_NOTATION))
+                {
+                    return SUCCESS;
+                }
+            }break;
+
+            case NOTATION: // detected annotation
+            {
+                if(!handleNotation_(parser, root))
+                {
+                    return SUCCESS;
+                }
+            }break;
+
+            case SEMICOLON: break;                                          // detected random semicolon, skip it
+            default : Shouter_shoutUnrecognizedToken(cTokenP);break;        // error case
         }
 
         currentToken++;
@@ -183,7 +197,10 @@ static inline bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_
     }else
     {
         Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
-        ParserUtils_skipUntil(&currentToken, SEMICOLON);
+        if(!ParserUtils_skipUntil(&currentToken, SEMICOLON))
+        {
+            return ERROR;
+        }
     }
 
     return SUCCESS;
