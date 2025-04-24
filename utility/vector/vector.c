@@ -65,8 +65,6 @@ bool Vector_create(VectorHandler_t object, const InitialSettingsHandler_t initia
     }
     if(initialSettings != NULL)
     {
-        Log_i(TAG, "Found vector initial settings");
-
         ALLOC_CHECK(object->expandable, initialSettings->initialSize * sizeof(void*), ERROR);
 
         object->availableSize = initialSettings->initialSize;
@@ -84,7 +82,6 @@ bool Vector_create(VectorHandler_t object, const InitialSettingsHandler_t initia
 
     }else
     {
-        Log_i(TAG, "Initial settings is NULL, restoring defaults");
         object->expandableConstant = EXPANDABLE_CONSTANT_DEFAULT; // default expandable constant
         ALLOC_CHECK(object->expandable, INITIAL_SIZE_DEFAULT * sizeof(void*), ERROR);
 
@@ -124,7 +121,7 @@ bool Vector_append(VectorHandler_t object, const void* dataObject)
         object->availableSize = (newSize - object->currentSize);
 
     }
-    
+
     object->expandable[object->currentSize] = (void*) dataObject;
     object->currentSize++;
     object->availableSize--;
