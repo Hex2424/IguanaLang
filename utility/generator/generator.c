@@ -90,8 +90,8 @@ static bool fileWriteMainHeader_(void);
 
 static bool fileWriteExpression_(const VectorHandler_t expression);
 static inline bool fileWriteVariablesAllocation_(const BitpackSize_t bitsize, const uint32_t scopeIndex);
-static bool printBitVariableReading_(const ExpressionHandle_t operand);
-static bool generateCodeForOperation_(const ExpressionHandle_t left, const ExpressionHandle_t right, const OperatorType_t operator);
+static bool printBitVariableReading_(const ExpressionHandle_t operand, const bool endMaskNeeded);
+static bool generateCodeForOperation_(const uint64_t assignedTmpForOperation, const ExpressionHandle_t left, const ExpressionHandle_t right, const OperatorType_t operator);
 static bool fileWriteBitVariableSet_(const ExpressionHandle_t left, const ExpressionHandle_t right);
 static bool generateCodeForOneOperand_(const ExpressionHandle_t symbol);
 static bool filewriteMethodCall_(const ExMethodCallHandle_t methodCallHandle);
@@ -302,7 +302,7 @@ static bool fileWriteExpression_(const VectorHandler_t expression)
 {
     DynamicStack_t symbolStack;
 
-    Expression_t tmpVar = {EXP_TMP_VAR, STRINGIFY(TMP_VAR)};
+    uint64_t tmpIncrement = 0;
 
     if(!Stack_create(&symbolStack))
     {
@@ -310,10 +310,7 @@ static bool fileWriteExpression_(const VectorHandler_t expression)
         return ERROR;
     }
 
-    fwrite(BRACKET_START_DEF READABILITY_ENDLINE BIT_TYPE_DEF " " STRINGIFY(TMP_VAR) SEMICOLON_DEF READABILITY_ENDLINE,
-        BYTE_SIZE,
-        SIZEOF_NOTERM(BRACKET_START_DEF READABILITY_ENDLINE BIT_TYPE_DEF " " STRINGIFY(TMP_VAR) SEMICOLON_DEF READABILITY_ENDLINE),
-        currentCfile_);
+    FWRITE_STRING(BRACKET_START_DEF READABILITY_ENDLINE);
 
     // there is one element pushed in postfix
     // May be a operand just laying around
@@ -342,25 +339,34 @@ static bool fileWriteExpression_(const VectorHandler_t expression)
                 Stack_push(&symbolStack, symbol);
             }else if(Expression_isSymbolOperator(symbol))
             {
+
+                // Generating temp variable to store for this operation
+                ExpressionHandle_t tmpExpression = alloca(sizeof(Expression_t));
+
+                tmpExpression->type = EXP_TMP_VAR;
+                tmpExpression->expressionObject = (void*) (uintptr_t) tmpIncrement;
+
                 const ExpressionHandle_t right = Stack_pop(&symbolStack);
                 const ExpressionHandle_t left = Stack_pop(&symbolStack);
 
-                
-
                 const OperatorType_t operator = (OperatorType_t) symbol->expressionObject;
 
+
+
                 // DO STUFF
-                if(!generateCodeForOperation_(left, right, operator))
+                if(!generateCodeForOperation_(tmpIncrement, left, right, operator))
                 {
                     Log_e(TAG, "Failed to generate code for operation");
                     return ERROR;
                 }
-    
-                if(!Stack_push(&symbolStack, &tmpVar))
+
+                if(!Stack_push(&symbolStack, tmpExpression))
                 {
                     Log_e(TAG, "Failed to push stack expression");
                     return ERROR;
                 }
+
+                tmpIncrement++;
             }
         }
     }
@@ -402,17 +408,16 @@ static bool generateCodeForOneOperand_(const ExpressionHandle_t symbol)
 }
 
 
-static bool generateCodeForOperation_(const ExpressionHandle_t left, const ExpressionHandle_t right, const OperatorType_t operator)
+static bool generateCodeForOperation_(const uint64_t assignedTmpForOperation, const ExpressionHandle_t left, const ExpressionHandle_t right, const OperatorType_t operator)
 {
     char* operatorString = NULL;
     int status;
-
     // Set handling differently
     if(operator != OP_SET)
     {
-        status = fwrite(STRINGIFY(TMP_VAR) C_OPERATOR_EQUAL_DEF, BYTE_SIZE, SIZEOF_NOTERM(STRINGIFY(TMP_VAR) C_OPERATOR_EQUAL_DEF), currentCfile_);
-        
-        if(!printBitVariableReading_(left))
+        fprintf(currentCfile_, BIT_TYPE_DEF " " STRINGIFY(TMP_VAR%lu) READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE, assignedTmpForOperation);
+
+        if(!printBitVariableReading_(left, false))
         {
             return ERROR;
         }
@@ -424,17 +429,16 @@ static bool generateCodeForOperation_(const ExpressionHandle_t left, const Expre
 
     switch (operator)
     {
-        case OP_PLUS: operatorString = C_OPERATOR_PLUS_DEF; break;
-        case OP_MINUS: operatorString = C_OPERATOR_MINUS_DEF; break;
-        case OP_MULTIPLY: operatorString = C_OPERATOR_MULTIPLY_DEF; break;
-        case OP_DIVIDE: operatorString = C_OPERATOR_DIVIDE_DEF; break;
-        case OP_MODULUS: operatorString = C_OPERATOR_MODULUS_DEF; break;
-        case OP_SET: operatorString = C_OPERATOR_EQUAL_DEF; break;
-
-        case OP_BIN_AND: operatorString = C_OPERATOR_BIN_AND_DEF; break;
-        // case OP_BIN_NOT: operatorString = C_OPERATOR_DIVIDE_DEF; break;
-        case OP_BIN_OR: operatorString = C_OPERATOR_BIN_OR_DEF; break;
-        case OP_BIN_XOR: operatorString = C_OPERATOR_BIN_XOR_DEF; break;
+        case OP_PLUS: operatorString =          READABILITY_SPACE C_OPERATOR_PLUS_DEF READABILITY_SPACE; break;
+        case OP_MINUS: operatorString =         READABILITY_SPACE C_OPERATOR_MINUS_DEF READABILITY_SPACE; break;
+        case OP_MULTIPLY: operatorString =      READABILITY_SPACE C_OPERATOR_MULTIPLY_DEF READABILITY_SPACE; break;
+        case OP_DIVIDE: operatorString =        READABILITY_SPACE C_OPERATOR_DIVIDE_DEF READABILITY_SPACE; break;
+        case OP_MODULUS: operatorString =       READABILITY_SPACE C_OPERATOR_MODULUS_DEF READABILITY_SPACE; break;
+        case OP_SET: operatorString =           READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE; break;
+        case OP_BIN_AND: operatorString =       READABILITY_SPACE C_OPERATOR_BIN_AND_DEF READABILITY_SPACE; break;
+        // case OP_BIN_NOT: operatorString =    READABILITY_SPACE C_OPERATOR_DIVIDE_DEF READABILITY_SPACE; break;
+        case OP_BIN_OR: operatorString =        READABILITY_SPACE C_OPERATOR_BIN_OR_DEF READABILITY_SPACE; break;
+        case OP_BIN_XOR: operatorString =       READABILITY_SPACE C_OPERATOR_BIN_XOR_DEF READABILITY_SPACE; break;
 
         default: operatorString = NULL; break;
     }
@@ -443,37 +447,37 @@ static bool generateCodeForOperation_(const ExpressionHandle_t left, const Expre
 
     if(status < 0)
     {
-        Log_e(TAG, "Failed to write");
+        Log_e(TAG, "Failed to write operator string %s", operatorString);
         return ERROR;
     }
 
-    if(!printBitVariableReading_(right))
+    if(!printBitVariableReading_(right, false))
     {
         return ERROR;
     }
 
-    status = fwrite(SEMICOLON_DEF READABILITY_ENDLINE, BYTE_SIZE, SIZEOF_NOTERM(SEMICOLON_DEF READABILITY_ENDLINE), currentCfile_);
-
-    if(status < 0)
-    {
-        Log_e(TAG, "Failed to write");
-        return ERROR;
-    }
+    FWRITE_STRING(SEMICOLON_DEF READABILITY_ENDLINE)
 
     return SUCCESS;
 }
 
-static bool printBitVariableReading_(const ExpressionHandle_t operand)
+static bool printBitVariableReading_(const ExpressionHandle_t operand, const bool endMaskNeeded)
 {
     int status = SUCCESS;
-    
+
     if (operand->type == EXP_VARIABLE)
     {
         const VariableObjectHandle_t variable = (VariableObjectHandle_t) operand->expressionObject;
- 
+        Log_d(TAG, "Variable name: %s variable.pos=%u variable_bitpack:%lu", variable->objectName, variable->posBit, variable->bitpack);
         if(variable->bitpack < BIT_SIZE_BITPACK)
         {
-            status = fprintf(currentCfile_, STRINGIFY(AFIT_READ(s_%u[%u], %u, %lu)), 0, variable->belongToGroup, variable->posBit, variable->bitpack);
+            if(endMaskNeeded)
+            {
+                status = fprintf(currentCfile_, STRINGIFY((AFIT_READ(s_%u[%u], %u, %lu)&AFIT_MASK(%lu))), 0, variable->belongToGroup, variable->posBit, variable->bitpack, variable->bitpack);
+            }else
+            {
+                status = fprintf(currentCfile_, STRINGIFY(AFIT_READ(s_%u[%u], %u, %lu)), 0, variable->belongToGroup, variable->posBit, variable->bitpack);
+            }
         }else if (variable->bitpack == BIT_SIZE_BITPACK)
         {
             status = fprintf(currentCfile_, STRINGIFY(APLT_READ(s_%u[%u])), 0, variable->belongToGroup);
@@ -481,7 +485,7 @@ static bool printBitVariableReading_(const ExpressionHandle_t operand)
 
     }else if(operand->type == EXP_TMP_VAR)
     {
-        status = fprintf(currentCfile_, STRINGIFY(APLT_READ(tmp)));
+        status = fprintf(currentCfile_, STRINGIFY(APLT_READ(tmp%lu)), (uint64_t) operand->expressionObject);
     }else if(operand->type == EXP_CONST_NUMBER)
     {
         status = fprintf(currentCfile_, STRINGIFY(APLT_READ(%lu)), (AssignValue_t) operand->expressionObject);
@@ -527,7 +531,7 @@ static bool fileWriteBitVariableSet_(const ExpressionHandle_t left, const Expres
     
     if(right->type == EXP_TMP_VAR)
     {
-        status = fprintf(currentCfile_, STRINGIFY(((TMP_VAR & AFIT_MASK(%lu)) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
+        status = fprintf(currentCfile_, STRINGIFY(((TMP_VAR%lu & AFIT_MASK(%lu)) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, (uint64_t) right->expressionObject, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
     }else if (right->type == EXP_VARIABLE)
     {
         if(rightVar->bitpack < BIT_SIZE_BITPACK)
@@ -644,14 +648,15 @@ static bool filewriteMethodCall_(const ExMethodCallHandle_t methodCallHandle)
         {
             FWRITE_STRING("%lu ");
         }
-        FWRITE_STRING("\"");
+        FWRITE_STRING("\\n\"");
 
         for(uint16_t paramIdx = 0; paramIdx < methodCallHandle->method.parameters->currentSize; paramIdx++)
         {
             FWRITE_STRING("," READABILITY_SPACE);
 
             const ExpressionHandle_t param = methodCallHandle->method.parameters->expandable[paramIdx];
-            if(!printBitVariableReading_(param))
+
+            if(!printBitVariableReading_(param, true))
             {
                 Log_e(TAG, "Failed to generate param for print");
                 return ERROR;
