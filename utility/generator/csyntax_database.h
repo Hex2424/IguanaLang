@@ -102,10 +102,12 @@ CONST_STRING TYPE_BINDS[] =
 
 // Binary Operators supported by C language
 
-#define C_OPERATOR_BIN_XOR_DEF   "^"
-#define C_OPERATOR_BIN_AND_DEF   "&"
-#define C_OPERATOR_BIN_OR_DEF    "|"
-#define C_OPERATOR_BIN_NOT_DEF   "~"
+#define C_OPERATOR_BIN_XOR_DEF          "^"
+#define C_OPERATOR_BIN_AND_DEF          "&"
+#define C_OPERATOR_BIN_OR_DEF           "|"
+#define C_OPERATOR_BIN_NOT_DEF          "~"
+
+#define C_OPERATOR_BIN_OR_EQUAL_DEF     "|="
 
 #if ARCHITECTURE_DEFAULT_BITS == 64
     #define BIT_TYPE_EXP              TYPE_BIT64_EXP

@@ -35,7 +35,7 @@ static const char* TAG = "BODY_PARSER";
 
 ////////////////////////////////
 // PRIVATE TYPES
-
+static DynamicStack_t symbolStack;
 
 ////////////////////////////////
 // PRIVATE METHODS
@@ -69,8 +69,14 @@ static inline int32_t expressionPrecedence_(ExpressionHandle_t symbol)
 
         switch (operatorType)
         {
+            case OP_BIN_NOT:
+            {
+                prec = 4; // Unary NOT (if used as prefix op)
+            }break;
+
             case OP_MULTIPLY:
             case OP_DIVIDE:
+            case OP_MODULUS:
             {
                 prec = 3;
             }break;
@@ -82,18 +88,19 @@ static inline int32_t expressionPrecedence_(ExpressionHandle_t symbol)
             }break;
 
             case OP_BIN_AND:
-            case OP_BIN_OR:
-            case OP_BIN_NOT:
             case OP_BIN_XOR:
-            case OP_MODULUS:
-            case OP_AND:
-            case OP_OR:
-            case OP_SET:
+            case OP_BIN_OR:
             {
                 prec = 1;
             }break;
+
+            case OP_SET:
+            {
+                prec = 0;
+            }break;
+
             
-            default:break;
+            default: prec = -1; break;
         }
         
     }
@@ -103,6 +110,13 @@ static inline int32_t expressionPrecedence_(ExpressionHandle_t symbol)
 
 bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle)
 {
+    
+    if(!Stack_create(&symbolStack))
+    {
+        Log_e(TAG, "Couldn't create symbols parsing stack");
+        return ERROR;
+    }
+
     while ((cTokenType != BRACKET_END) && (cTokenType != END_FILE))
     {
 
@@ -127,12 +141,15 @@ bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** 
     
     }
 
+
     // Doing some post processing after function parsed
     if(!postParsingJobsScope_(scopeBody))
     {
         Log_e(TAG, "Failed to posprocess scope body");
         return ERROR;
     }
+
+    Stack_destroy(&symbolStack);
 
     return SUCCESS;
 }
@@ -199,20 +216,12 @@ static inline bool parseVariableInstance_(LocalScopeObjectHandle_t scopeBody, To
 static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, TokenHandler_t** currentTokenHandle)
 {
     VectorHandler_t expressionVector;
-    ExpressionHandle_t stack[1024] = {NULL};
 
     ExpressionHandle_t lastSymbol = NULL;
     ExpressionHandle_t currentSymbol = NULL;
-
-    int32_t top = -1;
-
+    int appendsCount = 0;
     ALLOC_CHECK(expressionVector, sizeof(Vector_t), ERROR);
 
-    if(!Vector_create(expressionVector, NULL))
-    {
-        Log_e(TAG, "Failed to create expression vector");
-        return NULL;
-    }
 
     while ((cTokenType != BRACKET_END) && (cTokenType != END_FILE) && (cTokenType != SEMICOLON))
     {
@@ -221,7 +230,6 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
         ALLOC_CHECK(symbol, sizeof(Expression_t), ERROR);
         
         Log_d(TAG, "Parsing symbol in expression line");
-        Log_d(TAG, "Symbol vector current size %d available: %d", expressionVector->currentSize, expressionVector->availableSize);
         if(!parseSymbolExpression_(localScope, symbol, currentTokenHandle))
         {
             Shouter_shoutError(cTokenP, "Parse error");
@@ -229,25 +237,9 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
             free(symbol);
             return SUCCESS;
         }
-
+        
         lastSymbol = currentSymbol;
         currentSymbol = symbol;
-
-        if(lastSymbol != NULL)
-        {
-            Log_d(TAG, "symbols1 check %d", lastSymbol->type);
-        }else
-        {
-            Log_d(TAG, "symbols1 check (null)");
-        }
-
-        if(currentSymbol != NULL)
-        {
-            Log_d(TAG, "symbols2 check %d", currentSymbol->type);
-        }else
-        {
-            Log_d(TAG, "symbols2 check (null)");
-        }
 
         if(!isSymbolsLegalToExistTogether_(lastSymbol, currentSymbol))
         {
@@ -260,8 +252,10 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
         // an operand, add it to the output string.
         if (Expression_isSymbolOperand(symbol))
         {
+            appendsCount++;
             if(!Vector_append(expressionVector, symbol))
             {
+                Log_e(TAG, "Failed to apped operand");
                 return ERROR;
             }
         }
@@ -270,7 +264,11 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
         // an ‘(‘, push it to the stack.
         else if (symbol->type == EXP_PARENTHESES_LEFT)
         {
-            stack[++top] = symbol;
+            if(!Stack_push(&symbolStack, symbol))
+            {
+                Log_e(TAG, "Failed to push symbol to stack");
+                return ERROR;
+            }
         }
 
         // If the scanned character is an ‘)’,
@@ -278,32 +276,33 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
         // until an ‘(‘ is encountered.
         else if (symbol->type == EXP_PARENTHESES_RIGHT) 
         {
-            while (top != -1 && stack[top]->type != EXP_PARENTHESES_LEFT) 
+            while (!Stack_isEmpty(&symbolStack) && (((ExpressionHandle_t)Stack_peek(&symbolStack))->type != EXP_PARENTHESES_LEFT)) 
             {
-                Log_d(TAG, "Symbol vector current size %d available: %d", expressionVector->currentSize, expressionVector->availableSize);
-                if(!Vector_append(expressionVector, stack[top--]))
+                if(!Vector_append(expressionVector, Stack_pop(&symbolStack)))
                 {
+                    Log_e(TAG, "Failed to append pop from stack");
                     return ERROR;
                 }
             }
-            top--; 
+            Stack_pop(&symbolStack);
         }
 
         // If an operator is scanned
         else 
         {
-            
-            while ((top != -1) && ((expressionPrecedence_(symbol) < expressionPrecedence_(stack[top])) ||
-                                 (expressionPrecedence_(symbol) == expressionPrecedence_(stack[top])))) 
+            while (!Stack_isEmpty(&symbolStack) && (expressionPrecedence_(symbol) <= expressionPrecedence_(Stack_peek(&symbolStack)))) 
             {
-                Log_d(TAG, "Symbol vector current size %d available: %d", expressionVector->currentSize, expressionVector->availableSize);
-                if(!Vector_append(expressionVector, stack[top--]))
+                if(!Vector_append(expressionVector, Stack_pop(&symbolStack)))
                 {
+                    Log_e(TAG, "Failed to append pop from stack");
                     return ERROR;
                 }
             }
-
-            stack[++top] = symbol;
+            if(!Stack_push(&symbolStack, symbol))
+            {
+                Log_e(TAG, "Failed to push symbol to stack");
+                return ERROR;
+            }
         }
 
         (*currentTokenHandle)++;
@@ -312,19 +311,31 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
     currentSymbol = NULL;
 
     // Pop all the remaining elements from the stack
-    while (top != -1) 
+    while (!Stack_isEmpty(&symbolStack)) 
     {
-        Log_d(TAG, "Symbol vector current size %d available: %d", expressionVector->currentSize, expressionVector->availableSize);
-        if(!Vector_append(expressionVector, stack[top--]))
+        if(!Vector_append(expressionVector, Stack_pop(&symbolStack)))
         {
             return ERROR;
         }
+
     }
 
     for(int i = 0; i < expressionVector->currentSize; i++)
     {
         ExpressionHandle_t handle =  expressionVector->expandable[i];
-        Log_d(TAG, "symbol: %d", handle->type);
+
+        if (handle->type == EXP_CONST_NUMBER)
+        {
+            Log_d(TAG, "symbol: NUM(%d)", (AssignValue_t) handle->expressionObject);
+        }else if(handle->type == EXP_OPERATOR)
+        {
+            Log_d(TAG, "symbol: OP: %d", (OperatorType_t) handle->expressionObject);
+        }else if(handle->type == EXP_VARIABLE)
+        {
+            VariableObjectHandle_t var = (VariableObjectHandle_t) handle->expressionObject;
+            Log_d(TAG, "symbol: bit:%u(%s) %s", var->bitpack, var->castedFile, var->objectName);
+        }
+        
     }
 
 
@@ -485,7 +496,7 @@ static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHan
 
         if(Hashmap_find(&localScopeBody->localVariables, varName, strlen(varName)))
         {
-            symbol->expressionObject = localScopeBody->localVariables.value;
+            symbol->expressionObject = *localScopeBody->localVariables.value;
         }else
         {
             symbol->expressionObject = NULL;
