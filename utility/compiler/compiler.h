@@ -18,9 +18,13 @@
 #include "../queue/queue.h"
 #include <vector.h>
 #include <hashmap.h>
+#include <unix_linker.h>
+#include <c_compiler.h>
+#include <global_config.h>
+#include <libgen.h>
 
-
-bool Compiler_compile(const char* iguanaFilePath, const bool isMain);
+bool Compiler_compileIguana(const char* iguanaFilePath);
 bool Compiler_initialize(const char* mainFilePath);
 
+void Compiler_removeExtensionFromFilenameWithCopy_(char* filename, const char* const filenameWithExtension);
 #endif // UTILITY_COMPILER_COMPILER_H_

@@ -31,9 +31,9 @@
 #define MAX_RETRIES_ID                  15
 #define OBJECT_RANDOM_SEED              0
 
-#define MAIN_PROCESS_FILE_NAME          "___start"
+#define MAIN_PROCESS_FILE_NAME          "_ZN9bit0_main4mainEv"
 
 
-#define CFILES_LENGTH                   (sizeof(TEMP_PATH) + OBJECT_ID_LENGTH + sizeof(".x")) - 1
+#define CFILES_LENGTH                   MAX_FILENAME_LENGTH
 
 #endif // UTILITY_GLOBAL_CONFIG_GLOBAL_CONFIG_H_

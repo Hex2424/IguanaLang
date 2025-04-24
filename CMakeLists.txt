@@ -44,7 +44,10 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/utility/stack
     ${CMAKE_SOURCE_DIR}/utility/global_config
     ${CMAKE_SOURCE_DIR}/utility/logger
-    ${CMAKE_SOURCE_DIR}/utility/misc)
+    ${CMAKE_SOURCE_DIR}/utility/misc
+    ${CMAKE_SOURCE_DIR}/utility/external/inbuilt_c_compiler
+    ${CMAKE_SOURCE_DIR}/utility/external/unix_linker
+)
 
 if(WIN32)
     add_definitions(-DPLATFORM_WINDOWS)

@@ -24,6 +24,8 @@ static char args_doc[] = "[FILES]...";
 
 static struct argp_option options[] = {
     { "output", 'o', "FILE", 0, "Destination executable path" },
+    { "only-c", 'c', 0, 0, "Only generate .c source files (no object files or executable)" },
+    { "only-object", 'b', 0, 0, "Only compile to .o object files (no linking)" },
     { 0 }
 };
 
@@ -33,6 +35,8 @@ enum Mode { CHARACTER_MODE, WORD_MODE, LINE_MODE };
 struct arguments {
     enum Mode mode;
     bool isCaseInsensitive;
+    bool only_c;
+    bool only_obj;
     char *output_path;
     char **files;
     int file_count;
@@ -44,11 +48,11 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     case 'o':
         arguments->output_path = arg;
         break;
-    case 'w':
-        arguments->mode = WORD_MODE;
+    case 'c':
+        arguments->only_c = true;
         break;
-    case 'i':
-        arguments->isCaseInsensitive = true;
+    case 'b':
+        arguments->only_obj = true;
         break;
     case ARGP_KEY_ARG:
         arguments->files = realloc(arguments->files, (arguments->file_count + 1) * sizeof(char *));
@@ -73,31 +77,59 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    // REMOVE THIS VECTOR IN FUTURE ITS NOT NEEDED
+    Vector_t pathsToLink;
+
+    if(!Vector_create(&pathsToLink, NULL))
+    {
+        fprintf(stderr, "Error: failed to create vector for link paths\n");
+        return EXIT_FAILURE;
+    }
+
     // Process each file
     for (int argIdx = 0; argIdx < arguments.file_count; argIdx++) 
     {
-        if(argIdx == 0)
-        {
-            // Main file of Iguana need be handled differently
-            // Need some wrapper to call the object
-            if(!Compiler_compile(arguments.files[0], true))
-            {
-                fprintf(stderr, "Error to compile Iguana main file: %s", arguments.files[argIdx]);
-                return EXIT_FAILURE;
-            }
+        char* iguanaObjectName;
 
-            continue;
-        }
 
+        iguanaObjectName = malloc(strlen(arguments.files[argIdx]));
+
+        Compiler_removeExtensionFromFilenameWithCopy_(iguanaObjectName, basename((char*) arguments.files[argIdx]));
+            
         // After compiled main file, secondary objects also need compile
-        if(!Compiler_compile(arguments.files[argIdx], false))
+        if(!Compiler_compileIguana(arguments.files[argIdx]))
         {
             fprintf(stderr, "Error to compile Iguana path: %s", arguments.files[argIdx]);
             return EXIT_FAILURE;
         }
+
+        if(!arguments.only_c)
+        {
+            if(!CExternalCompiler_compile(iguanaObjectName, true))
+            {
+                fprintf(stderr, "Error to compile c file %s.c", iguanaObjectName);
+                return EXIT_FAILURE;
+            }
+
+            if(!Vector_append(&pathsToLink, iguanaObjectName))
+            {
+                fprintf(stderr, "Error: failed to create vector for link paths\n");
+                return EXIT_FAILURE;
+            }
+        }
+    }
+
+    if(!arguments.only_obj && !arguments.only_c)
+    {  
+        if(!UnixLinker_linkPaths(&pathsToLink))
+        {
+            fprintf(stderr, "Error failed to link objects...");
+            return EXIT_FAILURE;
+        }
+
     }
 
     free(arguments.files);
-
+    
     return EXIT_SUCCESS;
 }

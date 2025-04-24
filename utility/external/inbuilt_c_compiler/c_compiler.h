@@ -16,7 +16,7 @@
 #include <stdbool.h>
 #include <vector.h>
 
-bool CExternalCompiler_compile(const char* objectId);
-bool CExternalCompiler_compileWhole(const VectorHandler_t pathsOfCompiledIguana);
+bool CExternalCompiler_compile(const char* filename, const bool removeSourceAfter);
+
 
 #endif // UTILITY_EXTERNAL_INBUILT_C_COMPILER_C_COMPILER_H_

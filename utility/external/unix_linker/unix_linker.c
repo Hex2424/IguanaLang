@@ -12,15 +12,17 @@
  */
 #include "unix_linker.h"
 #include "string.h"
+#include <safety_macros.h>
+#include <global_config.h>
 
 
 ////////////////////////////////
 // DEFINES
-#define LD_LINKER_COMMAND "./ld/ld_linker -dynamic-linker ./ld/ld-linux-x86-64.so -o output --entry ___start -lc"
+#define LD_LINKER_COMMAND "ld -o output --entry " MAIN_PROCESS_FILE_NAME " -lc"
 
 ////////////////////////////////
 // PRIVATE CONSTANTS
-// static const char* TAG = "UNIX_LINKER";
+static const char* TAG = "UNIX_LINKER";
 
 ////////////////////////////////
 // PRIVATE TYPES
@@ -33,52 +35,40 @@
 ////////////////////////////////
 // IMPLEMENTATION
 
-// bool UnixLinker_linkPaths(const VectorHandler_t objectsCompiledExternaly)
-// {
-//     char* full_command;
-//     char* iterator;
+bool UnixLinker_linkPaths(const VectorHandler_t objectsCompiledExternaly)
+{
+    char* full_command;
+    char* iterator;
 
-//     ALLOC_CHECK(full_command, sizeof(LD_LINKER_COMMAND) + CFILES_LENGTH + (OBJECT_ID_LENGTH * objectsCompiledExternaly->currentSize), ERROR);
+    ALLOC_CHECK(full_command, sizeof(LD_LINKER_COMMAND) + CFILES_LENGTH + (CFILES_LENGTH * objectsCompiledExternaly->currentSize), ERROR);
 
-//     full_command[0] = '\0';//null terminator beggining for strncat
-//     iterator = full_command;
+    full_command[0] = '\0';//null terminator beggining for strncat
+    iterator = full_command;
 
-//     strncat(iterator, LD_LINKER_COMMAND,sizeof(LD_LINKER_COMMAND));
-//     iterator += (sizeof(LD_LINKER_COMMAND) - 1);
+    strcat(iterator, LD_LINKER_COMMAND);
+    iterator += (sizeof(LD_LINKER_COMMAND) - 1);
 
-//     for(size_t idx = 0; idx < objectsCompiledExternaly->currentSize; idx++)
-//     {
-//         ImportObjectHandle_t object;
-//         object = objectsCompiledExternaly->expandable[idx];
+    for(size_t idx = 0; idx < objectsCompiledExternaly->currentSize; idx++)
+    {
+        const char* iguanaFileobject = objectsCompiledExternaly->expandable[idx];
 
-//         NULL_GUARD(object, ERROR, Log_e(TAG, "Null object in linker passed"));
+        NULL_GUARD(iguanaFileobject, ERROR, Log_e(TAG, "Null object in linker passed"));
 
-//         snprintf(iterator, CFILES_LENGTH + sizeof(' '), " %s%s.o", TEMP_PATH, object->objectId.id);
-//         iterator += (CFILES_LENGTH);
-//     }
-//     // char check_command[CFILES_LENGTH];
+        snprintf(iterator, CFILES_LENGTH + sizeof(' '), " %s%s.o", TEMP_PATH, iguanaFileobject);
+        iterator += (CFILES_LENGTH);
+    }
+
+    Log_d(TAG, "Executing Linker: %s", full_command);
+
+    if(system(full_command) == -1)
+    {
+        free(full_command);
+        return ERROR;
+    }
 
 
-//     // snprintf(check_command, CFILES_LENGTH, "%s%s.o", TEMP_PATH, objectId);
-//     // snprintf(full_command, sizeof(GCC_COMPILER_COMMAND) + CFILES_LENGTH, GCC_COMPILER_COMMAND, TEMP_PATH, objectId, objectId);
-//     // Log_d(TAG, "Executing command:%s", full_command);
+    Log_i(TAG, "Linked objects successfuly!");
+    free(full_command);
 
-//     if(system(full_command) == -1)
-//     {
-//         free(full_command);
-//         return ERROR;
-//     }
-
-//     // FILE* objectFile = fopen(check_command, "r");
-
-//     // NULL_GUARD(objectFile, ERROR, Log_e(TAG, "Failed to compile one of c files"));
-
-//     // if(fclose(objectFile) != 0)
-//     // {
-//     //     Log_w(TAG, "Failed to close file at runtime: %s", objectFile);
-//     //     return ERROR;
-//     // }
-//     free(full_command);
-
-//     return SUCCESS;
-// }
+    return SUCCESS;
+}

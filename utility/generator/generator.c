@@ -149,6 +149,9 @@ bool Generator_generateCode(const MainFrameHandle_t ast, const char* dstCFileNam
         Log_w(TAG, "Failed to close file %s", currentCfile_);
     }
 
+    Log_i(TAG, "C code generation in file: \"%s\" SUCCESSFUL!", dstCFileName);
+
+
     return SUCCESS;
 }
 

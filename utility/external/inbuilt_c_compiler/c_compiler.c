@@ -22,8 +22,8 @@
 // DEFINES
 
 
-#define GCC_COMPILER_COMMAND "gcc -c %s%s.c -o %s.o "WARNING_SUPRESSED LOG_PATH_TO_FILE
-
+#define GCC_COMPILER_COMMAND "gcc -c %s -o %s.o "WARNING_SUPRESSED LOG_PATH_TO_FILE
+#define FULL_COMMAND_LEN     sizeof(GCC_COMPILER_COMMAND) + CFILES_LENGTH + CFILES_LENGTH
 ////////////////////////////////
 // PRIVATE CONSTANTS
 static const char* TAG = "C_COMPILER";
@@ -39,14 +39,21 @@ static const char* TAG = "C_COMPILER";
 ////////////////////////////////
 // IMPLEMENTATION
 
-bool CExternalCompiler_compile(const char* filename)
+
+
+bool CExternalCompiler_compile(const char* filename, const bool removeSourceAfter)
 {
     int closeStatus = true;
 
-    char full_command[sizeof(GCC_COMPILER_COMMAND) + CFILES_LENGTH] = GCC_COMPILER_COMMAND;
-    char check_command[CFILES_LENGTH];
+    char full_command[FULL_COMMAND_LEN] = {0};
+    char check_command[CFILES_LENGTH + sizeof(TEMP_PATH)] = {0};
+    char sourceFilename[MAX_FILENAME_LENGTH + sizeof(TEMP_PATH)] = {0};
+
+    snprintf(sourceFilename, MAX_FILENAME_LENGTH + sizeof(TEMP_PATH), "%s%s.c", TEMP_PATH, filename);
+    
     snprintf(check_command, CFILES_LENGTH, "%s%s.o", TEMP_PATH, filename);
-    snprintf(full_command, sizeof(GCC_COMPILER_COMMAND) + CFILES_LENGTH, GCC_COMPILER_COMMAND, TEMP_PATH, filename, filename);
+
+    snprintf(full_command, FULL_COMMAND_LEN, GCC_COMPILER_COMMAND, sourceFilename, filename);
     Log_d(TAG, "Executing command:%s", full_command);
 
     if(system(full_command) == -1)
@@ -58,13 +65,22 @@ bool CExternalCompiler_compile(const char* filename)
 
     NULL_GUARD(objectFile, ERROR, Log_e(TAG, "Failed to compile one of c files"));
 
+    int rmStatus = remove(sourceFilename);
+
+    if (rmStatus != 0) 
+    {
+        Log_w(TAG, "Failed to remove source C file %d", rmStatus);
+        return ERROR;
+    }
+        
     closeStatus = fclose(objectFile);
     
     if(closeStatus != 0)
     {
-        Log_w(TAG, "Failed to close C file at runtime: %d", closeStatus);
+        Log_w(TAG, "Failed to close Object file at runtime: %d", closeStatus);
         return ERROR;
     }
 
+    Log_i(TAG, "Compiled C files successfuly!");
     return SUCCESS;
 }
