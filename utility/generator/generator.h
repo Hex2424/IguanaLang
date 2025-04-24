@@ -24,6 +24,6 @@
 #define FOUT_BUFFER_LENGTH          1024
 
 
-bool Generator_generateCode(const MainFrameHandle_t ast, const char* dstCFileName);
+bool Generator_generateCode(const MainFrameHandle_t ast, const char* dstCFileName, const bool isFirstFile);
 
 #endif // UTILITY_GENERATOR_GENERATOR_H_

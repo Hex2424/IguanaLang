@@ -23,7 +23,7 @@
 #include <global_config.h>
 #include <libgen.h>
 
-bool Compiler_compileIguana(const char* iguanaFilePath);
+bool Compiler_compileIguana(const char* iguanaFilePath, const bool isFirstFile);
 bool Compiler_initialize(const char* mainFilePath);
 
 void Compiler_removeExtensionFromFilenameWithCopy_(char* filename, const char* const filenameWithExtension);

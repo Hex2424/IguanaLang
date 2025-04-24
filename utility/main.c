@@ -97,7 +97,7 @@ int main(int argc, char **argv)
         Compiler_removeExtensionFromFilenameWithCopy_(iguanaObjectName, basename((char*) arguments.files[argIdx]));
             
         // After compiled main file, secondary objects also need compile
-        if(!Compiler_compileIguana(arguments.files[argIdx]))
+        if(!Compiler_compileIguana(arguments.files[argIdx], argIdx == 0))
         {
             fprintf(stderr, "Error to compile Iguana path: %s", arguments.files[argIdx]);
             return EXIT_FAILURE;

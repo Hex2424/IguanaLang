@@ -23,6 +23,7 @@
 #include "bit_arithmetic/fit_arithmetic.h"
 #include "bit_arithmetic/plt_arithmetic.h"
 #include <dstack.h>
+#include "first_headers.h"
 
 ////////////////////////////////
 // DEFINES
@@ -86,7 +87,7 @@ static inline uint8_t getDigitCountU64_(uint64_t number);
 static bool fileWriteNameMangleMethod_(const char* const className, const MethodObjectHandle_t method, const bool isPublic);
 static bool fileWriteIncludes_(void);
 static bool fileWriteMainHTypedefs_(void);
-static bool fileWriteMainHeader_(void);
+static bool fileWriteMainHeader_(const bool isFirstFile);
 
 static bool fileWriteExpression_(const VectorHandler_t expression);
 static inline bool fileWriteVariablesAllocation_(const BitpackSize_t bitsize, const uint32_t scopeIndex);
@@ -99,7 +100,7 @@ static bool filewriteMethodCall_(const ExMethodCallHandle_t methodCallHandle);
 ////////////////////////////////
 // IMPLEMENTATION
 
-bool Generator_generateCode(const MainFrameHandle_t ast, const char* dstCFileName)
+bool Generator_generateCode(const MainFrameHandle_t ast, const char* dstCFileName, const bool isFirstFile)
 {
     
     NULL_GUARD(ast, ERROR, Log_e(TAG, "Null AST"));
@@ -120,16 +121,9 @@ bool Generator_generateCode(const MainFrameHandle_t ast, const char* dstCFileNam
 
     setvbuf(currentCfile_, writingBufferC_, _IOFBF, FOUT_BUFFER_LENGTH);
 
-    // Generating class variables
-
-    // if(!fileWriteVariablesHashmap_(&(currentAst_->classVariables)))
-    // {
-    //     Log_e(TAG, "Failed to write c class variables");
-    //     return ERROR;
-    // }
-
+    
     // // Generating public methods
-    if(!fileWriteMainHeader_())
+    if(!fileWriteMainHeader_(isFirstFile))
     {
         Log_e(TAG, "Failed to write main header");
         return ERROR;
@@ -159,8 +153,21 @@ bool Generator_generateCode(const MainFrameHandle_t ast, const char* dstCFileNam
 }
 
 
-static bool fileWriteMainHeader_(void)
+
+static bool fileWriteMainHeader_(const bool isFirstFile)
 {
+    int status;
+    // first file needs some more stuff to have
+    if(isFirstFile)
+    {
+        status = fwrite(START_POINT, BYTE_SIZE, SIZEOF_NOTERM(START_POINT), currentCfile_);
+        if(status < 0)
+        {
+            Log_e(TAG, "Failed to write starting point injection");
+            return ERROR;
+        }
+    }
+
     if(!fileWriteIncludes_())
     {
         Log_e(TAG, "Failed to write main #includes in object:%s", currentAst_->iguanaObjectName);

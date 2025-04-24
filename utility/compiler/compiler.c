@@ -68,7 +68,7 @@ static int cfilenameOfObject_(char* cfilename, const char* objectName)
  * @param[in/out] filePath - Import object containing Iguana file path
  * @return bool            - Success state
  */
-bool Compiler_compileIguana(const char* iguanaFilePath)
+bool Compiler_compileIguana(const char* iguanaFilePath, const bool isFirstFile)
 {
     char filenameGenerate[MAX_FILENAME_LENGTH];
     MainFrame_t root;
@@ -119,7 +119,7 @@ bool Compiler_compileIguana(const char* iguanaFilePath)
     if(Shouter_getErrorCount() == NO_ERROR)
     {
         // Generator generates code out of AST(Abstract syntax tree)
-        if(!Generator_generateCode(&root, filenameGenerate))
+        if(!Generator_generateCode(&root, filenameGenerate, isFirstFile))
         {
             Log_e(TAG, "Failed to generate c language code for Iguana file %s", iguanaFilePath);
             return ERROR;
