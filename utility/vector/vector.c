@@ -93,6 +93,29 @@ bool Vector_create(VectorHandler_t object, const InitialSettingsHandler_t initia
     
 }
 
+/**
+ * @brief Public method for initializing Vector object dynamically
+ * 
+ * @param[out] object           pointer to vector structure
+ * @param[in] initialSettings   initial advanced vector object settings for manual setup
+ * 
+ * @return                      Success state
+ */
+
+VectorHandler_t Vector_createDynamic(const InitialSettingsHandler_t initialSettings)
+{
+    VectorHandler_t vectorHandle;
+
+    ALLOC_CHECK(vectorHandle, sizeof(Vector_t), NULL);
+
+    if(!Vector_create(vectorHandle, initialSettings))
+    {
+        Log_e(TAG, "Failed to initialize dynamic vector");
+        return NULL;
+    }
+
+    return vectorHandle;
+}
 
 /**
  * @brief Public method for handling new data pointer adding to existing list
@@ -121,7 +144,7 @@ bool Vector_append(VectorHandler_t object, const void* dataObject)
         object->availableSize = (newSize - object->currentSize);
 
     }
-
+    
     object->expandable[object->currentSize] = (void*) dataObject;
     object->currentSize++;
     object->availableSize--;

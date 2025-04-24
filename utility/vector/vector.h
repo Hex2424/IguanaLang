@@ -43,6 +43,8 @@ typedef Vector_t* VectorHandler_t;
 typedef InitialSettings_t* InitialSettingsHandler_t;
 
 
+VectorHandler_t Vector_createDynamic(const InitialSettingsHandler_t initialSettings);
+
 bool Vector_create(VectorHandler_t object, const InitialSettingsHandler_t initialSettings);
 bool Vector_append(VectorHandler_t object, const void* dataObject);
 bool Vector_fit(VectorHandler_t object);

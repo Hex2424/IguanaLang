@@ -83,14 +83,9 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, const 
 
 static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodObjectHandle_t methodHandle)
 {
-
-    ALLOC_CHECK(methodHandle->parameters, sizeof(Vector_t), ERROR);
-
-    if(!Vector_create(methodHandle->parameters, NULL))
-    {
-        Log_e(TAG, "Failed to create vector for method paramters for some reason");
-        return ERROR;
-    }
+    methodHandle->parameters = Vector_createDynamic(NULL);
+    
+    NULL_GUARD(methodHandle->parameters, ERROR, Log_e(TAG, "Failed to create function declaration %s params vector", methodHandle->methodName));
 
     while(true)
     {
@@ -104,7 +99,7 @@ static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodOb
             {
                 return ERROR;
             }
-            
+
             cTokenIncrement;
 
             if(!Vector_append(methodHandle->parameters, parameter))

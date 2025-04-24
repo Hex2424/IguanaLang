@@ -73,7 +73,6 @@ bool Separator_getSeparatedWords(const char *codeString, const size_t length, Ve
     Log_i(TAG, "Token Count: %d", (int)tokenCount);
 
 
-    
     if(!Vector_append(vector, endFileToken))
     {
         Log_e(TAG, "Failed to END_FILE token");

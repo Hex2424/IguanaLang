@@ -90,7 +90,6 @@ bool Parser_parseTokens(ParserHandle_t parser, MainFrameHandle_t root, const Vec
     if(!MainFrame_init(root))
     {
         Log_e(TAG, "MainFrame init failed");
-        Vector_destroy(tokenVector);
         return ERROR;
     }
 
