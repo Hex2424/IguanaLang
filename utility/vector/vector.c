@@ -123,13 +123,12 @@ bool Vector_append(VectorHandler_t object, const void* dataObject)
         
         object->availableSize = (newSize - object->currentSize);
 
-    }else
-    {
-        object->expandable[object->currentSize] = (void*) dataObject;
-        object->currentSize++;
-        object->availableSize--;
     }
     
+    object->expandable[object->currentSize] = (void*) dataObject;
+    object->currentSize++;
+    object->availableSize--;
+
     return SUCCESS;
 }
 
