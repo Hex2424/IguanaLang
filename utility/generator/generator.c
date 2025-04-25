@@ -91,7 +91,7 @@ static bool fileWriteMainHeader_(const bool isFirstFile);
 
 static bool fileWriteExpression_(const VectorHandler_t expression);
 static inline bool fileWriteVariablesAllocation_(const BitpackSize_t bitsize, const uint32_t scopeIndex);
-static bool printBitVariableReading_(const ExpressionHandle_t operand, const bool endMaskNeeded);
+static bool printBitVariableReading_(const ExpressionHandle_t operand);
 static bool generateCodeForOperation_(const uint64_t assignedTmpForOperation, const ExpressionHandle_t left, const ExpressionHandle_t right, const OperatorType_t operator);
 static bool fileWriteBitVariableSet_(const ExpressionHandle_t left, const ExpressionHandle_t right);
 static bool generateCodeForOneOperand_(const ExpressionHandle_t symbol);
@@ -424,7 +424,7 @@ static bool generateCodeForOperation_(const uint64_t assignedTmpForOperation, co
     {
         fprintf(currentCfile_, BIT_TYPE_DEF " " STRINGIFY(TMP_VAR%lu) READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE, assignedTmpForOperation);
 
-        if(!printBitVariableReading_(left, false))
+        if(!printBitVariableReading_(left))
         {
             return ERROR;
         }
@@ -458,7 +458,7 @@ static bool generateCodeForOperation_(const uint64_t assignedTmpForOperation, co
         return ERROR;
     }
 
-    if(!printBitVariableReading_(right, false))
+    if(!printBitVariableReading_(right))
     {
         return ERROR;
     }
@@ -468,23 +468,20 @@ static bool generateCodeForOperation_(const uint64_t assignedTmpForOperation, co
     return SUCCESS;
 }
 
-static bool printBitVariableReading_(const ExpressionHandle_t operand, const bool endMaskNeeded)
+static bool printBitVariableReading_(const ExpressionHandle_t operand)
 {
     int status = SUCCESS;
+    
+
 
     if (operand->type == EXP_VARIABLE)
     {
         const VariableObjectHandle_t variable = (VariableObjectHandle_t) operand->expressionObject;
+
         Log_d(TAG, "Variable name: %s variable.pos=%u variable_bitpack:%lu", variable->objectName, variable->posBit, variable->bitpack);
         if(variable->bitpack < BIT_SIZE_BITPACK)
         {
-            if(endMaskNeeded)
-            {
-                status = fprintf(currentCfile_, STRINGIFY((AFIT_READ(s_%u[%u], %u, %lu)&AFIT_MASK(%lu))), 0, variable->belongToGroup, variable->posBit, variable->bitpack, variable->bitpack);
-            }else
-            {
-                status = fprintf(currentCfile_, STRINGIFY(AFIT_READ(s_%u[%u], %u, %lu)), 0, variable->belongToGroup, variable->posBit, variable->bitpack);
-            }
+            status = fprintf(currentCfile_, STRINGIFY((AFIT_READ(s_%u[%u], %u, %lu)&AFIT_MASK(%lu))), 0, variable->belongToGroup, variable->posBit, variable->bitpack, variable->bitpack);
         }else if (variable->bitpack == BIT_SIZE_BITPACK)
         {
             status = fprintf(currentCfile_, STRINGIFY(APLT_READ(s_%u[%u])), 0, variable->belongToGroup);
@@ -663,7 +660,7 @@ static bool filewriteMethodCall_(const ExMethodCallHandle_t methodCallHandle)
 
             const ExpressionHandle_t param = methodCallHandle->method.parameters->expandable[paramIdx];
 
-            if(!printBitVariableReading_(param, true))
+            if(!printBitVariableReading_(param))
             {
                 Log_e(TAG, "Failed to generate param for print");
                 return ERROR;

@@ -233,7 +233,7 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
         Log_d(TAG, "Parsing symbol in expression line");
         if(!parseSymbolExpression_(localScope, symbol, currentTokenHandle))
         {
-            Shouter_shoutError(cTokenP, "Parse error");
+            Shouter_shoutError(cTokenP, "Symbol Parse error");
             ParserUtils_skipUntil(currentTokenHandle, SEMICOLON);
             free(symbol);
             return SUCCESS;
@@ -579,16 +579,16 @@ static inline bool handleMethodCallParameterization_(LocalScopeObjectHandle_t lo
                     Log_e(TAG, "Failed to append function param to vector");
                     return ERROR;
                 }
-            }
-            
-            if(cTokenType != COMMA)
+            }else if(COMMA)
             {
-                // If next symbol not comma, break, because there shouldnt be anything more
+                // do nothing, continue
+            }else
+            {
+                Shouter_shoutUnrecognizedToken(cTokenP);
                 break;
             }
-
+            
             (*currentTokenHandle)++;
-
         }
         
 

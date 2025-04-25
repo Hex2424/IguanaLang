@@ -128,6 +128,7 @@ bool Compiler_compileIguana(const char* iguanaFilePath, const bool isFirstFile)
     }else
     {
         Shouter_shoutError(NULL, "Compiling completed with %d errors", Shouter_getErrorCount());
+        return ERROR;
     }
 
     // cleanTempCFile_(filePath);

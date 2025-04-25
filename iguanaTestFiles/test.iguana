@@ -7,18 +7,19 @@ bit:2(none) ggg;
 bit:34(none) lol;
 bit:31 lol2;
 
+bit:1(none) sss;
 bit:24(stdio) HEY;
 bit:24(hey) HEY2;
 
 bit:24 lol3;
 
 
-bit:32(lol) method(bit:54(hey) param1, bit:8 param2)
+bit:32(lol_t) method(bit:54(hey) param1, bit:8 param2)
 {
     bit:1 boolean;
     bit:2 boolean2;
-    
-    bit:31 hey = ((50 | boolean) ^ 20);
+     
+    bit:381 hey = ((50 | boolean) ^ 20);
     bit:7 hmm = 3 + hello() + 1 + (2 + 3) * 3;
     bit:3 lol = 0;
     bit:31 hey2 = ((50 | boolean) ^ 20);
@@ -28,7 +29,7 @@ bit:32(lol) method(bit:54(hey) param1, bit:8 param2)
 
 
 
-bit:32(lol) method4(bit:54(hey) param1, bit:8 param2)
+bit:32(lol12) method4(bit:54(hey) param1, bit:8 param2)
 {
     bit:1 boolean;
     bit:31 hey = ((50 | boolean) ^ 20);
