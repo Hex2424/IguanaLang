@@ -18,7 +18,7 @@
 
 ////////////////////////////////
 // DEFINES
-#define LD_LINKER_COMMAND "ld -o output --entry " MAIN_PROCESS_FILE_NAME " -lc"
+#define LD_LINKER_COMMAND "ld -static -o output --entry " MAIN_PROCESS_FILE_NAME " -lc"
 
 ////////////////////////////////
 // PRIVATE CONSTANTS

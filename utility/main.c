@@ -103,30 +103,20 @@ int main(int argc, char **argv)
             return EXIT_FAILURE;
         }
 
-        if(!arguments.only_c)
+        if(!Vector_append(&pathsToLink, iguanaObjectName))
         {
-            if(!CExternalCompiler_compile(iguanaObjectName, true))
-            {
-                fprintf(stderr, "Error to compile c file %s.c", iguanaObjectName);
-                return EXIT_FAILURE;
-            }
-
-            if(!Vector_append(&pathsToLink, iguanaObjectName))
-            {
-                fprintf(stderr, "Error: failed to create vector for link paths\n");
-                return EXIT_FAILURE;
-            }
+            fprintf(stderr, "Error: failed to create vector for link paths\n");
+            return EXIT_FAILURE;
         }
+        
     }
-
-    if(!arguments.only_obj && !arguments.only_c)
-    {  
-        if(!UnixLinker_linkPaths(&pathsToLink))
+    if(!arguments.only_c)
+    {
+        if(!CExternalCompiler_compile(&pathsToLink, "output.out", !arguments.only_obj))
         {
             fprintf(stderr, "Error failed to link objects...");
             return EXIT_FAILURE;
         }
-
     }
     
     free(arguments.files);

@@ -16,7 +16,9 @@
 #include <stdbool.h>
 #include <vector.h>
 
-bool CExternalCompiler_compile(const char* filename, const bool removeSourceAfter);
+// bool CExternalCompiler_compile(const char* filename, const bool removeSourceAfter);
+// bool CExternalCompiler_link(const VectorHandler_t objectsCompiledExternaly, char* outputName);
 
+bool CExternalCompiler_compile(const VectorHandler_t objectsCompiledExternaly, char* outputName, const bool linkingEnabled);
 
 #endif // UTILITY_EXTERNAL_INBUILT_C_COMPILER_C_COMPILER_H_
