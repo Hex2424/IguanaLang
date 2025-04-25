@@ -230,10 +230,10 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
 
         ALLOC_CHECK(symbol, sizeof(Expression_t), ERROR);
         
-        Log_d(TAG, "Parsing symbol in expression line");
+        Log_d(TAG, "Parsing symbol in expression line %s", cTokenP->valueString);
         if(!parseSymbolExpression_(localScope, symbol, currentTokenHandle))
         {
-            Shouter_shoutError(cTokenP, "Symbol Parse error");
+            Shouter_shoutError(cTokenP, "Symbol Parse error %s", cTokenP->valueString);
             ParserUtils_skipUntil(currentTokenHandle, SEMICOLON);
             free(symbol);
             return SUCCESS;
@@ -309,6 +309,12 @@ static inline bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, Tok
         }
 
         (*currentTokenHandle)++;
+    }
+
+    if(cTokenType != SEMICOLON)
+    {
+        Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
+        (*currentTokenHandle)--;
     }
 
     currentSymbol = NULL;
@@ -401,7 +407,7 @@ static inline bool parseSymbolExpression_(LocalScopeObjectHandle_t scopeBody, Ex
                     Log_e(TAG, "Error happened while handling variable%s in expression", cTokenP->valueString);
                     return ERROR;
                 }
-
+             
             }break;
 
             case NUMBER_VALUE:
