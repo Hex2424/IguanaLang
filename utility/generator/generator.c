@@ -535,7 +535,7 @@ static bool fileWriteBitVariableSet_(const ExpressionHandle_t left, const Expres
     
     if(right->type == EXP_TMP_VAR)
     {
-        status = fprintf(currentCfile_, STRINGIFY(((TMP_VAR%lu & AFIT_MASK(%lu)) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, (uint64_t) right->expressionObject, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
+        status = fprintf(currentCfile_, STRINGIFY(((TMP_VAR%lu) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, (uint64_t) right->expressionObject, leftVar->posBit, leftVar->bitpack);
     }else if (right->type == EXP_VARIABLE)
     {
         if(rightVar->bitpack < BIT_SIZE_BITPACK)
