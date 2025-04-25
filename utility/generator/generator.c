@@ -542,7 +542,7 @@ static bool fileWriteBitVariableSet_(const ExpressionHandle_t left, const Expres
         {
             status = fprintf(currentCfile_, STRINGIFY(((AFIT_READ(s_%u[%u], %u, %lu) & AFIT_MASK(%lu)) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, 0, rightVar->belongToGroup, rightVar->posBit, rightVar->bitpack, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
         }else if (rightVar->bitpack == BIT_SIZE_BITPACK)
-        {
+        {expression
             status = fprintf(currentCfile_, STRINGIFY(((s_%u[%u] & AFIT_MASK(%lu)) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, 0, rightVar->belongToGroup, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
         }else
         {   
