@@ -1,5 +1,5 @@
 /**
- * @file separator.h
+ * @file helper_macros.h
  *
  * MORE INFO ABOUT THE FILE'S CONTENTS
  *
@@ -8,19 +8,22 @@
  *
  * @author Markas Vielavičius (markas.vielavicius@bytewall.com)
  *
- * @date 2022-09-05
+ * @date 2025-04-22
  */
 
-#ifndef UTILITY_SEPERATOR_SEPARATOR_H
-#define UTILITY_SEPERATOR_SEPARATOR_H
-#include <vector.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
-
-bool Separator_getSeparatedWords(const char* codeString, const size_t length, VectorHandler_t vector, const char* filePath);
+#ifndef UTILITY_MISC_HELPER_MACROS_H_
+#define UTILITY_MISC_HELPER_MACROS_H_
 
 
+// STRING HELPERS
+
+#define STRINGIFY(exp) str__(exp)
+#define str__(exp) #exp
+
+#define SIZEOF_NOTERM(string) (sizeof(string) - 1)
 
 
-#endif
+
+
+
+#endif // UTILITY_MISC_HELPER_MACROS_H_

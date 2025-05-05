@@ -1,0 +1,104 @@
+<mxfile host="app.diagrams.net" modified="2025-03-10T21:42:43.772Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36" etag="7qtIYXwpyaFQQXhaei1c" version="24.4.4" type="device">
+  <diagram name="Page-1" id="fAcEPMCyW2s_DZS-pGAu">
+    <mxGraphModel dx="1434" dy="820" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-4" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="140" y="40" width="660" height="360" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u1WJvrDL6ypDJO4t7qQA-1" target="u1WJvrDL6ypDJO4t7qQA-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-1" value="Nuskaitomas &quot;Iguana&quot; failas" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="180" y="190" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="u1WJvrDL6ypDJO4t7qQA-2" target="u1WJvrDL6ypDJO4t7qQA-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-2" value="Pradžia" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="30" y="180" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-5" value="Iguana kompiliatorius" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="412.5" y="50" width="115" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="u1WJvrDL6ypDJO4t7qQA-6" target="u1WJvrDL6ypDJO4t7qQA-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-6" value="Simbolių&amp;nbsp;&lt;div&gt;atpažinimas&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="180" y="300" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="u1WJvrDL6ypDJO4t7qQA-8" target="u1WJvrDL6ypDJO4t7qQA-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-8" value="Abstrakčios sintaksės medžio generavimas" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="365" y="300" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u1WJvrDL6ypDJO4t7qQA-10" target="u1WJvrDL6ypDJO4t7qQA-15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-10" value="Tarpinių failų išvalymas" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="540" y="190" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="u1WJvrDL6ypDJO4t7qQA-12" target="u1WJvrDL6ypDJO4t7qQA-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-12" value="C failo generavimas su kodu" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="365" y="190" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u1WJvrDL6ypDJO4t7qQA-15" target="u1WJvrDL6ypDJO4t7qQA-1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="750" y="320" />
+              <mxPoint x="750" y="120" />
+              <mxPoint x="240" y="120" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-18" value="TAIP" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="u1WJvrDL6ypDJO4t7qQA-17">
+          <mxGeometry x="-0.9111" y="-1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u1WJvrDL6ypDJO4t7qQA-15" target="u1WJvrDL6ypDJO4t7qQA-19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-21" value="NE" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="u1WJvrDL6ypDJO4t7qQA-20">
+          <mxGeometry x="-0.3333" y="2" relative="1" as="geometry">
+            <mxPoint x="-2" y="-10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-15" value="Ar yra dar Iguana kompiliavimo failų" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="525" y="280" width="150" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-30" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="u1WJvrDL6ypDJO4t7qQA-19" target="u1WJvrDL6ypDJO4t7qQA-26">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-31" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="u1WJvrDL6ypDJO4t7qQA-19" target="u1WJvrDL6ypDJO4t7qQA-28">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-19" value="C failų kompiliavimas" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="540" y="450" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-24" value="Objektinių failų susiejimas" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="180" y="450" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-34" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="u1WJvrDL6ypDJO4t7qQA-26" target="u1WJvrDL6ypDJO4t7qQA-33">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-26" value="Programos generavimas" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="180" y="570" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-32" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="u1WJvrDL6ypDJO4t7qQA-28" target="u1WJvrDL6ypDJO4t7qQA-24">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-28" value="Assemblerio kompiliavimas" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="365" y="450" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="u1WJvrDL6ypDJO4t7qQA-33" value="Pabaiga" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="30" y="560" width="80" height="80" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,5 +1,5 @@
 /**
- * @file separator.h
+ * @file unix_linker.h
  *
  * MORE INFO ABOUT THE FILE'S CONTENTS
  *
@@ -8,19 +8,13 @@
  *
  * @author Markas Vielavičius (markas.vielavicius@bytewall.com)
  *
- * @date 2022-09-05
+ * @date 2022-10-21
  */
 
-#ifndef UTILITY_SEPERATOR_SEPARATOR_H
-#define UTILITY_SEPERATOR_SEPARATOR_H
+#ifndef UTILITY_EXTERNAL_UNIX_LINKER_UNIX_LINKER_H_
+#define UTILITY_EXTERNAL_UNIX_LINKER_UNIX_LINKER_H_
 #include <vector.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
 
-bool Separator_getSeparatedWords(const char* codeString, const size_t length, VectorHandler_t vector, const char* filePath);
+bool UnixLinker_linkPaths(const VectorHandler_t objectsCompiledExternaly);
 
-
-
-
-#endif
+#endif // UTILITY_EXTERNAL_UNIX_LINKER_UNIX_LINKER_H_

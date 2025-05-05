@@ -1,5 +1,5 @@
 /**
- * @file separator.h
+ * @file typedefs.h
  *
  * MORE INFO ABOUT THE FILE'S CONTENTS
  *
@@ -8,19 +8,19 @@
  *
  * @author Markas Vielavičius (markas.vielavicius@bytewall.com)
  *
- * @date 2022-09-05
+ * @date 2025-04-21
  */
 
-#ifndef UTILITY_SEPERATOR_SEPARATOR_H
-#define UTILITY_SEPERATOR_SEPARATOR_H
-#include <vector.h>
+#ifndef UTILITY_MISC_TYPEDEFS_H_
+#define UTILITY_MISC_TYPEDEFS_H_
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdlib.h>
-
-bool Separator_getSeparatedWords(const char* codeString, const size_t length, VectorHandler_t vector, const char* filePath);
 
 
+typedef uint64_t    BitpackSize_t;
+typedef uint8_t     BitpackPos_t;
+typedef uint32_t    GroupID_t;
 
+typedef int64_t AssignValue_t;
 
-#endif
+#endif // UTILITY_MISC_TYPEDEFS_H_

@@ -1,5 +1,5 @@
 /**
- * @file tokenizer.h
+ * @file file_reader.h
  *
  * MORE INFO ABOUT THE FILE'S CONTENTS
  *
@@ -8,17 +8,17 @@
  *
  * @author Markas Vielavičius (markas.vielavicius@bytewall.com)
  *
- * @date 2022-09-05
+ * @date 2022-09-10
  */
 
-#ifndef UTILITY_TOKENIZER_TOKENIZER_H
-#define UTILITY_TOKENIZER_TOKENIZER_H
 
-#include <stdlib.h>
-#include <stdbool.h>
-#include "token/token.h"
+#ifndef UTILITY_FILE_READER_FILE_READER_H_
+#define UTILITY_FILE_READER_FILE_READER_H_
+#include "stdbool.h"
+#include "stdlib.h"
 
-TokenHandler_t Tokenizer_wordToCorrespondingToken(const char* seperation, const size_t length);
+size_t FileReader_readToBuffer(const char* fileName, char** buffer);
+bool FileReader_destroy(char* codeString);
 
 
-#endif
+#endif // UTILITY_FILE_READER_FILE_READER_H_

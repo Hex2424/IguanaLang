@@ -1,0 +1,47 @@
+TODO:
+2. Bitpacked method params
+3. Bitpacket method returns
+4. On not bitpacked work same fast as c code
+5. Inheritence
+6. Object orientation (File orientation)
+7. Annotation system (Public / Private / Disabled)
+8. C multiple compiler support
+7. C header include support
+8. Inline keyword power
+7. Preprocessor?
+10. Pointers support
+11. Macro string formating
+13. Loops with ~> symbol (no when loop anymore)
+14. Interfaces
+15. ,,, parameters counts as NULL
+16. as keyword for imports object naming
+17. Object constructors / primitive types constructors
+18. Comments support
+17. Function pointer / integer pointer
+18. Make operational zones like i == a || i == b  to i == (a or b or c ...)
+19. Optimized way to create Abstract syntax tree
+20. Negative numbers support
+21. check if variable was declared what position
+22. Handle correct naming of methods incase of differend folders collisions
+23. Direct elf/ .o editing (Assembler options, change .c file name);
+24. Handle all Dynamic allocation memory fragmentations
+25. Disk variables
+26. Types wrapping feature int {a,b,c};
+l.c
+
+
+// Comment
+// Something wrong with this shit
+"ss"
+
+#replace(ss, aaaaaaa);
+#replace(ss, ssssss);
+
+#if(ss < 4)
+{
+
+}
+
+#while()
+#var 
+#regex("") a;
