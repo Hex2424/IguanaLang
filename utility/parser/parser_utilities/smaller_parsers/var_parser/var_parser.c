@@ -53,11 +53,11 @@ bool VarParser_parseVariable(TokenHandler_t** currentTokenHandle, VariableObject
     {
         variableHolder->objectName = cTokenP->valueString;
         return SUCCESS;
-    }else if(cTokenType == BRACKET_ROUND_START)
+    }else if(cTokenType == ARROW_LEFT)
     {
         cTokenIncrement;
 
-        if(cTokenType == BRACKET_ROUND_END)
+        if(cTokenType == ARROW_RIGHT)
         {
             variableHolder->castedFile = NULL;
         }else if(cTokenType == NONE)
@@ -65,9 +65,9 @@ bool VarParser_parseVariable(TokenHandler_t** currentTokenHandle, VariableObject
             variableHolder->castedFile = NULL;
             cTokenIncrement;
 
-            if (cTokenType != BRACKET_ROUND_END)
+            if (cTokenType != ARROW_RIGHT)
             {
-                Shouter_shoutExpectedToken(cTokenP, BRACKET_ROUND_END);
+                Shouter_shoutExpectedToken(cTokenP, ARROW_RIGHT);
                 return SUCCESS;
             }
         }else if(cTokenType == NAMING)
@@ -75,9 +75,9 @@ bool VarParser_parseVariable(TokenHandler_t** currentTokenHandle, VariableObject
             variableHolder->castedFile = cTokenP->valueString;
             cTokenIncrement;
 
-            if (cTokenType != BRACKET_ROUND_END)
+            if (cTokenType != ARROW_RIGHT)
             {
-                Shouter_shoutExpectedToken(cTokenP, BRACKET_ROUND_END);
+                Shouter_shoutExpectedToken(cTokenP, ARROW_RIGHT);
                 return SUCCESS;
             }
             
