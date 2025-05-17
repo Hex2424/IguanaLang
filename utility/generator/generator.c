@@ -451,7 +451,7 @@ static bool generateCodeForOperation_(const uint64_t assignedTmpForOperation, Ex
 
     if(right->type == EXP_METHOD_CALL)
     {
-        if(generateMethodCallScope_(assignedTmpForOperation, 1, right))
+        if(!generateMethodCallScope_(assignedTmpForOperation, 1, right))
         {
             Log_e(TAG, "Failed to generate method call scope 1 (right)");
             return ERROR;
