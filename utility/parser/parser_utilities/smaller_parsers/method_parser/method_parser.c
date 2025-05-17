@@ -16,6 +16,8 @@
 #include "../../global_parser_utility.h"
 #include "../body_parser/body_parser.h"
 #include "../../../parser.h"
+#include "../../post_parsing_utility/bitfit.h"
+
 ////////////////////////////////
 // DEFINES
 #define cTokenP (**currentTokenHandle)
@@ -35,7 +37,7 @@ static const char* TAG = "METHOD_PARSER";
 
 static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodObjectHandle_t methodHandle);
 static bool parseMethodBody_(TokenHandler_t** currentTokenHandle, MethodObjectHandle_t methodHandle);
-
+static bool postParsingJobsMethod_(MethodObjectHandle_t method);
 ////////////////////////////////
 // IMPLEMENTATION
 
@@ -63,17 +65,38 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, const 
         return ERROR;
     }
 
-
-    // if(Hashmap_set(&parser->compiler->AllMethodDeclarations, methodHandle->methodName, methodHandle))
-    // {
-    //     Shouter_shoutError(cTokenP, "Method \'%s\' is declared several times", methodHandle->methodName);
-    //     return ERROR;
-    // }
-
-
     if(Hashmap_set(&root->methods, methodHandle->methodName, methodHandle))
     {
         Shouter_shoutError(cTokenP, "Method \'%s\' is declared several times", methodHandle->methodName);
+        return ERROR;
+    }
+    
+    // Doing some post processing after function parsed
+    if(!postParsingJobsMethod_(methodHandle))
+    {
+        Log_e(TAG, "Failed to posprocess scope body");
+        return ERROR;
+    }
+
+    return SUCCESS;
+}
+
+
+static bool postParsingJobsMethod_(MethodObjectHandle_t method)
+{
+    // Categorizing each bit pack variable to corresponding group
+    // Assigning bitpack positions
+    // Algorithm of packing should be decided depending on optimization
+    if(!Bitfit_assignGroupsAndPositionForVariableHashmap_(&method->body.localVariables, FIRST_FIT, &method->body.sizeBits))
+    {
+        Log_e(TAG, "Failed to do bitfitting in scope");
+        return ERROR;
+    }
+
+    // Also doing same thing for function parameters
+    if(!Bitfit_assignGroupsAndPositionForVariableVector_(method->parameters, FIRST_FIT, &method->parametersSizeBits))
+    {
+        Log_e(TAG, "Failed to do bitfitting in parameters");
         return ERROR;
     }
 
@@ -101,11 +124,17 @@ static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodOb
             }
 
             cTokenIncrement;
-
-            if(!Vector_append(methodHandle->parameters, parameter))
+            
+            if(VarParser_searchVariableInVectorByName(methodHandle->parameters, parameter->objectName) == NULL)
             {
-                Log_e(TAG, "Failed to append to parameters vector");
-                return ERROR;
+                if(!Vector_append(methodHandle->parameters, parameter))
+                {
+                    Log_e(TAG, "Failed to append to parameters vector");
+                    return ERROR;
+                }
+            }else
+            {
+                Shouter_shoutError(cTokenP, "Parameter \'%s\' is defined before", parameter->objectName);
             }
 
             if(cTokenType == COMMA)
@@ -162,8 +191,6 @@ static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodOb
             }
             // valid infinity parameters syntac acquired
             methodHandle->hasInfinityParams = true;
-
-            
         }
         else
         {
@@ -173,6 +200,7 @@ static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodOb
         }
         
     }
+
     cTokenIncrement;
     return SUCCESS;
 

@@ -112,3 +112,19 @@ bool VarParser_parseVariable(TokenHandler_t** currentTokenHandle, VariableObject
 
     return SUCCESS;
 }
+
+
+VariableObjectHandle_t VarParser_searchVariableInVectorByName(const VectorHandler_t vectorHandle, const char* name)
+{
+    for(uint32_t variableIndex = 0; variableIndex < vectorHandle->currentSize; variableIndex++)
+    {
+        const VariableObjectHandle_t variableCurrent = vectorHandle->expandable[variableIndex];
+        
+        if(strcmp(variableCurrent->objectName, name) == 0)
+        {
+            return variableCurrent;
+        }
+    }
+
+    return NULL;
+}
