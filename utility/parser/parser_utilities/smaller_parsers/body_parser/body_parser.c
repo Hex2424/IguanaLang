@@ -592,7 +592,7 @@ static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHan
                         symbol->type = EXP_METHOD_CALL;
                         symbol->expressionObject = methodHandle;
                     }else
-                    {currentTokenHandle
+                    {
                         Shouter_shoutExpectedToken(cTokenP, BRACKET_ROUND_START);
                     }
                 }else
