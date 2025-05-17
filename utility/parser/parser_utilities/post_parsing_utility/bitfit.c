@@ -35,7 +35,7 @@ bool Bitfit_assignGroupsAndPositionForVariableHashmap_(const HashmapHandle_t var
     // Put links to variables from hashmap to vector
     Hashmap_forEach(variablesHashmap, variableIteratorCallback_, &vector);
 
-    return Bitfit_assignGroupsAndPositionForVariableVector_(&vector, ARCHITECTURE_DEFAULT_BITS, sizeNeededForVariables);
+    return Bitfit_assignGroupsAndPositionForVariableVector_(&vector, fitType, sizeNeededForVariables);
 }
 
 
