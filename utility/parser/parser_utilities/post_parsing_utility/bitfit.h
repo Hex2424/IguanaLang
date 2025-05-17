@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <hashmap.h>
 #include <typedefs.h>
+#include <vector.h>
 
 typedef enum
 {
@@ -27,5 +28,6 @@ typedef enum
 }BitFitMethod_t;
 
 bool Bitfit_assignGroupsAndPositionForVariableHashmap_(const HashmapHandle_t variablesHashmap, const BitFitMethod_t fitType, BitpackSize_t* sizeNeededForVariables);
+bool Bitfit_assignGroupsAndPositionForVariableVector_(const VectorHandler_t variablesVector, const BitFitMethod_t fitType, BitpackSize_t* sizeNeededForVariables);
 
 #endif // UTILITY_PARSER_PARSER_UTILITIES_BITFIT_H_
