@@ -92,7 +92,7 @@ static bool fileWriteMainHeader_(const bool isFirstFile);
 static bool fileWriteExpression_(const VectorHandler_t expression);
 static inline bool fileWriteVariablesAllocation_(const BitpackSize_t bitsize, const uint32_t scopeIndex);
 static bool printBitVariableReading_(const ExpressionHandle_t operand);
-static bool generateCodeForOperation_(const uint64_t assignedTmpForOperation, const ExpressionHandle_t left, const ExpressionHandle_t right, const OperatorType_t operator);
+static bool generateCodeForOperation_(const uint64_t assignedTmpForOperation, ExpressionHandle_t left, ExpressionHandle_t right, const OperatorType_t operator);
 static bool fileWriteBitVariableSet_(const ExpressionHandle_t left, const ExpressionHandle_t right);
 static bool generateCodeForOneOperand_(const ExpressionHandle_t symbol);
 static bool filewriteMethodCall_(const ExMethodCallHandle_t methodCallHandle);
@@ -414,11 +414,50 @@ static bool generateCodeForOneOperand_(const ExpressionHandle_t symbol)
     return SUCCESS;
 }
 
+static bool generateMethodCallScope_(const uint64_t assignedTmpForOperation, const uint64_t funcId, ExpressionHandle_t functionExpression)
+{
+    functionExpression->type = EXP_TMP_VAR;
 
-static bool generateCodeForOperation_(const uint64_t assignedTmpForOperation, const ExpressionHandle_t left, const ExpressionHandle_t right, const OperatorType_t operator)
+    fprintf(currentCfile_, BIT_TYPE_DEF " " STRINGIFY(TMP_VAR%lu)STRINGIFY(TMP_FUNC%lu) SEMICOLON_DEF READABILITY_ENDLINE BRACKET_END_DEF READABILITY_ENDLINE, assignedTmpForOperation, funcId);
+    
+
+    // const ExMethodCallHandle_t call = operand->expressionObject;
+
+    // if(!filewriteMethodCall_(call))
+    // {
+    //     Log_e(TAG, "Failed to write method call");
+    //     return ERROR;   
+    // }
+
+    // functionExpression->expressionObject = assignedTmpForOperation;
+    return SUCCESS;
+}
+
+static bool generateCodeForOperation_(const uint64_t assignedTmpForOperation, ExpressionHandle_t left, ExpressionHandle_t right, const OperatorType_t operator)
 {
     char* operatorString = NULL;
     int status;
+
+    // Checking if operation regenerateCodeForOperation_lated to function call, it needs be handled differently
+    if(left->type == EXP_METHOD_CALL)
+    {
+        
+        if(!generateMethodCallScope_(assignedTmpForOperation, 0, left))
+        {
+            Log_e(TAG, "Failed to generate method call scope 0 (left)");
+            return ERROR;
+        }
+    }
+
+    if(right->type == EXP_METHOD_CALL)
+    {
+        if(generateMethodCallScope_(assignedTmpForOperation, 1, right))
+        {
+            Log_e(TAG, "Failed to generate method call scope 1 (right)");
+            return ERROR;
+        }
+    }
+
     // Set handling differently
     if(operator != OP_SET)
     {
@@ -471,7 +510,6 @@ static bool generateCodeForOperation_(const uint64_t assignedTmpForOperation, co
 static bool printBitVariableReading_(const ExpressionHandle_t operand)
 {
     int status = SUCCESS;
-    
 
 
     if (operand->type == EXP_VARIABLE)
@@ -493,15 +531,6 @@ static bool printBitVariableReading_(const ExpressionHandle_t operand)
     }else if(operand->type == EXP_CONST_NUMBER)
     {
         status = fprintf(currentCfile_, STRINGIFY(APLT_READ(%lu)), (AssignValue_t) operand->expressionObject);
-    }else if(operand->type == EXP_METHOD_CALL)
-    {
-        const ExMethodCallHandle_t call = operand->expressionObject;
-
-        if(!filewriteMethodCall_(call))
-        {
-            Log_e(TAG, "Failed to write method call");
-            return ERROR;   
-        }
     }
 
     return status > 0;
@@ -670,11 +699,16 @@ static bool filewriteMethodCall_(const ExMethodCallHandle_t methodCallHandle)
         FWRITE_STRING(BRACKET_ROUND_END_DEF);
     }else
     {
+        
+        printf("%s from caller: %s %lu", methodCallHandle->name, methodCallHandle->castFile, methodCallHandle->castBitSize);
+
         FWRITE_STRING("0");
     }
 
     return SUCCESS;
 }
+
+
 
 
 static inline uint8_t getDigitCountU64_(uint64_t number) 

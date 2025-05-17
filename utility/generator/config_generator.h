@@ -22,5 +22,5 @@
 #define FUNCTION_PARAM_NAME         "p"
 
 #define TMP_VAR                     tmp
-
+#define TMP_FUNC                    f
 #endif // UTILITY_MISC_CONFIG_GENERATOR_H_
