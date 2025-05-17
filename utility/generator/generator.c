@@ -645,20 +645,20 @@ static int methodDeclarationIteratorCallback_(void *key, int count, void* value,
 static bool filewriteMethodCall_(const ExMethodCallHandle_t methodCallHandle)
 {
     // TODO: when implemented function normal calls will be, will add better handling, for now lets leave
-    if(strcmp(methodCallHandle->method.methodName, "print") == 0)
+    if(strcmp(methodCallHandle->name, "print") == 0)
     {
         FWRITE_STRING("printf(\"");
-        for(uint16_t paramIdx = 0; paramIdx < methodCallHandle->method.parameters->currentSize; paramIdx++)
+        for(uint16_t paramIdx = 0; paramIdx < methodCallHandle->parameters.currentSize; paramIdx++)
         {
             FWRITE_STRING("%lu ");
         }
         FWRITE_STRING("\\n\"");
 
-        for(uint16_t paramIdx = 0; paramIdx < methodCallHandle->method.parameters->currentSize; paramIdx++)
+        for(uint16_t paramIdx = 0; paramIdx < methodCallHandle->parameters.currentSize; paramIdx++)
         {
             FWRITE_STRING("," READABILITY_SPACE);
 
-            const ExpressionHandle_t param = methodCallHandle->method.parameters->expandable[paramIdx];
+            const ExpressionHandle_t param = methodCallHandle->parameters.expandable[paramIdx];
 
             if(!printBitVariableReading_(param))
             {
@@ -668,6 +668,9 @@ static bool filewriteMethodCall_(const ExMethodCallHandle_t methodCallHandle)
         
         }
         FWRITE_STRING(BRACKET_ROUND_END_DEF);
+    }else
+    {
+        FWRITE_STRING("0");
     }
 
     return SUCCESS;

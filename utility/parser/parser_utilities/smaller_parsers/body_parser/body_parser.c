@@ -41,19 +41,24 @@ static DynamicStack_t symbolStack;
 // PRIVATE METHODS
 
 // static inline bool handleDotAccess_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
-static bool handleMethodCall_(LocalScopeObjectHandle_t localScopeBody, ExMethodCallHandle_t methodCall, TokenHandler_t** currentTokenHandle, const bool isMethodSelf);
+static bool handleMethodCall_(LocalScopeObjectHandle_t localScopeBody,
+    ExMethodCallHandle_t methodCall,
+    TokenHandler_t** currentTokenHandle,
+    const BitpackSize_t castBitSize,
+    const char* castFileType,
+    const VariableObjectHandle_t caller);
 static inline bool handleObjectDeclaration_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
-static inline bool handleMethodCallParameterization_(LocalScopeObjectHandle_t localScopeBody, MethodObjectHandle_t methodHandle, TokenHandler_t** currentTokenHandle);
+static inline bool handleMethodCallParameterization_(LocalScopeObjectHandle_t localScopeBody, VectorHandler_t parameters, TokenHandler_t** currentTokenHandle);
 static bool handleOperator_(ExpressionHandle_t symbolHandle, TokenHandler_t** currentTokenHandle);
-static bool isTokenOperator_(TokenHandler_t** currentTokenHandle);
-static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHandle_t symbol, TokenHandler_t** currentTokenHandle);
+static bool isTokenOperator_(TokenHandler_t token);
+static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHandle_t symbol, TokenHandler_t** currentTokenHandle, const BitpackSize_t castBitSize, const char* castFileType);
 // static bool handleOperations_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
 static bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, TokenHandler_t** currentTokenHandle);
 static bool isSymbolsLegalToExistTogether_(const ExpressionHandle_t firstSymbol, const ExpressionHandle_t secondSymbol);
 static inline bool parseVariableInstance_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
 static inline int32_t expressionPrecedence_(ExpressionHandle_t symbol);
 static inline bool parseSymbolExpression_(LocalScopeObjectHandle_t scopeBody, ExpressionHandle_t symbolHandle, TokenHandler_t** currentTokenHandle);
-static bool handleNumber_(ExpressionHandle_t symbolHandle, TokenHandler_t** currentTokenHandle);
+static bool handleNumeric_(LocalScopeObjectHandle_t scopeBody, ExpressionHandle_t symbolHandle, TokenHandler_t** currentTokenHandle);
 static inline bool postParsingJobsScope_(LocalScopeObjectHandle_t scopeBody);
 ////////////////////////////////
 // IMPLEMENTATION
@@ -384,7 +389,7 @@ bool BodyParser_initialize(LocalScopeObjectHandle_t scopeBody)
 
 static inline bool parseSymbolExpression_(LocalScopeObjectHandle_t scopeBody, ExpressionHandle_t symbolHandle, TokenHandler_t** currentTokenHandle)
 {
-    if(isTokenOperator_(currentTokenHandle))
+    if(isTokenOperator_(cTokenP))
     {
         Log_d(TAG, "parsing operator: %s", cTokenP->valueString);
 
@@ -402,7 +407,7 @@ static inline bool parseSymbolExpression_(LocalScopeObjectHandle_t scopeBody, Ex
             {
                 Log_d(TAG, "parsing naming: %s", cTokenP->valueString);
 
-                if(!handleNaming_(scopeBody, symbolHandle, currentTokenHandle))
+                if(!handleNaming_(scopeBody, symbolHandle, currentTokenHandle, 0, NULL))
                 {
                     Log_e(TAG, "Error happened while handling variable%s in expression", cTokenP->valueString);
                     return ERROR;
@@ -414,7 +419,7 @@ static inline bool parseSymbolExpression_(LocalScopeObjectHandle_t scopeBody, Ex
             {
                 Log_d(TAG, "parsing number: %s", cTokenP->valueString);
 
-                if(!handleNumber_(symbolHandle, currentTokenHandle))
+                if(!handleNumeric_(scopeBody, symbolHandle, currentTokenHandle))
                 {
                     Log_e(TAG, "Error happened while handling number%s in expression", cTokenP->valueString);
                     return ERROR;
@@ -432,17 +437,70 @@ static inline bool parseSymbolExpression_(LocalScopeObjectHandle_t scopeBody, Ex
 
 }
 
+static bool handleCastedOperand_(LocalScopeObjectHandle_t scopeBody, const BitpackSize_t castSize, const char* castFileType, ExpressionHandle_t symbolHandle, TokenHandler_t** currentTokenHandle)
+{
+    switch (cTokenType)
+    {
+        case NAMING:
+            if(!handleNaming_(scopeBody, symbolHandle, currentTokenHandle, castSize, castFileType))
+            {
+                return ERROR;
+            }
+            break;
+        
+        case NUMBER_VALUE:
+            Shouter_shoutError(cTokenP, "Cast type for number constant not supported yet");
+            break;
+        
+        default:break;
+    }
 
-static bool handleNumber_(ExpressionHandle_t symbolHandle, TokenHandler_t** currentTokenHandle)
+    return SUCCESS;
+}
+
+static bool handleNumeric_(LocalScopeObjectHandle_t scopeBody, ExpressionHandle_t symbolHandle, TokenHandler_t** currentTokenHandle)
 {
     AssignValue_t number;
     char *end;
     // in future may need more logic according to this
-    symbolHandle->type = EXP_CONST_NUMBER;
+    // symbolHandle->type = EXP_CONST_NUMBER;
     // Parsing number
     number = strtol(cTokenP->valueString, &end, 10);
 
-    symbolHandle->expressionObject = (void*) (uintptr_t) number;
+    // After number what token
+    if(isTokenOperator_(tokenOffset(1)) || (tokenOffset(1)->tokenType == SEMICOLON) || (tokenOffset(1)->tokenType == BRACKET_ROUND_END))
+    {
+        symbolHandle->type = EXP_CONST_NUMBER;
+        symbolHandle->expressionObject = (void*) (uintptr_t) number;
+    }else
+    {
+        (*currentTokenHandle)++;
+        
+        switch (cTokenType)
+        {
+            case COLON:
+            {
+                (*currentTokenHandle)++;
+                // TODO: Add file type handling also and rewrite the way to create bit packed vars with less writing
+                if(!handleCastedOperand_(scopeBody, number, NULL, symbolHandle, currentTokenHandle))
+                {
+                    Log_e(TAG, "Error happened in parsing casted operand");
+                    return ERROR;
+                }
+            }break;
+
+            case BRACKET_ROUND_START:
+            {
+                Shouter_shoutError(cTokenP, "Constant number %d is not callable function", number);
+            }break;
+
+            default:
+            {
+                Shouter_shoutError(cTokenP, "Expected operator or colon after numeric");
+            }break;
+        }
+    }
+
     return SUCCESS;
 }
 
@@ -471,12 +529,12 @@ static bool handleOperator_(ExpressionHandle_t symbolHandle, TokenHandler_t** cu
     return SUCCESS;
 }
 
-static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHandle_t symbol, TokenHandler_t** currentTokenHandle)
+static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHandle_t symbol, TokenHandler_t** currentTokenHandle, const BitpackSize_t castBitSize, const char* castFileType)
 {
     // TokenHandler_t currentNamingToken;
     (*currentTokenHandle)++;
 
-    if(cTokenType== BRACKET_ROUND_START)
+    if(cTokenType == BRACKET_ROUND_START)
     {
         ExMethodCallHandle_t methodHandle;
 
@@ -485,7 +543,7 @@ static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHan
         (*currentTokenHandle)--;
         Log_d(TAG, "Parsing method call: %s", cTokenP->valueString);
 
-        if(!handleMethodCall_(localScopeBody, methodHandle, currentTokenHandle, true))
+        if(!handleMethodCall_(localScopeBody, methodHandle, currentTokenHandle, castBitSize, castFileType, NULL))
         {
             Log_e(TAG, "Failed to handle method parsing");
             return ERROR;
@@ -497,39 +555,90 @@ static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHan
     }else
     {   
         (*currentTokenHandle)--;
-        symbol->type = EXP_VARIABLE;
+        // symbol->type = EXP_VARIABLE;
+        // Recognised some kind of variable
 
         const char* varName = cTokenP->valueString;
-
         Log_d(TAG, "Parsing variable: %s", varName);
 
         if(Hashmap_find(&localScopeBody->localVariables, varName, strlen(varName)))
         {
-            symbol->expressionObject = *localScopeBody->localVariables.value;
+
+            VariableObjectHandle_t variable = *localScopeBody->localVariables.value;
+            
+            // Object call
+            if(tokenOffset(1)->tokenType == DOT_SYMBOL)
+            {
+                (*currentTokenHandle) += 2;
+                if(cTokenType == NAMING)
+                {
+                    (*currentTokenHandle)++;
+                    
+                    if(cTokenType== BRACKET_ROUND_START)
+                    {
+                        ExMethodCallHandle_t methodHandle;
+
+                        ALLOC_CHECK(methodHandle, sizeof(ExMethodCall_t), ERROR);
+
+                        (*currentTokenHandle)--;
+                        Log_d(TAG, "Parsing method call: %s", cTokenP->valueString);
+
+                        if(!handleMethodCall_(localScopeBody, methodHandle, currentTokenHandle, castBitSize, castFileType, variable))
+                        {
+                            Log_e(TAG, "Failed to handle method parsing");
+                            return ERROR;
+                        }
+
+                        symbol->type = EXP_METHOD_CALL;
+                        symbol->expressionObject = methodHandle;
+                    }else
+                    {currentTokenHandle
+                        Shouter_shoutExpectedToken(cTokenP, BRACKET_ROUND_START);
+                    }
+                }else
+                {
+                    Shouter_shoutError(cTokenP, "Expecting function call after dot");
+                }
+            }
+            else
+            {
+                symbol->type = EXP_VARIABLE;
+                symbol->expressionObject = *localScopeBody->localVariables.value;
+            }
+
         }else
         {
             symbol->expressionObject = NULL;
             Shouter_shoutError(cTokenP, "Variable '%s' is not declared previously", varName);
         }
-
+ 
     }
         
     return SUCCESS;
 }
 
 
-static bool handleMethodCall_(LocalScopeObjectHandle_t localScopeBody, ExMethodCallHandle_t methodCall, TokenHandler_t** currentTokenHandle, const bool isMethodSelf)
+static bool handleMethodCall_(LocalScopeObjectHandle_t localScopeBody,
+    ExMethodCallHandle_t methodCall,
+    TokenHandler_t** currentTokenHandle,
+    const BitpackSize_t castBitSize,
+    const char* castFileType,
+    const VariableObjectHandle_t caller)
 {
     // TODO: method existance check
-
-    methodCall->method.methodName = cTokenP->valueString;
-    methodCall->isMethodSelf = isMethodSelf;
-    methodCall->method.parameters = Vector_createDynamic(NULL);
-
-    NULL_GUARD(methodCall->method.parameters, ERROR, Log_e(TAG, "Failed to create function call %s params vector", methodCall->method.methodName));
+    
+    methodCall->name = cTokenP->valueString;
+    methodCall->castBitSize = castBitSize;
+    methodCall->castFile = (char*) castFileType;
+    
+    if(!Vector_create(&methodCall->parameters, NULL))
+    {
+        Log_e(TAG, "Failed to create function call %s params vector", methodCall->name);
+        return ERROR;
+    }
 
     (*currentTokenHandle)++; 
-    if(!handleMethodCallParameterization_(localScopeBody, &methodCall->method, currentTokenHandle))
+    if(!handleMethodCallParameterization_(localScopeBody, &methodCall->parameters, currentTokenHandle))
     {
         return ERROR;
     }
@@ -538,7 +647,7 @@ static bool handleMethodCall_(LocalScopeObjectHandle_t localScopeBody, ExMethodC
     return SUCCESS;
 }
 
-static inline bool handleMethodCallParameterization_(LocalScopeObjectHandle_t localScopeBody, MethodObjectHandle_t methodHandle, TokenHandler_t** currentTokenHandle)
+static inline bool handleMethodCallParameterization_(LocalScopeObjectHandle_t localScopeBody, VectorHandler_t parameters, TokenHandler_t** currentTokenHandle)
 {
     
     if(cTokenType == BRACKET_ROUND_START)
@@ -559,7 +668,7 @@ static inline bool handleMethodCallParameterization_(LocalScopeObjectHandle_t lo
                     symbol->type = EXP_VARIABLE;
                     symbol->expressionObject = *localScopeBody->localVariables.value;
                     
-                    if(!Vector_append(methodHandle->parameters, symbol))
+                    if(!Vector_append(parameters, symbol))
                     {
                         Log_e(TAG, "Failed to append function param to vector");
                         return ERROR;
@@ -574,13 +683,13 @@ static inline bool handleMethodCallParameterization_(LocalScopeObjectHandle_t lo
                 ExpressionHandle_t symbol;
                 ALLOC_CHECK(symbol, sizeof(Expression_t), ERROR);
 
-                if(!handleNumber_(symbol, currentTokenHandle))
+                if(!handleNumeric_(localScopeBody, symbol, currentTokenHandle))
                 {
                     Log_e(TAG, "Error happened while handling number%s in expression", cTokenP->valueString);
                     return ERROR;
                 }
 
-                if(!Vector_append(methodHandle->parameters, symbol))
+                if(!Vector_append(parameters, symbol))
                 {
                     Log_e(TAG, "Failed to append function param to vector");
                     return ERROR;
@@ -612,18 +721,18 @@ static inline bool handleObjectDeclaration_(LocalScopeObjectHandle_t scopeBody, 
     return false;
 }
 
-static bool isTokenOperator_(TokenHandler_t** currentTokenHandle)
+static bool isTokenOperator_(TokenHandler_t token)
 {
-    return  cTokenType == OPERATOR_PLUS     ||
-            cTokenType == OPERATOR_MINUS    ||
-            cTokenType == OPERATOR_MODULUS  ||
-            cTokenType == OPERATOR_MULTIPLY ||
-            cTokenType == OPERATOR_DIVIDE   ||
-            cTokenType == OPERATOR_XOR      ||
-            cTokenType == OPERATOR_AND      ||
-            cTokenType == OPERATOR_OR       ||
-            cTokenType == OPERATOR_NOT      ||
-            cTokenType == EQUAL;             
+    return  token->tokenType == OPERATOR_PLUS       ||
+            token->tokenType == OPERATOR_MINUS      ||
+            token->tokenType == OPERATOR_MODULUS    ||
+            token->tokenType == OPERATOR_MULTIPLY   ||
+            token->tokenType == OPERATOR_DIVIDE     ||
+            token->tokenType == OPERATOR_XOR        ||
+            token->tokenType == OPERATOR_AND        ||
+            token->tokenType == OPERATOR_OR         ||
+            token->tokenType == OPERATOR_NOT        ||
+            token->tokenType == EQUAL;             
             // cTokenType == OPERATOR_DIVIDE;
 
     // TODO: Add binary operators

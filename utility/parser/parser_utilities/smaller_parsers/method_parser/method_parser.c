@@ -48,7 +48,7 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, const 
     methodHandle->accessType = notation;
     methodHandle->containsBody = false;
     methodHandle->hasInfinityParams = false;
-
+    
     // setting up method name and return variables which already parsed
     methodHandle->returnVariable = returnVariable;
     methodHandle->methodName = returnVariable->objectName;
