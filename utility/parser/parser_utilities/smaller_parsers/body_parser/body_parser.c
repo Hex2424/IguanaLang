@@ -239,7 +239,6 @@ static bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, VectorHand
 
     while (*currentTokenHandle != expressionEndToken)
     {
-        Log_i(TAG, "Unequal %p %p", *currentTokenHandle, expressionEndToken);
         ExpressionHandle_t symbol;
 
         ALLOC_CHECK(symbol, sizeof(Expression_t), ERROR);
@@ -344,14 +343,14 @@ static bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, VectorHand
 
         if (handle->type == EXP_CONST_NUMBER)
         {
-            Log_d(TAG, "symbol: NUM(%d)", (AssignValue_t) handle->expressionObject);
+            Log_i(TAG, "symbol: NUM(%d)", (AssignValue_t) handle->expressionObject);
         }else if(handle->type == EXP_OPERATOR)
         {
-            Log_d(TAG, "symbol: OP: %d", (OperatorType_t) handle->expressionObject);
+            Log_i(TAG, "symbol: OP: %d", (OperatorType_t) handle->expressionObject);
         }else if(handle->type == EXP_VARIABLE)
         {
             VariableObjectHandle_t var = (VariableObjectHandle_t) handle->expressionObject;
-            Log_d(TAG, "symbol: bit:%u(%s) %s", var->bitpack, var->castedFile, var->objectName);
+            Log_i(TAG, "symbol: bit:%u(%s) %s", var->bitpack, var->castedFile, var->objectName);
         }
         
     }
@@ -705,13 +704,11 @@ static inline bool handleMethodCallParameterization_(LocalScopeObjectHandle_t lo
                 if((cTokenType == COMMA) || (*currentTokenHandle) == endExpressionFunctionPtr)
                 {
                     endExpressionPtr = (*currentTokenHandle);
-                    Log_i(TAG, "Expression end pointer %p", endExpressionPtr);
                     (*currentTokenHandle) = startExpressionPtr;
 
                     VectorHandler_t expressionVector = Vector_createDynamic(NULL);
 
                     NULL_GUARD(expressionVector, ERROR, Log_e(TAG, "Failed to create / allocate expression Vector"));
-                    Log_i(TAG, "Current Expression pointer %p", *currentTokenHandle);
                     if(!parseExpressionLine_(localScopeBody, expressionVector, currentTokenHandle, endExpressionPtr))
                     {
                         Log_e(TAG, "Failed to parse expression line");
