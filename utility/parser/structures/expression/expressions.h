@@ -44,7 +44,8 @@ typedef enum
     OP_BIN_AND,
     OP_BIN_OR,
 
-    OP_SET
+    OP_SET,
+    OP_CAST
 }OperatorType_t;
 
 typedef struct
