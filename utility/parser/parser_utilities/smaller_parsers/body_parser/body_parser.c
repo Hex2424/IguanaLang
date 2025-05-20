@@ -351,6 +351,10 @@ static bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, VectorHand
         {
             VariableObjectHandle_t var = (VariableObjectHandle_t) handle->expressionObject;
             Log_i(TAG, "symbol: bit:%u(%s) %s", var->bitpack, var->castedFile, var->objectName);
+        }else if(handle->type == EXP_METHOD_CALL)
+        {
+            ExMethodCallHandle_t var = (ExMethodCallHandle_t) handle->expressionObject;
+            Log_i(TAG, "symbol: method: %s", var->name);
         }
         
     }
@@ -438,26 +442,26 @@ static inline bool parseSymbolExpression_(LocalScopeObjectHandle_t scopeBody, Ex
 
 }
 
-static bool handleCastedOperand_(LocalScopeObjectHandle_t scopeBody, const BitpackSize_t castSize, const char* castFileType, ExpressionHandle_t symbolHandle, TokenHandler_t** currentTokenHandle)
-{
-    switch (cTokenType)
-    {
-        case NAMING:
-            if(!handleNaming_(scopeBody, symbolHandle, currentTokenHandle, castSize, castFileType))
-            {
-                return ERROR;
-            }
-            break;
+// static bool handleCastedOperand_(LocalScopeObjectHandle_t scopeBody, const BitpackSize_t castSize, const char* castFileType, ExpressionHandle_t symbolHandle, TokenHandler_t** currentTokenHandle)
+// {
+//     switch (cTokenType)
+//     {
+//         case NAMING:
+//             if(!handleNaming_(scopeBody, symbolHandle, currentTokenHandle, castSize, castFileType))
+//             {
+//                 return ERROR;
+//             }
+//             break;
         
-        case NUMBER_VALUE:
-            Shouter_shoutError(cTokenP, "Cast type for number constant not supported yet");
-            break;
+//         case NUMBER_VALUE:
+//             Shouter_shoutError(cTokenP, "Cast type for number constant not supported yet");
+//             break;
         
-        default:break;
-    }
+//         default:break;
+//     }
 
-    return SUCCESS;
-}
+//     return SUCCESS;
+// }
 
 static bool handleNumeric_(LocalScopeObjectHandle_t scopeBody, ExpressionHandle_t symbolHandle, TokenHandler_t** currentTokenHandle)
 {
@@ -468,39 +472,42 @@ static bool handleNumeric_(LocalScopeObjectHandle_t scopeBody, ExpressionHandle_
     // Parsing number
     number = strtol(cTokenP->valueString, &end, 10);
 
-    // After number what token
-    if(isTokenOperator_(tokenOffset(1)) || (tokenOffset(1)->tokenType == SEMICOLON) || (tokenOffset(1)->tokenType == BRACKET_ROUND_END))
-    {
-        symbolHandle->type = EXP_CONST_NUMBER;
-        symbolHandle->expressionObject = (void*) (uintptr_t) number;
-    }else
-    {
-        (*currentTokenHandle)++;
+    symbolHandle->type = EXP_CONST_NUMBER;
+    symbolHandle->expressionObject = (void*) (uintptr_t) number;
+
+    // // After number what token
+    // if(isTokenOperator_(tokenOffset(1)) || (tokenOffset(1)->tokenType == SEMICOLON) || (tokenOffset(1)->tokenType == BRACKET_ROUND_END))
+    // {
+    //     symbolHandle->type = EXP_CONST_NUMBER;
+    //     symbolHandle->expressionObject = (void*) (uintptr_t) number;
+    // }else
+    // {
+    //     (*currentTokenHandle)++;
         
-        switch (cTokenType)
-        {
-            case COLON:
-            {
-                (*currentTokenHandle)++;
-                // TODO: Add file type handling also and rewrite the way to create bit packed vars with less writing
-                if(!handleCastedOperand_(scopeBody, number, NULL, symbolHandle, currentTokenHandle))
-                {
-                    Log_e(TAG, "Error happened in parsing casted operand");
-                    return ERROR;
-                }
-            }break;
+    //     switch (cTokenType)
+    //     {
+    //         case COLON:
+    //         {
+    //             (*currentTokenHandle)++;
+    //             // TODO: Add file type handling also and rewrite the way to create bit packed vars with less writing
+    //             if(!handleCastedOperand_(scopeBody, number, NULL, symbolHandle, currentTokenHandle))
+    //             {
+    //                 Log_e(TAG, "Error happened in parsing casted operand");
+    //                 return ERROR;
+    //             }
+    //         }break;
 
-            case BRACKET_ROUND_START:
-            {
-                Shouter_shoutError(cTokenP, "Constant number %d is not callable function", number);
-            }break;
+    //         case BRACKET_ROUND_START:
+    //         {
+    //             Shouter_shoutError(cTokenP, "Constant number %d is not callable function", number);
+    //         }break;
 
-            default:
-            {
-                Shouter_shoutError(cTokenP, "Expected operator or colon after numeric");
-            }break;
-        }
-    }
+    //         default:
+    //         {
+    //             Shouter_shoutError(cTokenP, "Expected operator or colon after numeric");
+    //         }break;
+    //     }
+    // }
 
     return SUCCESS;
 }
@@ -765,6 +772,7 @@ static bool isTokenOperator_(TokenHandler_t token)
             token->tokenType == OPERATOR_AND        ||
             token->tokenType == OPERATOR_OR         ||
             token->tokenType == OPERATOR_NOT        ||
+            token->tokenType == COLON               ||
             token->tokenType == EQUAL;             
             // cTokenType == OPERATOR_DIVIDE;
 

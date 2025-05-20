@@ -19,6 +19,8 @@ typedef struct
 {
     char* name;
     VariableObjectHandle_t caller;
+    BitpackSize_t castBitSize;
+    char* castFile;
     Vector_t parameters;    
 }ExMethodCall_t;
 
