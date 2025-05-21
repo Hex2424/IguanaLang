@@ -358,12 +358,6 @@ static bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, VectorHand
         }
         
     }
-
-    if(!Vector_append(&localScope->expressionList, expressionVector))
-    {
-        Log_e(TAG, "Failed to append expression to expressionsList vector");
-        return ERROR;
-    }
     
     return SUCCESS;
 }
