@@ -301,7 +301,7 @@ static inline bool fileWriteMethodBody_(const MethodObjectHandle_t method)
 
     VariableObject_t resultVar;
 
-    resultVar.objectName = NULL;
+    resultVar.objectName = "";
 
     fwrite(READABILITY_ENDLINE BRACKET_START_DEF READABILITY_ENDLINE, BYTE_SIZE, SIZEOF_NOTERM(READABILITY_ENDLINE BRACKET_START_DEF READABILITY_ENDLINE), currentCfile_);
 
@@ -353,7 +353,7 @@ static bool fileWriteExpression_(const VectorHandler_t expression, VariableObjec
         return ERROR;
     }
 
-    if(resultVar->objectName != NULL)
+    if(resultVar->objectName[0] != '\0')
     {
         fprintf(currentCfile_, BIT_TYPE_DEF READABILITY_SPACE "%s" SEMICOLON_DEF READABILITY_ENDLINE, resultVar->objectName);
     }
@@ -517,7 +517,7 @@ static bool generateCodeForOneOperand_(const ExpressionHandle_t symbol, Variable
         Log_e(TAG, "Failed to estimate bit count for symbol");
         return ERROR;
     }
-    if(resultVariable->objectName != NULL)
+    if(resultVariable->objectName[0] != '\0')
     {
         fprintf(currentCfile_, BIT_TYPE_DEF " %s" C_OPERATOR_EQUAL_DEF READABILITY_SPACE, resultVariable->objectName);
     }
@@ -550,24 +550,12 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
 
 
     char* currSufix;
-    if(assignedTmpVar->objectName == NULL)
-    {
-        currSufix = alloca(10);
-    }else
-    {
-        currSufix = alloca(strlen(assignedTmpVar->objectName) + 10);
-    }
+    currSufix = alloca(strlen(assignedTmpVar->objectName) + 10);
 
     NULL_GUARD(currSufix, ERROR, Log_e(TAG, "Failed to allocate currSfix"));
 
     currSufix[0] = '\0';
-    if(assignedTmpVar->objectName == NULL)
-    {
-        sprintf(currSufix, "f%lu", funcId);
-    }else
-    {
-        sprintf(currSufix, "%sf%lu", assignedTmpVar->objectName, funcId);
-    }
+    sprintf(currSufix, "%sf%lu", assignedTmpVar->objectName, funcId);
     
     fprintf(currentCfile_, BIT_TYPE_DEF " %s" SEMICOLON_DEF READABILITY_ENDLINE BRACKET_START_DEF READABILITY_ENDLINE, currSufix);
 
@@ -582,12 +570,13 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
     for(size_t paramIdx = 0; paramIdx < method->parameters.currentSize; paramIdx++)
     {
         VariableObjectHandle_t resultVar = alloca(sizeof(VariableObject_t));
-
+        
         char* paramName = alloca(strlen(assignedTmpVar->objectName) + 10);
         NULL_GUARD(paramName, ERROR, Log_e(TAG, "Failed to allocate param name"));
         paramName[0] = '\0'; 
 
-        sprintf(paramName, "p%lu", paramIdx);
+        sprintf(paramName, "%sp%lu", assignedTmpVar->objectName, paramIdx);
+
         resultVar->objectName = paramName;
 
         if(!fileWriteExpression_(method->parameters.expandable[paramIdx], resultVar, currSufix))
