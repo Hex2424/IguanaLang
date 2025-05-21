@@ -694,6 +694,13 @@ static inline bool handleMethodCallParameterization_(LocalScopeObjectHandle_t lo
         }
 
         TokenHandler_t* endExpressionFunctionPtr = (*currentTokenHandle) - 1;
+
+        if(startExpressionPtr == endExpressionFunctionPtr)
+        {
+            (*currentTokenHandle)--;
+            return SUCCESS;
+        }
+
         (*currentTokenHandle) = startExpressionPtr;
 
         if(unclosedRoundBracketsCount > 0)

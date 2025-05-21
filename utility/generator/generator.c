@@ -24,6 +24,9 @@
 #include "bit_arithmetic/plt_arithmetic.h"
 #include <dstack.h>
 #include "first_headers.h"
+#include "../parser/parser_utilities/post_parsing_utility/bitfit.h"
+
+
 
 ////////////////////////////////
 // DEFINES
@@ -94,9 +97,14 @@ static inline bool fileWriteVariablesAllocation_(const BitpackSize_t bitsize, co
 static bool printBitVariableReading_(const ExpressionHandle_t operand);
 static bool generateCodeForOperation_(const VariableObjectHandle_t assignedTmpVar, ExpressionHandle_t left, ExpressionHandle_t right, const OperatorType_t operator);
 static bool fileWriteBitVariableSet_(const VariableObjectHandle_t assignedTmpVar, const ExpressionHandle_t left, const ExpressionHandle_t right);
-static bool generateCodeForOneOperand_(const ExpressionHandle_t symbol);
-static bool filewriteMethodCall_(const BitpackSize_t returnSizeBits, const ExMethodCallHandle_t methodCallHandle);
+static bool getResultingVariableFromOperand_(const ExpressionHandle_t symbol, VariableObjectHandle_t resultVariable);
 static bool handleCastOperator_(const VariableObjectHandle_t assignedTmpVar, const ExpressionHandle_t left, const ExpressionHandle_t right);
+static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const VariableObjectHandle_t assignedTmpVar, const uint64_t funcId, ExMethodCallHandle_t functionExpression);
+static bool fileWriteNameMangleParams_(const VectorHandler_t params);
+static bool generateCodeForOneOperand_(const ExpressionHandle_t symbol, VariableObjectHandle_t resultVariable);
+
+static inline uint8_t getBitCountU64_(uint64_t number);
+
 
 ////////////////////////////////
 // IMPLEMENTATION
@@ -198,32 +206,15 @@ static bool fileWriteMainHTypedefs_(void)
     return (writeStatus >= 0);
 }
 
-static bool fileWriteNameMangleMethod_(const char* const className, const MethodObjectHandle_t method, const bool isPublic)
+static bool fileWriteNameMangleParams_(const VectorHandler_t params)
 {
     int writeStatus;
-    // TODO: optimize this so length will be somewhere stored entire generator
-    size_t objectNameLen = strlen(className);
-    size_t methodNameLen = strlen(method->methodName);
 
-    writeStatus = fprintf(currentCfile_,
-        //ex: asm("_ZN9wikipedia3fooEv");
-        READABILITY_SPACE ASM_HEADER_MANGLE MANGLE_MAGIC_BYTE_DEF MANGLE_NEST_ID_DEF "%lu" BIT_DEF "%lu_%s%ld%s" MANGLE_END_DEF,
-        objectNameLen + ((uint8_t) SIZEOF_NOTERM(BIT_DEF)) + ((uint8_t) SIZEOF_NOTERM("_")) + getDigitCountU64_((uint64_t) currentAst_->objectSizeBits),
-        currentAst_->objectSizeBits,
-        className,
-        methodNameLen,
-        method->methodName);
-
-    if(writeStatus < 0)
+    if(params->currentSize > 0)
     {
-        return ERROR;
-    }
-
-    if(method->parameters->currentSize > 0)
-    {
-        for(uint32_t parameterIdx = 0; parameterIdx < method->parameters->currentSize; parameterIdx++)
+        for(uint32_t parameterIdx = 0; parameterIdx < params->currentSize; parameterIdx++)
         {
-            const VariableObjectHandle_t varParam = (VariableObjectHandle_t) method->parameters->expandable[parameterIdx];
+            const VariableObjectHandle_t varParam = (VariableObjectHandle_t) params->expandable[parameterIdx];
             writeStatus = fprintf(currentCfile_, "%u" BIT_DEF "%lu", (uint8_t) SIZEOF_NOTERM(BIT_DEF) + getDigitCountU64_(varParam->bitpack), varParam->bitpack);
             
             if(writeStatus < 0)
@@ -247,6 +238,41 @@ static bool fileWriteNameMangleMethod_(const char* const className, const Method
         {
             return ERROR;
         }
+    }
+    
+    if(writeStatus < 0)
+    {
+        return ERROR;
+    }
+
+    return SUCCESS;
+}
+
+static bool fileWriteNameMangleMethod_(const char* const className, const MethodObjectHandle_t method, const bool isPublic)
+{
+    int writeStatus;
+    // TODO: optimize this so length will be somewhere stored entire generator
+    size_t objectNameLen = strlen(className);
+    size_t methodNameLen = strlen(method->methodName);
+
+    writeStatus = fprintf(currentCfile_,
+        //ex: asm("_ZN9wikipedia3fooEv");
+        READABILITY_SPACE ASM_HEADER_MANGLE MANGLE_MAGIC_BYTE_DEF MANGLE_NEST_ID_DEF "%lu" BIT_DEF "%lu_%s%ld%s" MANGLE_END_DEF,
+        objectNameLen + ((uint8_t) SIZEOF_NOTERM(BIT_DEF)) + ((uint8_t) SIZEOF_NOTERM("_")) + getDigitCountU64_((uint64_t) currentAst_->objectSizeBits),
+        currentAst_->objectSizeBits,
+        className,
+        methodNameLen,
+        method->methodName);
+
+    if(writeStatus < 0)
+    {
+        return ERROR;
+    }
+
+    if(!fileWriteNameMangleParams_(method->parameters))
+    {
+        Log_e(TAG, "Failed to write params mangle of method");
+        return ERROR;
     }
     
     return SUCCESS;
@@ -343,7 +369,7 @@ static bool fileWriteExpression_(const VectorHandler_t expression, VariableObjec
         // If operand handle it, if operator or something else ignore, it shouldn't safely passby from parser side
         if(Expression_isSymbolOperand(symbol))
         {
-            if(!generateCodeForOneOperand_(symbol))
+            if(!generateCodeForOneOperand_(symbol, resultVar))
             {
                 Log_e(TAG, "Failed to generate code for 1 operand");
                 return ERROR;
@@ -379,6 +405,7 @@ static bool fileWriteExpression_(const VectorHandler_t expression, VariableObjec
                 
                 if(right == NULL || left == NULL)
                 {
+                    Log_w(TAG, "stack got popped null values");
                     break;
                 }
 
@@ -413,18 +440,19 @@ static bool fileWriteExpression_(const VectorHandler_t expression, VariableObjec
                 tmpIncrement++;
             }
         }
+        resultVar->bitpack = tmpVar->bitpack;
+        resultVar->posBit = tmpVar->posBit;
+        resultVar->belongToGroup = tmpVar->belongToGroup;
+        resultVar->castedFile = tmpVar->castedFile;
+        // Var name left, since it passed through object, through params
+        
+        if(resultVar->objectName != NULL)
+        {
+            fprintf(currentCfile_, "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE "%s" SEMICOLON_DEF READABILITY_ENDLINE, resultVar->objectName, tmpVar->objectName);
+        }
     }
 
-    resultVar->bitpack = tmpVar->bitpack;
-    resultVar->posBit = tmpVar->posBit;
-    resultVar->belongToGroup = tmpVar->belongToGroup;
-    resultVar->castedFile = tmpVar->castedFile;
-    // Var name left, since it passed through object, through params
-    
-    if(resultVar->objectName != NULL)
-    {
-        fprintf(currentCfile_, "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE "%s" SEMICOLON_DEF READABILITY_ENDLINE, resultVar->objectName, tmpVar->objectName);
-    }
+
 
     FWRITE_STRING(BRACKET_END_DEF READABILITY_ENDLINE);
 
@@ -439,52 +467,226 @@ static bool determineResultVariable_(VariableObjectHandle_t resultVariable, cons
 }
 
 
-static bool generateCodeForOneOperand_(const ExpressionHandle_t symbol)
+static bool getResultingVariableFromOperand_(const ExpressionHandle_t symbol, VariableObjectHandle_t resultVariable)
 {
+    NULL_GUARD(resultVariable, ERROR, Log_e(TAG, "Passed NULL result variable for bit count estimation"));
 
     switch (symbol->type)
     {
-        case EXP_TMP_VAR:            // Ignoring solo temp variable without operator is same as nothing
-        case EXP_VARIABLE:           // Ignoring solo variable without operator is same as nothing
-        case EXP_CONST_NUMBER:break; // Ignoring solo const number without operator is same as nothing
-        
-        case EXP_METHOD_CALL:        // Method call need handling, it does things
+        case EXP_TMP_VAR:
         {
-            const ExMethodCallHandle_t methodCallHandle = symbol->expressionObject;
+            VariableObjectHandle_t var = (VariableObjectHandle_t) symbol->expressionObject;
+            NULL_GUARD(var, ERROR, Log_e(TAG, "NULL temp variable detected for bit count estimation"));
 
-            if(!filewriteMethodCall_(0, methodCallHandle))
-            {
-                Log_e(TAG, "Failed to write method call symbol");
-                return ERROR;
-            }
-
-            FWRITE_STRING(SEMICOLON_DEF READABILITY_ENDLINE);
+            resultVariable->bitpack = var->bitpack;
         }break;
 
-        default: Log_e(TAG, "Unhandled operator in 1 operator parse type: %d", symbol->type);break;
+        case EXP_VARIABLE:
+        {
+            VariableObjectHandle_t var = (VariableObjectHandle_t) symbol->expressionObject;
+            NULL_GUARD(var, ERROR, Log_e(TAG, "NULL variable detected for bit count estimation"));
+            resultVariable->bitpack = var->bitpack;
+        }break;
+
+        case EXP_CONST_NUMBER:
+        {
+            AssignValue_t value = (AssignValue_t) symbol->expressionObject;
+            resultVariable->bitpack = getBitCountU64_(value);
+            
+        }break;
+        
+        case EXP_METHOD_CALL:
+        {
+            // if its just method call then return type is 0, cast case makes tmp var non zero
+            resultVariable->bitpack = 0;
+        }break;
+
+        default:
+        {
+            Log_e(TAG, "Unhandled operator in 1 operator parse type: %d", symbol->type);
+        }return ERROR;
     }
 
     return SUCCESS;
 }
 
-// static bool generateMethodCallScope_(const VariableObjectHandle_t assignedTmpVar, const uint64_t funcId, ExpressionHandle_t functionExpression)
-// {
-//     functionExpression->type = EXP_TMP_VAR;
+static bool generateCodeForOneOperand_(const ExpressionHandle_t symbol, VariableObjectHandle_t resultVariable)
+{
+    if(!getResultingVariableFromOperand_(symbol, resultVariable))
+    {
+        Log_e(TAG, "Failed to estimate bit count for symbol");
+        return ERROR;
+    }
+    if(resultVariable->objectName != NULL)
+    {
+        fprintf(currentCfile_, BIT_TYPE_DEF " %s" C_OPERATOR_EQUAL_DEF READABILITY_SPACE, resultVariable->objectName);
+    }
 
-//     fprintf(currentCfile_, BIT_TYPE_DEF " %s" STRINGIFY(TMP_FUNC%lu) SEMICOLON_DEF READABILITY_ENDLINE BRACKET_END_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, funcId);
+    if(symbol->type != EXP_METHOD_CALL)
+    {
+        if(!printBitVariableReading_(symbol))
+        {
+            return ERROR;
+        }
+
+        FWRITE_STRING(SEMICOLON_DEF READABILITY_ENDLINE);
+    }else
+    {
+        ExMethodCallHandle_t methodCall = symbol->expressionObject;
+
+        if(!generateMethodCallScope_(0, resultVariable, 0, methodCall))
+        {
+            Log_e(TAG, "Failed to generate method call for one operand");
+            return ERROR;
+        }
+    }    
+
+    return SUCCESS;
+}
+
+static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const VariableObjectHandle_t assignedTmpVar, const uint64_t funcId, ExMethodCallHandle_t method)
+{
+    Vector_t resultVars;
+
+
+    char* currSufix;
+    if(assignedTmpVar->objectName == NULL)
+    {
+        currSufix = alloca(10);
+    }else
+    {
+        currSufix = alloca(strlen(assignedTmpVar->objectName) + 10);
+    }
+
+    NULL_GUARD(currSufix, ERROR, Log_e(TAG, "Failed to allocate currSfix"));
+
+    currSufix[0] = '\0';
+    if(assignedTmpVar->objectName == NULL)
+    {
+        sprintf(currSufix, "f%lu", funcId);
+    }else
+    {
+        sprintf(currSufix, "%sf%lu", assignedTmpVar->objectName, funcId);
+    }
     
+    fprintf(currentCfile_, BIT_TYPE_DEF " %s" SEMICOLON_DEF READABILITY_ENDLINE BRACKET_START_DEF READABILITY_ENDLINE, currSufix);
 
-//     // const ExMethodCallHandle_t call = operand->expressionObject;
+    Log_d(TAG, "Start on method call generation: %s", method->name);
 
-//     // if(!filewriteMethodCall_(call))
-//     // {
-//     //     Log_e(TAG, "Failed to write method call");
-//     //     return ERROR;   
-//     // }
+    if(!Vector_create(&resultVars, NULL))
+    {
+        Log_e(TAG, "Failed to create result vars vector");
+        return ERROR;
+    }
 
-//     // functionExpression->expressionObject = assignedTmpForOperation;
-//     return SUCCESS;
-// }
+    for(size_t paramIdx = 0; paramIdx < method->parameters.currentSize; paramIdx++)
+    {
+        VariableObjectHandle_t resultVar = alloca(sizeof(VariableObject_t));
+
+        char* paramName = alloca(strlen(assignedTmpVar->objectName) + 10);
+        NULL_GUARD(paramName, ERROR, Log_e(TAG, "Failed to allocate param name"));
+        paramName[0] = '\0'; 
+
+        sprintf(paramName, "p%lu", paramIdx);
+        resultVar->objectName = paramName;
+
+        if(!fileWriteExpression_(method->parameters.expandable[paramIdx], resultVar, currSufix))
+        {
+            Log_e(TAG, "Failed to write parameter expression");
+            return ERROR;
+        }
+
+        if(!Vector_append(&resultVars, resultVar))
+        {
+            Log_e(TAG, "Failed to append to result variables");
+            return ERROR;
+        }
+
+    }
+
+    // void case not needed to pack
+    if (returnSizeBits != 0)
+    {
+        VariableObject_t returnVar;
+
+        returnVar.bitpack = returnSizeBits;
+
+        // Adding return variable also to bitfit
+        if(!Vector_append(&resultVars, &returnVar))
+        {
+            Log_e(TAG, "Failed to append to result variables");
+            return ERROR;
+        }
+    }
+    
+    BitpackSize_t sizeNeededForFunctionParams;
+
+    if(!Bitfit_assignGroupsAndPositionForVariableVector_(&resultVars, FIRST_FIT, &sizeNeededForFunctionParams))
+    {
+        Log_e(TAG, "Failed to fit params bits");
+        return ERROR;
+    }
+
+    if(resultVars.currentSize > 0)
+    {
+        fprintf(currentCfile_, EXTERN_KEYWORD_DEF " " TYPE_BIT0_DEF " " "%s" BRACKET_ROUND_START_DEF "" READABILITY_SPACE "void* p" BRACKET_ROUND_END_DEF, method->name);
+    }else
+    {
+        fprintf(currentCfile_, EXTERN_KEYWORD_DEF " " TYPE_BIT0_DEF " " "%s" BRACKET_ROUND_START_DEF TYPE_BIT0_DEF BRACKET_ROUND_END_DEF, method->name);
+    }
+
+    MethodObject_t tempMethodObj;
+
+    tempMethodObj.methodName = method->name;
+    tempMethodObj.parameters = &resultVars;
+    
+    // if(method->caller == NULL)
+    // {
+    //     VariableObjectHandle_t caller = malloc(sizeof(VariableObject_t));
+    //     caller->objectName = currentAst_->iguanaObjectName;
+
+    //     method->caller = caller;
+    // }
+    if(method->caller == NULL)
+    {
+        if(!fileWriteNameMangleMethod_(currentAst_->iguanaObjectName, &tempMethodObj, true))
+        {
+            Log_e(TAG, "Failed to write mangle self method \'%s\'", method->name);
+            return ERROR;
+        }
+
+    }else
+    {
+        if(!fileWriteNameMangleMethod_(method->caller->objectName, &tempMethodObj, true))
+        {
+            Log_e(TAG, "Failed to write mangle method \'%s\'", method->name);
+            return ERROR;
+        }
+
+    }
+
+    if(resultVars.currentSize > 0)
+    {
+        fprintf(currentCfile_, READABILITY_ENDLINE "%s" BRACKET_ROUND_START_DEF "" READABILITY_SPACE "%spset" BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE, method->name, assignedTmpVar->objectName);
+    }else
+    {
+        fprintf(currentCfile_, READABILITY_ENDLINE "%s" BRACKET_ROUND_START_DEF BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE, method->name);
+    }
+
+
+    FWRITE_STRING(BRACKET_END_DEF READABILITY_ENDLINE);
+
+    // const ExMethodCallHandle_t call = operand->expressionObject;
+
+    // if(!filewriteMethodCall_(call))
+    // {
+    //     Log_e(TAG, "Failed to write method call");
+    //     return ERROR;   
+    // }
+
+    // functionExpression->expressionObject = assignedTmpForOperation;
+    return SUCCESS;
+}
 
 static bool generateCodeForOperation_(const VariableObjectHandle_t assignedTmpVar, ExpressionHandle_t left, ExpressionHandle_t right, const OperatorType_t operator)
 {
@@ -492,24 +694,24 @@ static bool generateCodeForOperation_(const VariableObjectHandle_t assignedTmpVa
     int status;
 
     // Checking if operation regenerateCodeForOperation_lated to function call, it needs be handled differently
-    // if(left->type == EXP_METHOD_CALL)
-    // {
+    if(left->type == EXP_METHOD_CALL)
+    {
         
-    //     if(!generateMethodCallScope_(assignedTmpVar, 0, left))
-    //     {
-    //         Log_e(TAG, "Failed to generate method call scope 0 (left)");
-    //         return ERROR;
-    //     }
-    // }
+        if(!generateMethodCallScope_(0, assignedTmpVar, 0, left->expressionObject))
+        {
+            Log_e(TAG, "Failed to generate method call scope 0 (left)");
+            return ERROR;
+        }
+    }
 
-    // if(right->type == EXP_METHOD_CALL)
-    // {
-    //     if(!generateMethodCallScope_(assignedTmpVar, 1, right))
-    //     {
-    //         Log_e(TAG, "Failed to generate method call scope 1 (right)");
-    //         return ERROR;
-    //     }
-    // }
+    if(right->type == EXP_METHOD_CALL)
+    {
+        if(!generateMethodCallScope_(0, assignedTmpVar, 1, right->expressionObject))
+        {
+            Log_e(TAG, "Failed to generate method call scope 1 (right)");
+            return ERROR;
+        }
+    }
 
     if(operator == OP_CAST)
     {
@@ -697,14 +899,26 @@ static bool generateMethodHeader_(const MethodObjectHandle_t method)
         if(method->containsBody)
         {
             // TODO later change this hardcoded 
-            fwrite(PARAM_TYPE_DEF READABILITY_SPACE FUNCTION_OBJ_NAME COMMA_DEF READABILITY_SPACE,
+            // fwrite(PARAM_TYPE_DEF READABILITY_SPACE FUNCTION_OBJ_NAME COMMA_DEF READABILITY_SPACE,
+            //     BYTE_SIZE,
+            //     SIZEOF_NOTERM(PARAM_TYPE_DEF READABILITY_SPACE FUNCTION_OBJ_NAME COMMA_DEF READABILITY_SPACE), currentCfile_);
+            
+            fwrite(READABILITY_SPACE,
                 BYTE_SIZE,
-                SIZEOF_NOTERM(PARAM_TYPE_DEF READABILITY_SPACE FUNCTION_OBJ_NAME COMMA_DEF READABILITY_SPACE), currentCfile_);
+                SIZEOF_NOTERM(READABILITY_SPACE), currentCfile_);
 
         }
     }
 
-    FWRITE_STRING(PARAM_TYPE_DEF READABILITY_SPACE FUNCTION_PARAM_NAME BRACKET_ROUND_END_DEF);
+    if(method->parameters->currentSize > 0)
+    {
+        FWRITE_STRING(PARAM_TYPE_DEF READABILITY_SPACE FUNCTION_PARAM_NAME);
+    }else
+    {
+        FWRITE_STRING(TYPE_BIT0_DEF);
+    }
+    
+    FWRITE_STRING(BRACKET_ROUND_END_DEF);
 
     return SUCCESS;
 }
@@ -744,42 +958,43 @@ static int methodDeclarationIteratorCallback_(void *key, int count, void* value,
 }
 
 
-static bool filewriteMethodCall_(const BitpackSize_t returnSizeBits, const ExMethodCallHandle_t methodCallHandle)
-{
-    //TODO: when implemented function normal calls will be, will add better handling, for now lets leave
-    if(strcmp(methodCallHandle->name, "print") == 0)
-    {
-        FWRITE_STRING("printf(\"");
-        for(uint16_t paramIdx = 0; paramIdx < methodCallHandle->parameters.currentSize; paramIdx++)
-        {
-            FWRITE_STRING("%lu ");
-        }
-        FWRITE_STRING("\\n\"");
+// static bool filewriteMethodCall_(const BitpackSize_t returnSizeBits, const ExMethodCallHandle_t methodCallHandle)
+// {
 
-        for(uint16_t paramIdx = 0; paramIdx < methodCallHandle->parameters.currentSize; paramIdx++)
-        {
-            FWRITE_STRING("," READABILITY_SPACE);
+//     // //TODO: when implemented function normal calls will be, will add better handling, for now lets leave
+//     // if(strcmp(methodCallHandle->name, "print") == 0)
+//     // {
+//     //     FWRITE_STRING("printf(\"");
+//     //     for(uint16_t paramIdx = 0; paramIdx < methodCallHandle->parameters.currentSize; paramIdx++)
+//     //     {
+//     //         FWRITE_STRING("%lu ");
+//     //     }
+//     //     FWRITE_STRING("\\n\"");
 
-            const ExpressionHandle_t param = methodCallHandle->parameters.expandable[paramIdx];
+//     //     for(uint16_t paramIdx = 0; paramIdx < methodCallHandle->parameters.currentSize; paramIdx++)
+//     //     {
+//     //         FWRITE_STRING("," READABILITY_SPACE);
 
-            if(!printBitVariableReading_(param))
-            {
-                Log_e(TAG, "Failed to generate param for print");
-                return ERROR;
-            }
+//     //         const ExpressionHandle_t param = methodCallHandle->parameters.expandable[paramIdx];
+
+//     //         if(!printBitVariableReading_(param))
+//     //         {
+//     //             Log_e(TAG, "Failed to generate param for print");
+//     //             return ERROR;
+//     //         }
         
-        }
-        FWRITE_STRING(BRACKET_ROUND_END_DEF);
-    }else
-    {
+//     //     }
+//     //     FWRITE_STRING(BRACKET_ROUND_END_DEF);
+//     // }else
+//     // {
         
-        // printf("%s from caller: %s %lu", methodCallHandle->name, methodCallHandle->castFile, methodCallHandle->castBitSize);
+//     //     // printf("%s from caller: %s %lu", methodCallHandle->name, methodCallHandle->castFile, methodCallHandle->castBitSize);
 
-        FWRITE_STRING("0");
-    }
+//     //     FWRITE_STRING("0");
+//     // }
 
-    return SUCCESS;
-}
+//     return SUCCESS;
+// }
 
 
 static bool handleCastOperator_(const VariableObjectHandle_t assignedTmpVar, const ExpressionHandle_t left, const ExpressionHandle_t right)
@@ -793,11 +1008,13 @@ static bool handleCastOperator_(const VariableObjectHandle_t assignedTmpVar, con
     if(right->type == EXP_METHOD_CALL)
     {
         AssignValue_t castValue = (AssignValue_t) left->expressionObject;
-        if(!filewriteMethodCall_(castValue, (ExMethodCallHandle_t) right->expressionObject))
+
+        if(!generateMethodCallScope_(castValue, assignedTmpVar, 0, right->expressionObject))
         {
             Log_e(TAG, "Failed to write method call to file size: %lu", castValue);
             return ERROR;
         }
+
     }else if(right->type == EXP_CONST_NUMBER)
     {
         Log_e(TAG, "Cast on constant value not supported yet");
@@ -820,7 +1037,15 @@ static bool handleCastOperator_(const VariableObjectHandle_t assignedTmpVar, con
     return SUCCESS;
 }
 
-
+static inline uint8_t getBitCountU64_(uint64_t number)
+{
+    uint8_t count = 0;
+    while (number) {
+        count++;
+        number >>= 1;
+    }
+    return count;
+}
 
 static inline uint8_t getDigitCountU64_(uint64_t number) 
 {
