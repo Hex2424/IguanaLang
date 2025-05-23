@@ -354,7 +354,14 @@ static bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, VectorHand
         }else if(handle->type == EXP_METHOD_CALL)
         {
             ExMethodCallHandle_t var = (ExMethodCallHandle_t) handle->expressionObject;
-            Log_i(TAG, "symbol: method: %s", var->name);
+            if (var->caller != NULL)
+            {
+                Log_i(TAG, "symbol: method: %s.%s", var->caller->objectName, var->name);
+            }else
+            {
+                Log_i(TAG, "symbol: method: this.%s", var->name);
+            }
+            
         }
         
     }
@@ -544,7 +551,7 @@ static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHan
         ALLOC_CHECK(methodHandle, sizeof(ExMethodCall_t), ERROR);
 
         (*currentTokenHandle)--;
-        Log_d(TAG, "Parsing method call: %s", cTokenP->valueString);
+        Log_d(TAG, "Parsing method call: this.%s", cTokenP->valueString);
 
         if(!handleMethodCall_(localScopeBody, methodHandle, currentTokenHandle, NULL))
         {
@@ -584,7 +591,7 @@ static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHan
                         ALLOC_CHECK(methodHandle, sizeof(ExMethodCall_t), ERROR);
 
                         (*currentTokenHandle)--;
-                        Log_d(TAG, "Parsing method call: %s", cTokenP->valueString);
+                        Log_d(TAG, "Parsing method call: %s.%s", variable->objectName, cTokenP->valueString);
 
                         if(!handleMethodCall_(localScopeBody, methodHandle, currentTokenHandle, variable))
                         {
@@ -629,6 +636,7 @@ static bool handleMethodCall_(LocalScopeObjectHandle_t localScopeBody,
     // TODO: method existance check
     
     methodCall->name = cTokenP->valueString;
+    methodCall->caller = caller;
 
     if(!Vector_create(&methodCall->parameters, NULL))
     {

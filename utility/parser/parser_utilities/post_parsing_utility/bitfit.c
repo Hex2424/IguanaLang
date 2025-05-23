@@ -123,8 +123,6 @@ int comp (const void * elem1, const void * elem2)
     VariableObjectHandle_t a = (VariableObjectHandle_t) elem1;
     VariableObjectHandle_t b = (VariableObjectHandle_t) elem2;
     
-    return (b->bitpack - a->bitpack);
-
     if (a->bitpack < b->bitpack)
     {
         return 1;
@@ -135,6 +133,5 @@ int comp (const void * elem1, const void * elem2)
         return -1;
     }
 
-    return strcmp(a->objectName, b->objectName);
-
+    return 1;
 }

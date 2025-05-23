@@ -621,20 +621,13 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
         }
     }
     
-    BitpackSize_t sizeNeededForFunctionParams;
-
-    if(!Bitfit_assignGroupsAndPositionForVariableVector_(&resultVars, FIRST_FIT, &sizeNeededForFunctionParams))
-    {
-        Log_e(TAG, "Failed to fit params bits");
-        return ERROR;
-    }
 
     if(resultVars.currentSize > 0)
     {
-        fprintf(currentCfile_, EXTERN_KEYWORD_DEF " " TYPE_BIT0_DEF " " "%s" BRACKET_ROUND_START_DEF "" READABILITY_SPACE "void* p" BRACKET_ROUND_END_DEF, method->name);
+        fprintf(currentCfile_, EXTERN_KEYWORD_DEF " " TYPE_BIT0_DEF " " "__%s" BRACKET_ROUND_START_DEF "" READABILITY_SPACE "void* p" BRACKET_ROUND_END_DEF, method->name);
     }else
     {
-        fprintf(currentCfile_, EXTERN_KEYWORD_DEF " " TYPE_BIT0_DEF " " "%s" BRACKET_ROUND_START_DEF TYPE_BIT0_DEF BRACKET_ROUND_END_DEF, method->name);
+        fprintf(currentCfile_, EXTERN_KEYWORD_DEF " " TYPE_BIT0_DEF " " "__%s" BRACKET_ROUND_START_DEF TYPE_BIT0_DEF BRACKET_ROUND_END_DEF, method->name);
     }
 
     MethodObject_t tempMethodObj;
@@ -659,7 +652,7 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
 
     }else
     {
-        if(!fileWriteNameMangleMethod_(method->caller->objectName, &tempMethodObj, true))
+        if(!fileWriteNameMangleMethod_(method->caller->castedFile, &tempMethodObj, true))
         {
             Log_e(TAG, "Failed to write mangle method \'%s\'", method->name);
             return ERROR;
@@ -667,15 +660,48 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
 
     }
 
+    BitpackSize_t sizeNeededForFunctionParams;
+
+    if(!Bitfit_assignGroupsAndPositionForVariableVector_(&resultVars, FIRST_FIT, &sizeNeededForFunctionParams))
+    {
+        Log_e(TAG, "Failed to fit params bits");
+        return ERROR;
+    }
 
 
     if(resultVars.currentSize > 0)
     {
         fprintf(currentCfile_, READABILITY_ENDLINE BITPACK_TYPE_NAME " %spset[%lu]" SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, BITSCNT_TO_BYTESCNT(sizeNeededForFunctionParams));
-        fprintf(currentCfile_, "%s" BRACKET_ROUND_START_DEF "" READABILITY_SPACE "%spset" BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE, method->name, assignedTmpVar->objectName);
+
+        for(uint32_t paramIdx = 0; paramIdx < resultVars.currentSize; paramIdx++)
+        {
+            VariableObjectHandle_t param = (VariableObjectHandle_t) resultVars.expandable[paramIdx];
+            
+            if(param->bitpack < BIT_SIZE_BITPACK)
+            {
+                fprintf(currentCfile_,STRINGIFY(s_%u[%u] = AFIT_RESET(s_%u[%u], %u, %lu)) READABILITY_SPACE C_OPERATOR_BIN_OR_DEF READABILITY_SPACE,
+                    0,
+                    param->belongToGroup, 0,
+                    param->belongToGroup,
+                    param->bitpack, param->posBit, param->bitpack);
+
+            }else if (param->bitpack == BIT_SIZE_BITPACK)
+            {
+                fprintf(currentCfile_, STRINGIFY(s_%u[%u]) READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE, 
+                0, param->belongToGroup);
+            }else
+            {
+                Log_e(TAG, "Unhandled case vars cant be now bigger than %u", BIT_SIZE_BITPACK);
+                return ERROR;
+            }
+
+            fprintf(currentCfile_, STRINGIFY(((%s) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, param->objectName, param->posBit, param->bitpack);
+        }
+
+        fprintf(currentCfile_, "__%s" BRACKET_ROUND_START_DEF "" READABILITY_SPACE "%spset" BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE, method->name, assignedTmpVar->objectName);
     }else
     {
-        fprintf(currentCfile_, READABILITY_ENDLINE "%s" BRACKET_ROUND_START_DEF BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE, method->name);
+        fprintf(currentCfile_, READABILITY_ENDLINE "__%s" BRACKET_ROUND_START_DEF BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE, method->name);
     }
 
 
@@ -790,7 +816,7 @@ static bool printBitVariableReading_(const ExpressionHandle_t operand)
         {
             status = fprintf(currentCfile_, STRINGIFY(APLT_READ(s_%u[%u])), 0, variable->belongToGroup);
         }
-        printf("Tf\n");
+
     }else if(operand->type == EXP_TMP_VAR)
     {
         VariableObjectHandle_t var = (VariableObjectHandle_t) operand->expressionObject;
