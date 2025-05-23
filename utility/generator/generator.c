@@ -85,7 +85,7 @@ static bool fileWriteMethods_();
 static bool fileWriteMethodBody_(const MethodObjectHandle_t method);
 // static bool handleExpressionWriting_(const ExpressionHandle_t expression);
 // static void handleOperatorWritingByType_(const TokenType_t type);
-static bool generateMethodHeader_(const MethodObjectHandle_t method);
+static bool generateMethodHeader_(const MethodObjectHandle_t method, const char* prefixFunc);
 
 static inline uint8_t getDigitCountU64_(uint64_t number);
 static bool fileWriteNameMangleMethod_(const char* const className, const MethodObjectHandle_t method, const bool isPublic);
@@ -105,7 +105,6 @@ static bool fileWriteNameMangleParams_(const VectorHandler_t params);
 static bool generateCodeForOneOperand_(const ExpressionHandle_t symbol, VariableObjectHandle_t resultVariable);
 static AssignValue_t calculateConstantResultValue_(const AssignValue_t leftConst, const AssignValue_t rightConst, const OperatorType_t operator);
 static inline uint8_t getBitCountU64_(uint64_t number);
-
 
 ////////////////////////////////
 // IMPLEMENTATION
@@ -744,20 +743,19 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
         }
     }
     
-
-    if(resultVars.currentSize > 0)
-    {
-        fprintf(currentCfile_, EXTERN_KEYWORD_DEF " " TYPE_BIT0_DEF " " "__%s" BRACKET_ROUND_START_DEF "" READABILITY_SPACE "void* p" BRACKET_ROUND_END_DEF, method->name);
-    }else
-    {
-        fprintf(currentCfile_, EXTERN_KEYWORD_DEF " " TYPE_BIT0_DEF " " "__%s" BRACKET_ROUND_START_DEF TYPE_BIT0_DEF BRACKET_ROUND_END_DEF, method->name);
-    }
-
     MethodObject_t tempMethodObj;
 
     tempMethodObj.methodName = method->name;
     tempMethodObj.parameters = &resultVars;
-    
+    tempMethodObj.containsBody = true;    
+
+    FWRITE_STRING(EXTERN_KEYWORD_DEF " ");
+
+    if(!generateMethodHeader_(&tempMethodObj, "__"))
+    {
+        Log_e(TAG, "Failed to generate method call header");
+        return ERROR;
+    }
     // if(method->caller == NULL)
     // {
     //     VariableObjectHandle_t caller = malloc(sizeof(VariableObject_t));
@@ -821,26 +819,39 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
             fprintf(currentCfile_, STRINGIFY(((%s) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, param->objectName, param->posBit, param->bitpack);
         }
 
-        fprintf(currentCfile_, "__%s" BRACKET_ROUND_START_DEF "" READABILITY_SPACE "%spset" BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE, method->name, assignedTmpVar->objectName);
-    }else
-    {
-        fprintf(currentCfile_, READABILITY_ENDLINE "__%s" BRACKET_ROUND_START_DEF BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE, method->name);
     }
 
+    fprintf(currentCfile_, "__%s" BRACKET_ROUND_START_DEF, method->name);
+    
+    if(Hashmap_size(&currentAst_->classVariables) != 0)
+    {
+
+        if( method->caller != NULL)
+        {
+            fprintf(currentCfile_, "%s[%u]", method->caller->scopeName, method->caller->belongToGroup);
+        }else
+        {
+            // If caller is null, it means object tries to call another function in same object
+            // So just pass the caller function object param to another function through
+            FWRITE_STRING(CLASS_VAR_REGION_NAME);
+        }
+
+        if(resultVars.currentSize > 0)
+        {
+            FWRITE_STRING(COMMA_DEF READABILITY_SPACE);
+        }
+    }
+
+    if(resultVars.currentSize > 0)
+    {
+       fprintf(currentCfile_, "%spset" BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName);
+    }
 
     FWRITE_STRING(BRACKET_END_DEF READABILITY_ENDLINE);
 
-    // const ExMethodCallHandle_t call = operand->expressionObject;
-
-    // if(!filewriteMethodCall_(call))
-    // {
-    //     Log_e(TAG, "Failed to write method call");
-    //     return ERROR;   
-    // }
-
-    // functionExpression->expressionObject = assignedTmpForOperation;
     return SUCCESS;
 }
+
 
 static bool generateCodeForOperation_(const VariableObjectHandle_t assignedTmpVar, ExpressionHandle_t left, ExpressionHandle_t right, const OperatorType_t operator)
 {
@@ -1024,7 +1035,7 @@ static int methodDefinitionIteratorCallback_(void *key, int count, void* value, 
 {
     MethodObjectHandle_t method;
     method = value;
-    if(!generateMethodHeader_(method))
+    if(!generateMethodHeader_(method, ""))
     {
         Log_e(TAG, "Failed to write method %s header", method->methodName);
         return ERROR;
@@ -1042,12 +1053,12 @@ static int methodDefinitionIteratorCallback_(void *key, int count, void* value, 
 }
 
 
-static bool generateMethodHeader_(const MethodObjectHandle_t method)
+static bool generateMethodHeader_(const MethodObjectHandle_t method, const char* prefixFunc)
 {
     
     if(method->containsBody)
     {
-        fprintf(currentCfile_, "void %s" BRACKET_ROUND_START_DEF, method->returnVariable->objectName);
+        fprintf(currentCfile_, "void %s%s" BRACKET_ROUND_START_DEF, prefixFunc, method->methodName);
     }
 
     if(Hashmap_size(&currentAst_->classVariables) != 0)
@@ -1089,7 +1100,7 @@ static int methodDeclarationIteratorCallback_(void *key, int count, void* value,
         return SUCCESS;
     }
     
-    if(!generateMethodHeader_(method))
+    if(!generateMethodHeader_(method, " "))
     {
         Log_e(TAG, "Failed to generate method %s header", method->methodName);
         return ERROR;
@@ -1109,6 +1120,8 @@ static int methodDeclarationIteratorCallback_(void *key, int count, void* value,
     }
     return SUCCESS;
 }
+
+
 
 
 // static bool filewriteMethodCall_(const BitpackSize_t returnSizeBits, const ExMethodCallHandle_t methodCallHandle)
