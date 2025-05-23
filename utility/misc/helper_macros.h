@@ -24,6 +24,4 @@
 
 
 
-
-
 #endif // UTILITY_MISC_HELPER_MACROS_H_

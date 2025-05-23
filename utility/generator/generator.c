@@ -38,6 +38,7 @@
     #define READABILITY_SPACE               ""
 #endif
 
+#define BITSCNT_TO_BYTESCNT(bitsize) (bitsize / BIT_SIZE_BITPACK + 1)
 
 
 #define FWRITE_STRING(string) {if(fwrite(string, BYTE_SIZE, SIZEOF_NOTERM(string), currentCfile_) < 0) {Log_e(TAG, "fwrite failed to write \"%s\"", string);return ERROR;}}
@@ -292,7 +293,7 @@ static inline bool fileWriteMethods_()
 
 static inline bool fileWriteVariablesAllocation_(const BitpackSize_t bitsize, const uint32_t scopeId)
 {
-    const int status = fprintf(currentCfile_, BITPACK_TYPE_NAME " " STRINGIFY(ALLOCATION_ARRAY_PREFIX)"%u[%lu]" SEMICOLON_DEF READABILITY_ENDLINE, scopeId, bitsize / BIT_SIZE_BITPACK + 1);
+    const int status = fprintf(currentCfile_, BITPACK_TYPE_NAME " " STRINGIFY(ALLOCATION_ARRAY_PREFIX)"%u[%lu]" SEMICOLON_DEF READABILITY_ENDLINE, scopeId, BITSCNT_TO_BYTESCNT(bitsize));
     return (status >= 0);
 }
 
@@ -355,7 +356,7 @@ static bool fileWriteExpression_(const VectorHandler_t expression, VariableObjec
 
     if(resultVar->objectName[0] != '\0')
     {
-        fprintf(currentCfile_, BIT_TYPE_DEF READABILITY_SPACE "%s" SEMICOLON_DEF READABILITY_ENDLINE, resultVar->objectName);
+        fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" SEMICOLON_DEF READABILITY_ENDLINE, resultVar->objectName);
     }
 
     FWRITE_STRING(BRACKET_START_DEF READABILITY_ENDLINE);
@@ -366,10 +367,21 @@ static bool fileWriteExpression_(const VectorHandler_t expression, VariableObjec
     {
         const ExpressionHandle_t symbol = (ExpressionHandle_t) expression->expandable[0];
 
+        tmpVar = alloca(sizeof(VariableObject_t));
+        NULL_GUARD(tmpVar, ERROR, Log_e(TAG, "Failed to allocate tmpVar"));
+
+        currSufix = alloca(strlen(tmpSuffix) + 10);
+        NULL_GUARD(currSufix, ERROR, Log_e(TAG, "Failed to allocate currSfix"));
+
+        currSufix[0] = '\0';
+        
+        sprintf(currSufix, "%s" STRINGIFY(TMP_VAR) "%lu", tmpSuffix, tmpIncrement);
+        tmpVar->objectName = currSufix;
+
         // If operand handle it, if operator or something else ignore, it shouldn't safely passby from parser side
         if(Expression_isSymbolOperand(symbol))
         {
-            if(!generateCodeForOneOperand_(symbol, resultVar))
+            if(!generateCodeForOneOperand_(symbol, tmpVar))
             {
                 Log_e(TAG, "Failed to generate code for 1 operand");
                 return ERROR;
@@ -440,19 +452,19 @@ static bool fileWriteExpression_(const VectorHandler_t expression, VariableObjec
                 tmpIncrement++;
             }
         }
-        resultVar->bitpack = tmpVar->bitpack;
-        resultVar->posBit = tmpVar->posBit;
-        resultVar->belongToGroup = tmpVar->belongToGroup;
-        resultVar->castedFile = tmpVar->castedFile;
-        // Var name left, since it passed through object, through params
-        
-        if(resultVar->objectName != NULL)
-        {
-            fprintf(currentCfile_, "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE "%s" SEMICOLON_DEF READABILITY_ENDLINE, resultVar->objectName, tmpVar->objectName);
-        }
+
     }
 
-
+    resultVar->bitpack = tmpVar->bitpack;
+    resultVar->posBit = tmpVar->posBit;
+    resultVar->belongToGroup = tmpVar->belongToGroup;
+    resultVar->castedFile = tmpVar->castedFile;
+    // Var name left, since it passed through object, through params
+    
+    if(resultVar->objectName[0] != '\0')
+    {
+        fprintf(currentCfile_, "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE "%s" SEMICOLON_DEF READABILITY_ENDLINE, resultVar->objectName, tmpVar->objectName);
+    }
 
     FWRITE_STRING(BRACKET_END_DEF READABILITY_ENDLINE);
 
@@ -517,13 +529,14 @@ static bool generateCodeForOneOperand_(const ExpressionHandle_t symbol, Variable
         Log_e(TAG, "Failed to estimate bit count for symbol");
         return ERROR;
     }
-    if(resultVariable->objectName[0] != '\0')
-    {
-        fprintf(currentCfile_, BIT_TYPE_DEF " %s" C_OPERATOR_EQUAL_DEF READABILITY_SPACE, resultVariable->objectName);
-    }
 
     if(symbol->type != EXP_METHOD_CALL)
     {
+        if(resultVariable->objectName[0] != '\0')
+        {
+            fprintf(currentCfile_, BITPACK_TYPE_NAME " %s" C_OPERATOR_EQUAL_DEF READABILITY_SPACE, resultVariable->objectName);
+        }
+
         if(!printBitVariableReading_(symbol))
         {
             return ERROR;
@@ -557,7 +570,7 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
     currSufix[0] = '\0';
     sprintf(currSufix, "%sf%lu", assignedTmpVar->objectName, funcId);
     
-    fprintf(currentCfile_, BIT_TYPE_DEF " %s" SEMICOLON_DEF READABILITY_ENDLINE BRACKET_START_DEF READABILITY_ENDLINE, currSufix);
+    fprintf(currentCfile_, BITPACK_TYPE_NAME " %s" SEMICOLON_DEF READABILITY_ENDLINE BRACKET_START_DEF READABILITY_ENDLINE, currSufix);
 
     Log_d(TAG, "Start on method call generation: %s", method->name);
 
@@ -654,9 +667,12 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
 
     }
 
+
+
     if(resultVars.currentSize > 0)
     {
-        fprintf(currentCfile_, READABILITY_ENDLINE "%s" BRACKET_ROUND_START_DEF "" READABILITY_SPACE "%spset" BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE, method->name, assignedTmpVar->objectName);
+        fprintf(currentCfile_, READABILITY_ENDLINE BITPACK_TYPE_NAME " %spset[%lu]" SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, BITSCNT_TO_BYTESCNT(sizeNeededForFunctionParams));
+        fprintf(currentCfile_, "%s" BRACKET_ROUND_START_DEF "" READABILITY_SPACE "%spset" BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE, method->name, assignedTmpVar->objectName);
     }else
     {
         fprintf(currentCfile_, READABILITY_ENDLINE "%s" BRACKET_ROUND_START_DEF BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE, method->name);
@@ -711,7 +727,7 @@ static bool generateCodeForOperation_(const VariableObjectHandle_t assignedTmpVa
     // Set handling differently
     if(operator != OP_SET)
     {
-        fprintf(currentCfile_, BIT_TYPE_DEF " %s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE, assignedTmpVar->objectName);
+        fprintf(currentCfile_, BITPACK_TYPE_NAME " %s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE, assignedTmpVar->objectName);
 
         if(!printBitVariableReading_(left))
         {
@@ -824,18 +840,18 @@ static bool fileWriteBitVariableSet_(const VariableObjectHandle_t assignedTmpVar
     {
         VariableObjectHandle_t var = (VariableObjectHandle_t) right->expressionObject;
         status = fprintf(currentCfile_, STRINGIFY(((%s) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, var->objectName, leftVar->posBit, leftVar->bitpack);
-        status = fprintf(currentCfile_, BIT_TYPE_DEF READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE "%s" SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, var->objectName);
+        status = fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE "%s" SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, var->objectName);
 
     }else if (right->type == EXP_VARIABLE)
     {
         if(rightVar->bitpack < BIT_SIZE_BITPACK)
         {
             status = fprintf(currentCfile_, STRINGIFY(((AFIT_READ(s_%u[%u], %u, %lu) & MASK(%lu)) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, 0, rightVar->belongToGroup, rightVar->posBit, rightVar->bitpack, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
-            status = fprintf(currentCfile_, BIT_TYPE_DEF READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE STRINGIFY(AFIT_READ(s_%u[%u], %u, %lu) & MASK(%lu)) SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, 0, rightVar->belongToGroup, rightVar->posBit, rightVar->bitpack, leftVar->bitpack);
+            status = fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE STRINGIFY(AFIT_READ(s_%u[%u], %u, %lu) & MASK(%lu)) SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, 0, rightVar->belongToGroup, rightVar->posBit, rightVar->bitpack, leftVar->bitpack);
         }else if (rightVar->bitpack == BIT_SIZE_BITPACK)
         {
             status = fprintf(currentCfile_, STRINGIFY(((s_%u[%u] & MASK(%lu)) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, 0, rightVar->belongToGroup, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
-            status = fprintf(currentCfile_, BIT_TYPE_DEF READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE STRINGIFY(s_%u[%u] & MASK(%lu)) SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, 0, rightVar->belongToGroup, leftVar->bitpack);
+            status = fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE STRINGIFY(s_%u[%u] & MASK(%lu)) SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, 0, rightVar->belongToGroup, leftVar->bitpack);
         }else
         {   
             Log_e(TAG, "Unhandled case vars cant be now bigger than %u", BIT_SIZE_BITPACK);
@@ -846,7 +862,7 @@ static bool fileWriteBitVariableSet_(const VariableObjectHandle_t assignedTmpVar
         const AssignValue_t constValue = (AssignValue_t)right->expressionObject;
 
         status = fprintf(currentCfile_, STRINGIFY(((%ld & MASK(%lu)) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, constValue, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
-        status = fprintf(currentCfile_, BIT_TYPE_DEF READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE "%lu" SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, constValue);
+        status = fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE "%lu" SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, constValue);
     }
    
     return (status > 0);

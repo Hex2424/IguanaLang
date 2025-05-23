@@ -16,7 +16,8 @@
 
 #define ENABLE_READABILITY          1
 
-#define BITPACK_TYPE_NAME           "Bitpack_t"
+#define BITPACK_TYPE_EXP            Bitpack_t
+#define BITPACK_TYPE_NAME           STRINGIFY(BITPACK_TYPE_EXP)
 #define ALLOCATION_ARRAY_PREFIX     s_
 #define FUNCTION_OBJ_NAME           "o"
 #define FUNCTION_PARAM_NAME         "p"

@@ -29,7 +29,7 @@
 #define AFIT_RESET(platform_var, bit_pos, bit_count) (platform_var & (~(MASK(bit_count) << (BIT_SIZE_BITPACK - (bit_pos + bit_count)))))
 
 // VALUE READING
-#define AFIT_READ(platform_var, bit_pos, bit_count) ((((BIT_TYPE_EXP) platform_var) >> (BIT_SIZE_BITPACK - (bit_pos + bit_count))))
+#define AFIT_READ(platform_var, bit_pos, bit_count) ((((BITPACK_TYPE_EXP) platform_var) >> (BIT_SIZE_BITPACK - (bit_pos + bit_count))))
 
 // VALUE SET
 #define AFIT_SET_NORMALIZED_VAR(src_shift_var, dest_var, bit_pos_dest, bit_count) (dest_var = (AFIT_RESET(dest_var, bit_pos_dest, bit_count) | ((src_shift_var & MASK(bit_count)) << (BIT_SIZE_BITPACK - (bit_pos_dest + bit_count)))))
