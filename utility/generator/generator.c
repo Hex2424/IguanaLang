@@ -94,7 +94,7 @@ static bool fileWriteMainHTypedefs_(void);
 static bool fileWriteMainHeader_(const bool isFirstFile);
 static bool determineResultVariableExpression_(ExpressionHandle_t resultExp, VariableObjectHandle_t tmpVarAllocation, const ExpressionHandle_t left, const ExpressionHandle_t right, const OperatorType_t operator);
 static bool fileWriteExpression_(const VectorHandler_t expression, VariableObjectHandle_t resultVar, const char* tmpSuffix);
-static inline bool fileWriteVariablesAllocation_(const BitpackSize_t bitsize, const uint32_t scopeIndex);
+static inline bool fileWriteVariablesAllocation_(const BitpackSize_t bitsize, const char* scopeName);
 static bool printBitVariableReading_(const ExpressionHandle_t operand);
 static bool generateCodeForOperation_(const VariableObjectHandle_t assignedTmpVar, ExpressionHandle_t left, ExpressionHandle_t right, const OperatorType_t operator);
 static bool fileWriteBitVariableSet_(const VariableObjectHandle_t assignedTmpVar, const ExpressionHandle_t left, const ExpressionHandle_t right);
@@ -291,9 +291,9 @@ static inline bool fileWriteMethods_()
     return SUCCESS;
 }
 
-static inline bool fileWriteVariablesAllocation_(const BitpackSize_t bitsize, const uint32_t scopeId)
+static inline bool fileWriteVariablesAllocation_(const BitpackSize_t bitsize, const char* scopeName)
 {
-    const int status = fprintf(currentCfile_, BITPACK_TYPE_NAME " " STRINGIFY(ALLOCATION_ARRAY_PREFIX)"%u[%lu]" SEMICOLON_DEF READABILITY_ENDLINE, scopeId, BITSCNT_TO_BYTESCNT(bitsize));
+    const int status = fprintf(currentCfile_, BITPACK_TYPE_NAME " %s[%lu]" SEMICOLON_DEF READABILITY_ENDLINE, scopeName, BITSCNT_TO_BYTESCNT(bitsize));
     return (status >= 0);
 }
 
@@ -306,7 +306,7 @@ static inline bool fileWriteMethodBody_(const MethodObjectHandle_t method)
 
     fwrite(READABILITY_ENDLINE BRACKET_START_DEF READABILITY_ENDLINE, BYTE_SIZE, SIZEOF_NOTERM(READABILITY_ENDLINE BRACKET_START_DEF READABILITY_ENDLINE), currentCfile_);
 
-     if(!fileWriteVariablesAllocation_(method->body.sizeBits, 0))
+    if(!fileWriteVariablesAllocation_(method->body.sizeBits, LOCAL_VAR_REGION_NAME))
     {
         Log_e(TAG, "Failed to write method scope variables");
         return ERROR;
@@ -459,7 +459,7 @@ static bool fileWriteExpression_(const VectorHandler_t expression, VariableObjec
         }
 
     }
-    
+
     if(resultVar->objectName[0] != '\0')
     {
         fprintf(currentCfile_, "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE, resultVar->objectName);
@@ -664,7 +664,7 @@ static bool generateCodeForOneOperand_(const ExpressionHandle_t symbol, Variable
         {
             return ERROR;
         }
-
+        
         FWRITE_STRING(SEMICOLON_DEF READABILITY_ENDLINE);
     }else
     {
@@ -802,16 +802,16 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
             
             if(param->bitpack < BIT_SIZE_BITPACK)
             {
-                fprintf(currentCfile_,STRINGIFY(s_%u[%u] = AFIT_RESET(s_%u[%u], %u, %lu)) READABILITY_SPACE C_OPERATOR_BIN_OR_DEF READABILITY_SPACE,
-                    0,
-                    param->belongToGroup, 0,
+                fprintf(currentCfile_,STRINGIFY(%spset[%u] = AFIT_RESET(%spset[%u], %u, %lu)) READABILITY_SPACE C_OPERATOR_BIN_OR_DEF READABILITY_SPACE,
+                    assignedTmpVar->objectName,
+                    param->belongToGroup, assignedTmpVar->objectName,
                     param->belongToGroup,
                     param->bitpack, param->posBit, param->bitpack);
 
             }else if (param->bitpack == BIT_SIZE_BITPACK)
             {
-                fprintf(currentCfile_, STRINGIFY(s_%u[%u]) READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE, 
-                0, param->belongToGroup);
+                fprintf(currentCfile_, STRINGIFY(%spset[%u]) READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE, 
+                assignedTmpVar->objectName, param->belongToGroup);
             }else
             {
                 Log_e(TAG, "Unhandled case vars cant be now bigger than %u", BIT_SIZE_BITPACK);
@@ -934,10 +934,10 @@ static bool printBitVariableReading_(const ExpressionHandle_t operand)
 
         if(variable->bitpack < BIT_SIZE_BITPACK)
         {
-            status = fprintf(currentCfile_, STRINGIFY((AFIT_READ(s_%u[%u], %u, %lu)&MASK(%lu))), 0, variable->belongToGroup, variable->posBit, variable->bitpack, variable->bitpack);
+            status = fprintf(currentCfile_, STRINGIFY((AFIT_READ(%s[%u], %u, %lu)&MASK(%lu))), variable->scopeName, variable->belongToGroup, variable->posBit, variable->bitpack, variable->bitpack);
         }else if (variable->bitpack == BIT_SIZE_BITPACK)
         {
-            status = fprintf(currentCfile_, STRINGIFY(APLT_READ(s_%u[%u])), 0, variable->belongToGroup);
+            status = fprintf(currentCfile_, STRINGIFY(APLT_READ(%s[%u])), variable->scopeName, variable->belongToGroup);
         }
 
     }else if(operand->type == EXP_TMP_VAR)
@@ -964,16 +964,16 @@ static bool fileWriteBitVariableSet_(const VariableObjectHandle_t assignedTmpVar
     {
         if(leftVar->bitpack < BIT_SIZE_BITPACK)
         {
-            status = fprintf(currentCfile_,STRINGIFY(s_%u[%u] = AFIT_RESET(s_%u[%u], %u, %lu)) READABILITY_SPACE C_OPERATOR_BIN_OR_DEF READABILITY_SPACE,
-                 0,
-                leftVar->belongToGroup, 0,
+            status = fprintf(currentCfile_,STRINGIFY(%s[%u] = AFIT_RESET(%s[%u], %u, %lu)) READABILITY_SPACE C_OPERATOR_BIN_OR_DEF READABILITY_SPACE,
+                leftVar->scopeName,
+                leftVar->belongToGroup, leftVar->scopeName,
                 leftVar->belongToGroup,
                 leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
 
         }else if (leftVar->bitpack == BIT_SIZE_BITPACK)
         {
-            status = fprintf(currentCfile_, STRINGIFY(s_%u[%u]) READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE, 
-            0, leftVar->belongToGroup);
+            status = fprintf(currentCfile_, STRINGIFY(%s[%u]) READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE, 
+            leftVar->scopeName, leftVar->belongToGroup);
         }else
         {
             Log_e(TAG, "Unhandled case vars cant be now bigger than %u", BIT_SIZE_BITPACK);
@@ -985,6 +985,8 @@ static bool fileWriteBitVariableSet_(const VariableObjectHandle_t assignedTmpVar
         return ERROR;
     }
     
+
+
     if(right->type == EXP_TMP_VAR)
     {
         VariableObjectHandle_t var = (VariableObjectHandle_t) right->expressionObject;
@@ -995,12 +997,12 @@ static bool fileWriteBitVariableSet_(const VariableObjectHandle_t assignedTmpVar
     {
         if(rightVar->bitpack < BIT_SIZE_BITPACK)
         {
-            status = fprintf(currentCfile_, STRINGIFY(((AFIT_READ(s_%u[%u], %u, %lu) & MASK(%lu)) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, 0, rightVar->belongToGroup, rightVar->posBit, rightVar->bitpack, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
-            status = fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE STRINGIFY(AFIT_READ(s_%u[%u], %u, %lu) & MASK(%lu)) SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, 0, rightVar->belongToGroup, rightVar->posBit, rightVar->bitpack, leftVar->bitpack);
+            status = fprintf(currentCfile_, STRINGIFY(((AFIT_READ(%s[%u], %u, %lu) & MASK(%lu)) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, rightVar->scopeName, rightVar->belongToGroup, rightVar->posBit, rightVar->bitpack, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
+            status = fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE STRINGIFY(AFIT_READ(%s[%u], %u, %lu) & MASK(%lu)) SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, rightVar->scopeName, rightVar->belongToGroup, rightVar->posBit, rightVar->bitpack, leftVar->bitpack);
         }else if (rightVar->bitpack == BIT_SIZE_BITPACK)
         {
-            status = fprintf(currentCfile_, STRINGIFY(((s_%u[%u] & MASK(%lu)) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, 0, rightVar->belongToGroup, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
-            status = fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE STRINGIFY(s_%u[%u] & MASK(%lu)) SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, 0, rightVar->belongToGroup, leftVar->bitpack);
+            status = fprintf(currentCfile_, STRINGIFY(((%s[%u] & MASK(%lu)) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, rightVar->scopeName, rightVar->belongToGroup, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
+            status = fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE STRINGIFY(%s[%u] & MASK(%lu)) SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, rightVar->scopeName, rightVar->belongToGroup, leftVar->bitpack);
         }else
         {   
             Log_e(TAG, "Unhandled case vars cant be now bigger than %u", BIT_SIZE_BITPACK);
@@ -1050,24 +1052,21 @@ static bool generateMethodHeader_(const MethodObjectHandle_t method)
 
     if(Hashmap_size(&currentAst_->classVariables) != 0)
     {
-        if(method->containsBody)
-        {
             // TODO later change this hardcoded 
-            // fwrite(PARAM_TYPE_DEF READABILITY_SPACE FUNCTION_OBJ_NAME COMMA_DEF READABILITY_SPACE,
-            //     BYTE_SIZE,
-            //     SIZEOF_NOTERM(PARAM_TYPE_DEF READABILITY_SPACE FUNCTION_OBJ_NAME COMMA_DEF READABILITY_SPACE), currentCfile_);
-            
-            fwrite(READABILITY_SPACE,
-                BYTE_SIZE,
-                SIZEOF_NOTERM(READABILITY_SPACE), currentCfile_);
+        FWRITE_STRING(PARAM_TYPE_DEF READABILITY_SPACE FUNCTION_OBJ_NAME);
 
+        if(method->parameters->currentSize > 0)
+        {
+            FWRITE_STRING(COMMA_DEF READABILITY_SPACE);
         }
     }
 
     if(method->parameters->currentSize > 0)
     {
         FWRITE_STRING(PARAM_TYPE_DEF READABILITY_SPACE FUNCTION_PARAM_NAME);
-    }else
+    }
+    
+    if((Hashmap_size(&currentAst_->classVariables) == 0) && (method->parameters->currentSize == 0))
     {
         FWRITE_STRING(TYPE_BIT0_DEF);
     }

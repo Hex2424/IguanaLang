@@ -58,6 +58,7 @@ static inline int32_t expressionPrecedence_(ExpressionHandle_t symbol);
 static inline bool parseSymbolExpression_(LocalScopeObjectHandle_t scopeBody, ExpressionHandle_t symbolHandle, TokenHandler_t** currentTokenHandle);
 static bool handleNumeric_(LocalScopeObjectHandle_t scopeBody, ExpressionHandle_t symbolHandle, TokenHandler_t** currentTokenHandle);
 static bool handlePostASTMethodCall_(ExMethodCallHandle_t methodCall);
+static VariableObjectHandle_t searchVariableNameAcrossScopes(LocalScopeObjectHandle_t localScopeBody, const char* varName);
 ////////////////////////////////
 // IMPLEMENTATION
 
@@ -196,6 +197,9 @@ static inline bool parseVariableInstance_(LocalScopeObjectHandle_t scopeBody, To
     {
         return ERROR;
     }
+
+    // assigning object / class local variables array scope
+    variable->scopeName = LOCAL_VAR_REGION_NAME;
     
     Log_d(TAG, "Parsed variable instance: %s", variable->objectName);
 
@@ -307,7 +311,6 @@ static bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, VectorHand
         {
             while (!Stack_isEmpty(&symbolStack) && (expressionPrecedence_(symbol) <= expressionPrecedence_(Stack_peek(&symbolStack)))) 
             {
-
                 if(!Vector_append(expressionVector, Stack_pop(&symbolStack)))
                 {
                     Log_e(TAG, "Failed to append pop from stack");
@@ -443,27 +446,6 @@ static inline bool parseSymbolExpression_(LocalScopeObjectHandle_t scopeBody, Ex
 
 }
 
-// static bool handleCastedOperand_(LocalScopeObjectHandle_t scopeBody, const BitpackSize_t castSize, const char* castFileType, ExpressionHandle_t symbolHandle, TokenHandler_t** currentTokenHandle)
-// {
-//     switch (cTokenType)
-//     {
-//         case NAMING:
-//             if(!handleNaming_(scopeBody, symbolHandle, currentTokenHandle, castSize, castFileType))
-//             {
-//                 return ERROR;
-//             }
-//             break;
-        
-//         case NUMBER_VALUE:
-//             Shouter_shoutError(cTokenP, "Cast type for number constant not supported yet");
-//             break;
-        
-//         default:break;
-//     }
-
-//     return SUCCESS;
-// }
-
 static bool handleNumeric_(LocalScopeObjectHandle_t scopeBody, ExpressionHandle_t symbolHandle, TokenHandler_t** currentTokenHandle)
 {
     AssignValue_t number;
@@ -475,40 +457,6 @@ static bool handleNumeric_(LocalScopeObjectHandle_t scopeBody, ExpressionHandle_
 
     symbolHandle->type = EXP_CONST_NUMBER;
     symbolHandle->expressionObject = (void*) (uintptr_t) number;
-
-    // // After number what token
-    // if(isTokenOperator_(tokenOffset(1)) || (tokenOffset(1)->tokenType == SEMICOLON) || (tokenOffset(1)->tokenType == BRACKET_ROUND_END))
-    // {
-    //     symbolHandle->type = EXP_CONST_NUMBER;
-    //     symbolHandle->expressionObject = (void*) (uintptr_t) number;
-    // }else
-    // {
-    //     (*currentTokenHandle)++;
-        
-    //     switch (cTokenType)
-    //     {
-    //         case COLON:
-    //         {
-    //             (*currentTokenHandle)++;
-    //             // TODO: Add file type handling also and rewrite the way to create bit packed vars with less writing
-    //             if(!handleCastedOperand_(scopeBody, number, NULL, symbolHandle, currentTokenHandle))
-    //             {
-    //                 Log_e(TAG, "Error happened in parsing casted operand");
-    //                 return ERROR;
-    //             }
-    //         }break;
-
-    //         case BRACKET_ROUND_START:
-    //         {
-    //             Shouter_shoutError(cTokenP, "Constant number %d is not callable function", number);
-    //         }break;
-
-    //         default:
-    //         {
-    //             Shouter_shoutError(cTokenP, "Expected operator or colon after numeric");
-    //         }break;
-    //     }
-    // }
 
     return SUCCESS;
 }
@@ -552,7 +500,7 @@ static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHan
 
         (*currentTokenHandle)--;
         Log_d(TAG, "Parsing method call: this.%s", cTokenP->valueString);
-
+        
         if(!handleMethodCall_(localScopeBody, methodHandle, currentTokenHandle, NULL))
         {
             Log_e(TAG, "Failed to handle method parsing");
@@ -565,17 +513,16 @@ static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHan
     }else
     {   
         (*currentTokenHandle)--;
-        // symbol->type = EXP_VARIABLE;
+
         // Recognised some kind of variable
 
         const char* varName = cTokenP->valueString;
         Log_d(TAG, "Parsing variable: %s", varName);
 
-        if(Hashmap_find(&localScopeBody->localVariables, varName, strlen(varName)))
-        {
-
-            VariableObjectHandle_t variable = *localScopeBody->localVariables.value;
-            
+        VariableObjectHandle_t foundVariableCorresponding = searchVariableNameAcrossScopes(localScopeBody, varName);
+        
+        if(foundVariableCorresponding != NULL)
+        {    
             // Object call
             if(tokenOffset(1)->tokenType == DOT_SYMBOL)
             {
@@ -591,9 +538,9 @@ static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHan
                         ALLOC_CHECK(methodHandle, sizeof(ExMethodCall_t), ERROR);
 
                         (*currentTokenHandle)--;
-                        Log_d(TAG, "Parsing method call: %s.%s", variable->objectName, cTokenP->valueString);
+                        Log_d(TAG, "Parsing method call: %s.%s", foundVariableCorresponding->objectName, cTokenP->valueString);
 
-                        if(!handleMethodCall_(localScopeBody, methodHandle, currentTokenHandle, variable))
+                        if(!handleMethodCall_(localScopeBody, methodHandle, currentTokenHandle, foundVariableCorresponding))
                         {
                             Log_e(TAG, "Failed to handle method parsing");
                             return ERROR;
@@ -613,7 +560,7 @@ static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHan
             else
             {
                 symbol->type = EXP_VARIABLE;
-                symbol->expressionObject = *localScopeBody->localVariables.value;
+                symbol->expressionObject = foundVariableCorresponding;
             }
 
         }else
@@ -626,6 +573,36 @@ static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHan
         
     return SUCCESS;
 }
+
+static VariableObjectHandle_t searchVariableNameAcrossScopes(LocalScopeObjectHandle_t localScopeBody, const char* varName)
+{
+    VariableObjectHandle_t varFound;
+    int found;
+
+    found = Hashmap_find(&localScopeBody->localVariables, varName, strlen(varName));
+
+    if(found)
+    {
+        return *(localScopeBody->localVariables.value);
+    }
+
+    varFound = VarParser_searchVariableInVectorByName(localScopeBody->paramsVarsRef, varName);
+    
+    if(varFound != NULL)
+    {
+        return varFound;
+    }
+
+    found = Hashmap_find(localScopeBody->objectVarsRef, varName, strlen(varName));
+    
+    if(found)
+    {
+        return *(localScopeBody->objectVarsRef->value);
+    }
+
+    return NULL;
+}
+
 
 
 static bool handleMethodCall_(LocalScopeObjectHandle_t localScopeBody,

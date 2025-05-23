@@ -55,10 +55,15 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, const 
     methodHandle->returnVariable = returnVariable;
     methodHandle->methodName = returnVariable->objectName;
     
+    
     if(!parseMethodParameters_(currentTokenHandle, methodHandle))
     {
         return ERROR;
     }
+
+    // put ref to object variables and params
+    methodHandle->body.objectVarsRef = &root->classVariables;
+    methodHandle->body.paramsVarsRef = methodHandle->parameters;
 
     if(!parseMethodBody_(currentTokenHandle, methodHandle))
     {
@@ -71,13 +76,14 @@ inline bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, const 
         return ERROR;
     }
     
+
     // Doing some post processing after function parsed
     if(!postParsingJobsMethod_(methodHandle))
     {
         Log_e(TAG, "Failed to posprocess scope body");
         return ERROR;
     }
-
+    
     return SUCCESS;
 }
 
@@ -123,6 +129,9 @@ static bool parseMethodParameters_(TokenHandler_t** currentTokenHandle, MethodOb
                 return ERROR;
             }
 
+            // assigning function params variables array scope
+            parameter->scopeName = PARAMS_VAR_REGION_NAME;
+            
             cTokenIncrement;
             
             if(VarParser_searchVariableInVectorByName(methodHandle->parameters, parameter->objectName) == NULL)

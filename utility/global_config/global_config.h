@@ -33,6 +33,9 @@
 
 #define MAIN_PROCESS_FILE_NAME          "_ZN9bit0_main4mainEv"
 
+#define PARAMS_VAR_REGION_NAME          "params"
+#define CLASS_VAR_REGION_NAME           "object"
+#define LOCAL_VAR_REGION_NAME           "local"
 
 #define CFILES_LENGTH                   MAX_FILENAME_LENGTH
 

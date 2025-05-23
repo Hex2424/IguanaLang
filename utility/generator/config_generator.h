@@ -18,9 +18,8 @@
 
 #define BITPACK_TYPE_EXP            Bitpack_t
 #define BITPACK_TYPE_NAME           STRINGIFY(BITPACK_TYPE_EXP)
-#define ALLOCATION_ARRAY_PREFIX     s_
-#define FUNCTION_OBJ_NAME           "o"
-#define FUNCTION_PARAM_NAME         "p"
+#define FUNCTION_OBJ_NAME           CLASS_VAR_REGION_NAME
+#define FUNCTION_PARAM_NAME         PARAMS_VAR_REGION_NAME
 
 #define TMP_VAR                     tmp
 #define TMP_FUNC                    f

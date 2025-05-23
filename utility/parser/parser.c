@@ -169,6 +169,8 @@ static inline bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_
         return ERROR;
     }
 
+    // assigning object / class global variables array scope
+    variable->scopeName = CLASS_VAR_REGION_NAME;
     
     currentToken++;
 
