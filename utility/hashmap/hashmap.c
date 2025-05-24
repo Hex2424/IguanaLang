@@ -150,7 +150,7 @@ int Hashmap_find(const HashmapHandle_t dic, const void *key, const int keyn) {
 	return 0;
 }
 
-void Hashmap_forEach(const HashmapHandle_t dic, enumFunc f, const void *user) {
+bool Hashmap_forEach(const HashmapHandle_t dic, enumFunc f, const void *user) {
 	for (int i = 0; i < dic->length; i++) {
 		if (dic->table[i] != 0) {
 			struct keynode *k = dic->table[i];
@@ -158,13 +158,15 @@ void Hashmap_forEach(const HashmapHandle_t dic, enumFunc f, const void *user) {
 				
 				if (!f(k->key, k->len, k->value, (void*) user))
 				{
-					return;
+					return ERROR;
 				}
 
 				k = k->next;
 			}
 		}
 	}
+	
+	return SUCCESS;
 }
 
 inline uint64_t Hashmap_size(const HashmapHandle_t dic)

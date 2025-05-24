@@ -36,6 +36,6 @@ void Hashmap_delete(HashmapHandle_t dic);
 int Hashmap_set(HashmapHandle_t dic, const void *key, void* valueObject);
 int Hashmap_add(HashmapHandle_t dic, const void *key, const int keyn);
 int Hashmap_find(const HashmapHandle_t dic, const void *key, const int keyn);
-void Hashmap_forEach(const HashmapHandle_t dic, enumFunc f, const void *user);
+bool Hashmap_forEach(const HashmapHandle_t dic, enumFunc f, const void *user);
 uint64_t Hashmap_size(const HashmapHandle_t dic);
 #endif

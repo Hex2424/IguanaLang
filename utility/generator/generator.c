@@ -284,10 +284,18 @@ static bool fileWriteNameMangleMethod_(const char* const className, const Method
 static inline bool fileWriteMethods_()
 {
     // generating function definitions
-    Hashmap_forEach(&currentAst_->methods, methodDefinitionIteratorCallback_, NULL);
+    if(!Hashmap_forEach(&currentAst_->methods, methodDefinitionIteratorCallback_, NULL))
+    {
+        Log_e(TAG, "Failed to filewrite methods definitions");
+        return ERROR;
+    }
 
     // Generating function declarations
-    Hashmap_forEach(&currentAst_->methods, methodDeclarationIteratorCallback_, NULL);
+    if(!Hashmap_forEach(&currentAst_->methods, methodDeclarationIteratorCallback_, NULL))
+    {
+        Log_e(TAG, "Failed to filewrite methods declarations");
+        return ERROR;
+    }
 
     return SUCCESS;
 }
