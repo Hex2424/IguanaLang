@@ -35,7 +35,6 @@ static const char* TAG = "BODY_PARSER";
 
 ////////////////////////////////
 // PRIVATE TYPES
-static DynamicStack_t symbolStack;
 
 ////////////////////////////////
 // PRIVATE METHODS
@@ -120,13 +119,6 @@ static inline int32_t expressionPrecedence_(ExpressionHandle_t symbol)
 
 bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle)
 {
-    
-    if(!Stack_create(&symbolStack))
-    {
-        Log_e(TAG, "Couldn't create symbols parsing stack");
-        return ERROR;
-    }
-
     while ((cTokenType != BRACKET_END) && (cTokenType != END_FILE))
     {
 
@@ -181,8 +173,6 @@ bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** 
         (*currentTokenHandle)++;
     
     }
-
-    Stack_destroy(&symbolStack);
 
     return SUCCESS;
 }
@@ -240,6 +230,15 @@ static bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, VectorHand
 {
     ExpressionHandle_t lastSymbol = NULL;
     ExpressionHandle_t currentSymbol = NULL;
+
+    DynamicStack_t symbolStack;
+
+    if(!Stack_create(&symbolStack))
+    {
+        Log_e(TAG, "Couldn't create symbols parsing stack");
+        return ERROR;
+    }
+
     int appendsCount = 0;
 
     while (*currentTokenHandle != expressionEndToken)
@@ -370,6 +369,8 @@ static bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, VectorHand
         }
         
     }
+    
+    Stack_destroy(&symbolStack);
     
     return SUCCESS;
 }
