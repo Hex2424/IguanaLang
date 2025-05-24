@@ -146,7 +146,7 @@ bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** 
                 NULL_GUARD(expressionVector, ERROR, Log_e(TAG, "Failed to create / allocate expression Vector"));
 
                 TokenHandler_t* startExpressionPtr = (*currentTokenHandle);
-                ParserUtils_skipUntil(currentTokenHandle, SEMICOLON);
+                ParserUtils_skipUntil(currentTokenHandle, (TokenType_t[]){SEMICOLON, BRACKET_END, BRACKET_START}, 3);
                 TokenHandler_t* endExpressionPtr = (*currentTokenHandle);
                 
                 (*currentTokenHandle) = startExpressionPtr;
@@ -229,7 +229,7 @@ static inline bool parseVariableInstance_(LocalScopeObjectHandle_t scopeBody, To
     }else
     {
         Shouter_shoutUnrecognizedToken(cTokenP);
-        ParserUtils_skipUntil(currentTokenHandle, SEMICOLON);
+        ParserUtils_skipUntil(currentTokenHandle, (TokenType_t[]){SEMICOLON}, 1);
     }
 
 
@@ -252,7 +252,7 @@ static bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, VectorHand
         if(!parseSymbolExpression_(localScope, symbol, currentTokenHandle))
         {
             Shouter_shoutError(cTokenP, "Symbol Parse error \'%s\'", cTokenP->valueString);
-            ParserUtils_skipUntil(currentTokenHandle, SEMICOLON);
+            ParserUtils_skipUntil(currentTokenHandle, (TokenType_t[]){SEMICOLON, BRACKET_END, BRACKET_START}, 3);
             free(symbol);
             return SUCCESS;
         }
@@ -263,7 +263,7 @@ static bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, VectorHand
         if(!isSymbolsLegalToExistTogether_(lastSymbol, currentSymbol))
         {
             Shouter_shoutError(cTokenP, "Illegal token to use after prev token");
-            ParserUtils_skipUntil(currentTokenHandle, SEMICOLON);
+            ParserUtils_skipUntil(currentTokenHandle, (TokenType_t[]){SEMICOLON, BRACKET_END, BRACKET_START}, 3);
             return SUCCESS;
         }
 

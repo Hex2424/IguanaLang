@@ -20,7 +20,7 @@
 #include "stdbool.h"
 
 
-bool ParserUtils_skipUntil(TokenHandler_t** currentTokenHandle, const TokenType_t untilTokenType);
+bool ParserUtils_skipUntil(TokenHandler_t** currentTokenHandle, const TokenType_t* untilTokenTypeList, const uint8_t tokensLength);
 bool ParserUtils_tryParseSequence(TokenHandler_t** currentTokenHandle, const TokenType_t* pattern,const size_t patternSize);
 bool ParserUtils_assignTokenValue(char** to, const char* from);
 

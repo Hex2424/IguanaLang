@@ -186,7 +186,7 @@ static inline bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_
     {
         Shouter_shoutError(cTokenP, "Variables can be manipulated or assigned only in function scopes");
 
-        if(!ParserUtils_skipUntil(&currentToken, SEMICOLON))
+        if(!ParserUtils_skipUntil(&currentToken, (TokenType_t[]){SEMICOLON}, 1))
         {
             return ERROR;
         }
@@ -198,7 +198,8 @@ static inline bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_
     }else
     {
         Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
-        if(!ParserUtils_skipUntil(&currentToken, SEMICOLON))
+
+        if(!ParserUtils_skipUntil(&currentToken, (TokenType_t[]){SEMICOLON}, 1))
         {
             return ERROR;
         }
