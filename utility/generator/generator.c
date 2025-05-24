@@ -686,6 +686,11 @@ static bool generateCodeForOneOperand_(const ExpressionHandle_t symbol, Variable
 static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const VariableObjectHandle_t assignedTmpVar, ExMethodCallHandle_t method)
 {
     Vector_t resultVars;
+    static uint64_t functionIdCounter = 0;
+
+    char functionPrefix[33];  // Large enough to hold 20-digit uint64 + null terminator
+
+    snprintf(functionPrefix, sizeof(functionPrefix), "_%lu", functionIdCounter++);
 
     fprintf(currentCfile_, BITPACK_TYPE_NAME " %s" SEMICOLON_DEF READABILITY_ENDLINE BRACKET_START_DEF READABILITY_ENDLINE, assignedTmpVar->objectName);
     
@@ -747,7 +752,7 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
 
     FWRITE_STRING(EXTERN_KEYWORD_DEF " ");
 
-    if(!generateMethodHeader_(&tempMethodObj, "__"))
+    if(!generateMethodHeader_(&tempMethodObj, functionPrefix))
     {
         Log_e(TAG, "Failed to generate method call header");
         return ERROR;
@@ -828,7 +833,7 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
         FWRITE_STRING(READABILITY_ENDLINE)
     }
 
-    fprintf(currentCfile_, "__%s" BRACKET_ROUND_START_DEF, method->name);
+    fprintf(currentCfile_, "%s%s" BRACKET_ROUND_START_DEF, functionPrefix, method->name);
     
     if(Hashmap_size(&currentAst_->classVariables) != 0)
     {
