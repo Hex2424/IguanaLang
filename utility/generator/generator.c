@@ -100,7 +100,7 @@ static bool generateCodeForOperation_(const VariableObjectHandle_t assignedTmpVa
 static bool fileWriteBitVariableSet_(const VariableObjectHandle_t assignedTmpVar, const ExpressionHandle_t left, const ExpressionHandle_t right);
 static bool getBitpackFromOperand_(const ExpressionHandle_t symbol, BitpackSize_t* resultBitpack);
 static bool handleCastOperator_(const VariableObjectHandle_t assignedTmpVar, const ExpressionHandle_t left, const ExpressionHandle_t right);
-static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const VariableObjectHandle_t assignedTmpVar, const uint64_t funcId, ExMethodCallHandle_t functionExpression);
+static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const VariableObjectHandle_t assignedTmpVar, ExMethodCallHandle_t method);
 static bool fileWriteNameMangleParams_(const VectorHandler_t params);
 static bool generateCodeForOneOperand_(const ExpressionHandle_t symbol, VariableObjectHandle_t resultVariable);
 static AssignValue_t calculateConstantResultValue_(const AssignValue_t leftConst, const AssignValue_t rightConst, const OperatorType_t operator);
@@ -547,9 +547,12 @@ static bool determineResultVariableExpression_(ExpressionHandle_t resultExp, Var
     }else if(operator == OP_CAST)
     {
         // On cast it always result a casted variable with size of left variable which is cast value
-        if(!getBitpackFromOperand_(left, &tmpVarAllocation->bitpack))
+        if(left->type == EXP_CONST_NUMBER)
         {
-            Log_e(TAG, "Failed to get bitpack from operand");
+            tmpVarAllocation->bitpack = (AssignValue_t) left->expressionObject;
+        }else
+        {
+            Log_e(TAG, "Dynamic casting not supported yet");
             return ERROR;
         }
 
@@ -670,7 +673,7 @@ static bool generateCodeForOneOperand_(const ExpressionHandle_t symbol, Variable
     {
         ExMethodCallHandle_t methodCall = symbol->expressionObject;
 
-        if(!generateMethodCallScope_(0, resultVariable, 0, methodCall))
+        if(!generateMethodCallScope_(0, resultVariable, methodCall))
         {
             Log_e(TAG, "Failed to generate method call for one operand");
             return ERROR;
@@ -680,21 +683,12 @@ static bool generateCodeForOneOperand_(const ExpressionHandle_t symbol, Variable
     return SUCCESS;
 }
 
-static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const VariableObjectHandle_t assignedTmpVar, const uint64_t funcId, ExMethodCallHandle_t method)
+static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const VariableObjectHandle_t assignedTmpVar, ExMethodCallHandle_t method)
 {
     Vector_t resultVars;
 
-
-    char* currSufix;
-    currSufix = alloca(strlen(assignedTmpVar->objectName) + 10);
-
-    NULL_GUARD(currSufix, ERROR, Log_e(TAG, "Failed to allocate currSfix"));
-
-    currSufix[0] = '\0';
-    sprintf(currSufix, "%sf%lu", assignedTmpVar->objectName, funcId);
+    fprintf(currentCfile_, BITPACK_TYPE_NAME " %s" SEMICOLON_DEF READABILITY_ENDLINE BRACKET_START_DEF READABILITY_ENDLINE, assignedTmpVar->objectName);
     
-    fprintf(currentCfile_, BITPACK_TYPE_NAME " %s" SEMICOLON_DEF READABILITY_ENDLINE BRACKET_START_DEF READABILITY_ENDLINE, currSufix);
-
     Log_d(TAG, "Start on method call generation: %s", method->name);
 
     if(!Vector_create(&resultVars, NULL))
@@ -715,7 +709,7 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
 
         resultVar->objectName = paramName;
 
-        if(!fileWriteExpression_(method->parameters.expandable[paramIdx], resultVar, currSufix))
+        if(!fileWriteExpression_(method->parameters.expandable[paramIdx], resultVar, assignedTmpVar->objectName))
         {
             Log_e(TAG, "Failed to write parameter expression");
             return ERROR;
@@ -800,6 +794,14 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
         {
             VariableObjectHandle_t param = (VariableObjectHandle_t) resultVars.expandable[paramIdx];
             
+            // Checking if its not return variable, if it is just ignore, it dont need any insertion
+            // Return variable should be filled from function which being called
+            if(param == &returnVar)
+            {
+                Log_d(TAG, "Detected return variable in params");
+                continue;
+            }
+
             if(param->bitpack < BIT_SIZE_BITPACK)
             {
                 fprintf(currentCfile_,STRINGIFY(%spset[%u] = AFIT_RESET(%spset[%u], %u, %lu)) READABILITY_SPACE C_OPERATOR_BIN_OR_DEF READABILITY_SPACE,
@@ -821,6 +823,9 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
             fprintf(currentCfile_, STRINGIFY(((%s) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, param->objectName, param->posBit, param->bitpack);
         }
 
+    }else
+    {
+        FWRITE_STRING(READABILITY_ENDLINE)
     }
 
     fprintf(currentCfile_, "__%s" BRACKET_ROUND_START_DEF, method->name);
@@ -846,7 +851,10 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
 
     if(resultVars.currentSize > 0)
     {
-       fprintf(currentCfile_, "%spset" BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName);
+        fprintf(currentCfile_, "%spset" BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName);
+    }else
+    {
+        FWRITE_STRING(BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE);
     }
 
     FWRITE_STRING(BRACKET_END_DEF READABILITY_ENDLINE);
@@ -855,34 +863,76 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
 }
 
 
-static bool generateCodeForOperation_(const VariableObjectHandle_t assignedTmpVar, ExpressionHandle_t left, ExpressionHandle_t right, const OperatorType_t operator)
+static bool generateCodeForOperation_(const VariableObjectHandle_t assignedTmpVar, ExpressionHandle_t leftOperand, ExpressionHandle_t rightOperand, const OperatorType_t operator)
 {
     char* operatorString = NULL;
     int status;
+    
+    ExpressionHandle_t chosenOperandLeft = leftOperand;
+    ExpressionHandle_t chosenOperandRight = rightOperand;
 
     // Checking if operation regenerateCodeForOperation_lated to function call, it needs be handled differently
-    if(left->type == EXP_METHOD_CALL)
+    if(operator != OP_CAST)
     {
-        
-        if(!generateMethodCallScope_(0, assignedTmpVar, 0, left->expressionObject))
+        if(leftOperand->type == EXP_METHOD_CALL)
         {
-            Log_e(TAG, "Failed to generate method call scope 0 (left)");
-            return ERROR;
-        }
-    }
+            char* functionResultVarName = alloca(strlen(assignedTmpVar->objectName) + SIZEOF_NOTERM("fl"));
+            functionResultVarName[0] = '\0';
+            sprintf(functionResultVarName, "%sfl", assignedTmpVar->objectName);
 
-    if(right->type == EXP_METHOD_CALL)
-    {
-        if(!generateMethodCallScope_(0, assignedTmpVar, 1, right->expressionObject))
+            VariableObjectHandle_t tmpVar = alloca(sizeof(VariableObject_t));
+            ExpressionHandle_t tmpExpression = alloca(sizeof(Expression_t));
+
+            NULL_GUARD(functionResultVarName, ERROR, Log_e(TAG, "Failed to allocate function operand name"))
+            NULL_GUARD(tmpVar, ERROR, Log_e(TAG, "Failed to allocate function operand tmp var"))
+            NULL_GUARD(tmpExpression, ERROR, Log_e(TAG, "Failed to allocate function tmp operand"))
+            
+            tmpVar->objectName = functionResultVarName;
+            
+
+            if(!generateMethodCallScope_(0, tmpVar, leftOperand->expressionObject))
+            {
+                Log_e(TAG, "Failed to generate method call scope (left)");
+                return ERROR;
+            }
+
+            tmpExpression->type = EXP_TMP_VAR;
+            tmpExpression->expressionObject = tmpVar;
+
+            chosenOperandLeft = tmpExpression;
+        }
+
+        if(rightOperand->type == EXP_METHOD_CALL)
         {
-            Log_e(TAG, "Failed to generate method call scope 1 (right)");
-            return ERROR;
-        }
-    }
+            char* functionResultVarName = alloca(strlen(assignedTmpVar->objectName) + SIZEOF_NOTERM("fr"));
+            functionResultVarName[0] = '\0';
+            sprintf(functionResultVarName, "%sfr", assignedTmpVar->objectName);
 
+            VariableObjectHandle_t tmpVar = alloca(sizeof(VariableObject_t));
+            ExpressionHandle_t tmpExpression = alloca(sizeof(Expression_t));
+
+            NULL_GUARD(functionResultVarName, ERROR, Log_e(TAG, "Failed to allocate function operand name"))
+            NULL_GUARD(tmpVar, ERROR, Log_e(TAG, "Failed to allocate function operand tmp var"))
+            NULL_GUARD(tmpExpression, ERROR, Log_e(TAG, "Failed to allocate function tmp operand"))
+            
+            tmpVar->objectName = functionResultVarName;
+            
+            if(!generateMethodCallScope_(0, tmpVar, rightOperand->expressionObject))
+            {
+                Log_e(TAG, "Failed to generate method call scope (right)");
+                return ERROR;
+            }
+
+            tmpExpression->type = EXP_TMP_VAR;
+            tmpExpression->expressionObject = tmpVar;
+
+            chosenOperandRight = tmpExpression;
+        }   
+    }
+    
     if(operator == OP_CAST)
     {
-        return handleCastOperator_(assignedTmpVar, left, right);
+        return handleCastOperator_(assignedTmpVar, chosenOperandLeft, chosenOperandRight);
     }
 
 
@@ -891,13 +941,13 @@ static bool generateCodeForOperation_(const VariableObjectHandle_t assignedTmpVa
     {
         fprintf(currentCfile_, BITPACK_TYPE_NAME " %s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE, assignedTmpVar->objectName);
 
-        if(!printBitVariableReading_(left))
+        if(!printBitVariableReading_(chosenOperandLeft))
         {
             return ERROR;
         }
     }else
     {
-        return fileWriteBitVariableSet_(assignedTmpVar, left, right);
+        return fileWriteBitVariableSet_(assignedTmpVar, chosenOperandLeft, chosenOperandRight);
     }
 
     switch (operator)
@@ -924,7 +974,7 @@ static bool generateCodeForOperation_(const VariableObjectHandle_t assignedTmpVa
         return ERROR;
     }
 
-    if(!printBitVariableReading_(right))
+    if(!printBitVariableReading_(chosenOperandRight))
     {
         return ERROR;
     }
@@ -933,6 +983,9 @@ static bool generateCodeForOperation_(const VariableObjectHandle_t assignedTmpVa
 
     return SUCCESS;
 }
+
+
+
 
 static bool printBitVariableReading_(const ExpressionHandle_t operand)
 {
@@ -1177,7 +1230,7 @@ static bool handleCastOperator_(const VariableObjectHandle_t assignedTmpVar, con
     {
         AssignValue_t castValue = (AssignValue_t) left->expressionObject;
 
-        if(!generateMethodCallScope_(castValue, assignedTmpVar, 0, right->expressionObject))
+        if(!generateMethodCallScope_(castValue, assignedTmpVar, right->expressionObject))
         {
             Log_e(TAG, "Failed to write method call to file size: %lu", castValue);
             return ERROR;
