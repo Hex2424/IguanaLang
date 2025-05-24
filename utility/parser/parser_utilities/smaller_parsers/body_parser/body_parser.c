@@ -59,6 +59,7 @@ static inline bool parseSymbolExpression_(LocalScopeObjectHandle_t scopeBody, Ex
 static bool handleNumeric_(LocalScopeObjectHandle_t scopeBody, ExpressionHandle_t symbolHandle, TokenHandler_t** currentTokenHandle);
 static bool handlePostASTMethodCall_(ExMethodCallHandle_t methodCall);
 static VariableObjectHandle_t searchVariableNameAcrossScopes(LocalScopeObjectHandle_t localScopeBody, const char* varName);
+static VariableObjectHandle_t createUnknownVar_(char* notFoundVarName);
 ////////////////////////////////
 // IMPLEMENTATION
 
@@ -323,6 +324,7 @@ static bool parseExpressionLine_(LocalScopeObjectHandle_t localScope, VectorHand
                 return ERROR;
             }
         }
+    
 
         (*currentTokenHandle)++;
     }
@@ -565,13 +567,32 @@ static bool handleNaming_(LocalScopeObjectHandle_t localScopeBody, ExpressionHan
 
         }else
         {
-            symbol->expressionObject = NULL;
+            
+            symbol->type = EXP_VARIABLE;
+            symbol->expressionObject = createUnknownVar_((char*) varName);
+            
             Shouter_shoutError(cTokenP, "Variable '%s' is not declared previously", varName);
         }
  
     }
         
     return SUCCESS;
+}
+
+static VariableObjectHandle_t createUnknownVar_(char* notFoundVarName)
+{
+    VariableObjectHandle_t unknownVar;
+    
+    ALLOC_CHECK(unknownVar, sizeof(VariableObject_t), NULL);
+
+    unknownVar->belongToGroup = 0;
+    unknownVar->bitpack = 0;
+    unknownVar->castedFile = NULL;
+    unknownVar->posBit = 0;
+    unknownVar->scopeName = NULL;
+    unknownVar->objectName = notFoundVarName;
+
+    return unknownVar;
 }
 
 static VariableObjectHandle_t searchVariableNameAcrossScopes(LocalScopeObjectHandle_t localScopeBody, const char* varName)
