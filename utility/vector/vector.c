@@ -209,7 +209,7 @@ VectorHandler_t Vector_duplicate(const VectorHandler_t from)
     duplicateVector->containsVectors = from->containsVectors;
     duplicateVector->currentSize = from->currentSize;
 
-    duplicateVector->expandable = malloc(sizeof(void*) * duplicateVector->availableSize);
+    duplicateVector->expandable = malloc(sizeof(void*) * (duplicateVector->availableSize + duplicateVector->currentSize));
     NULL_GUARD(duplicateVector, NULL, VECTOR_NULL_PRINT);
 
     memcpy(duplicateVector->expandable, from->expandable, sizeof(void*) * duplicateVector->currentSize);
