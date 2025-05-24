@@ -257,11 +257,12 @@ static bool fileWriteNameMangleMethod_(const char* const className, const Method
 
     writeStatus = fprintf(currentCfile_,
         //ex: asm("_ZN9wikipedia3fooEv");
-        READABILITY_SPACE ASM_HEADER_MANGLE MANGLE_MAGIC_BYTE_DEF MANGLE_NEST_ID_DEF "%lu" BIT_DEF "%lu_%s%ld%s" MANGLE_END_DEF,
+        READABILITY_SPACE ASM_HEADER_MANGLE MANGLE_MAGIC_BYTE_DEF MANGLE_NEST_ID_DEF "%lu" BIT_DEF "%lu_%s%ld" BIT_DEF "%lu_%s" MANGLE_END_DEF,
         objectNameLen + ((uint8_t) SIZEOF_NOTERM(BIT_DEF)) + ((uint8_t) SIZEOF_NOTERM("_")) + getDigitCountU64_((uint64_t) currentAst_->objectSizeBits),
         currentAst_->objectSizeBits,
         className,
-        methodNameLen,
+        methodNameLen + SIZEOF_NOTERM("_") + getDigitCountU64_((uint64_t) method->returnVariable->bitpack) + ((uint8_t) SIZEOF_NOTERM(BIT_DEF)),
+        method->returnVariable->bitpack,
         method->methodName);
 
     if(writeStatus < 0)
@@ -727,14 +728,14 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
         }
 
     }
+    
+    
+    VariableObject_t returnVar;
+    returnVar.bitpack = returnSizeBits;
 
     // void case not needed to pack
     if (returnSizeBits != 0)
     {
-        VariableObject_t returnVar;
-
-        returnVar.bitpack = returnSizeBits;
-
         // Adding return variable also to bitfit
         if(!Vector_append(&resultVars, &returnVar))
         {
@@ -748,6 +749,7 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
     tempMethodObj.methodName = method->name;
     tempMethodObj.parameters = &resultVars;
     tempMethodObj.containsBody = true;    
+    tempMethodObj.returnVariable = &returnVar;
 
     FWRITE_STRING(EXTERN_KEYWORD_DEF " ");
 
