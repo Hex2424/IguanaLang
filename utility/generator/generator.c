@@ -986,7 +986,6 @@ static bool generateCodeForOperation_(const VariableObjectHandle_t assignedTmpVa
         return handleCastOperator_(assignedTmpVar, chosenOperandLeft, chosenOperandRight);
     }
 
-
     // Set handling differently
     if(operator != OP_SET)
     {
@@ -1276,11 +1275,10 @@ static bool handleCastOperator_(const VariableObjectHandle_t assignedTmpVar, con
         Log_e(TAG, "For now non constant (dynamic) casting is not allowed, will be in future");
         return ERROR;
     }
+    AssignValue_t castValue = (AssignValue_t) left->expressionObject;
 
     if(right->type == EXP_METHOD_CALL)
     {
-        AssignValue_t castValue = (AssignValue_t) left->expressionObject;
-
         if(!generateMethodCallScope_(castValue, assignedTmpVar, right->expressionObject))
         {
             Log_e(TAG, "Failed to write method call to file size: %lu", castValue);
@@ -1291,15 +1289,15 @@ static bool handleCastOperator_(const VariableObjectHandle_t assignedTmpVar, con
     {
         Log_e(TAG, "Cast on constant value not supported yet");
         return ERROR;
-    }else if(right->type == EXP_TMP_VAR)
+    }else if((right->type == EXP_TMP_VAR) || (right->type == EXP_VARIABLE))
     {
-        Log_e(TAG, "Casting on TMP var not supported yet");
-        return ERROR;
-    }else if(right->type == EXP_VARIABLE)
-    {
-        VariableObjectHandle_t var = (VariableObjectHandle_t) right->expressionObject;
-        Log_e(TAG, "Casting on variable not supported yet \'%s\'", var->objectName);
-        return ERROR;
+        fprintf(currentCfile_, BITPACK_TYPE_NAME " %s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE, assignedTmpVar->objectName);
+
+        printBitVariableReading_(right);
+        
+        fprintf(currentCfile_, STRINGIFY(&MASK(%lu)) SEMICOLON_DEF READABILITY_ENDLINE, castValue);
+
+        return SUCCESS;
     }else
     {
         Log_e(TAG, "Unknown casting type found");
