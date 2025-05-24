@@ -857,6 +857,16 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
         FWRITE_STRING(BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE);
     }
 
+    if(returnVar.bitpack != 0)
+    {
+        fprintf(currentCfile_, "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE STRINGIFY(AFIT_READ(%spset[%u], %u, %lu)) SEMICOLON_DEF READABILITY_ENDLINE,
+            assignedTmpVar->objectName, assignedTmpVar->objectName,
+            returnVar.belongToGroup, returnVar.posBit, returnVar.bitpack);
+    }else
+    {
+        fprintf(currentCfile_, "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE "0" SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName);
+    }
+
     FWRITE_STRING(BRACKET_END_DEF READABILITY_ENDLINE);
 
     return SUCCESS;
