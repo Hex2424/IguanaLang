@@ -98,6 +98,13 @@ static bool postParsingJobsMethod_(MethodObjectHandle_t method)
         Log_e(TAG, "Failed to do bitfitting in scope");
         return ERROR;
     }
+    
+    // Appending return variable to params, because they will be packed with return variable
+    if(!Vector_append(method->parameters, method->returnVariable))
+    {
+        Log_e(TAG, "Failed to append return variable");
+        return ERROR;
+    }
 
     // Also doing same thing for function parameters
     if(!Bitfit_assignGroupsAndPositionForVariableVector_(method->parameters, FIRST_FIT, &method->parametersSizeBits))
@@ -105,6 +112,14 @@ static bool postParsingJobsMethod_(MethodObjectHandle_t method)
         Log_e(TAG, "Failed to do bitfitting in parameters");
         return ERROR;
     }
+
+    // Popping out return variable
+    if(!Vector_popLast(method->parameters))
+    {
+        Log_e(TAG, "Failed to pop return variable");
+        return ERROR;
+    }
+
 
     return SUCCESS;
 }

@@ -61,15 +61,18 @@ static bool firstFitMethodFunction_(VectorHandler_t vector, const uint8_t groupS
 
     uint32_t highestGroupIdxReached = 0;
 
+    // It wont sort original vector but variables get their assigning
+    VectorHandler_t tempSortedVector = Vector_duplicate(vector);
+    
     // Sort fields by bitsize (largest first)
-    qsort (vector->expandable, vector->currentSize, sizeof(VariableObjectHandle_t), comp);
+    qsort (tempSortedVector->expandable, tempSortedVector->currentSize, sizeof(VariableObjectHandle_t), comp);
 
-    for (uint32_t varIdx = 0; varIdx < vector->currentSize; ++varIdx) {
+    for (uint32_t varIdx = 0; varIdx < tempSortedVector->currentSize; ++varIdx) {
 
         VariableObjectHandle_t variable;
         bool placed;
 
-        variable = (VariableObjectHandle_t) vector->expandable[varIdx];
+        variable = (VariableObjectHandle_t) tempSortedVector->expandable[varIdx];
         placed = false;
 
         for (int groupIdx = 0; groupIdx < MAX_GROUPS_POSSIBLE; ++groupIdx) 

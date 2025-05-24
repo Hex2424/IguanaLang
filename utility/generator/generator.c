@@ -728,20 +728,9 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
 
     }
     
-    
     VariableObject_t returnVar;
     returnVar.bitpack = returnSizeBits;
 
-    // void case not needed to pack
-    if (returnSizeBits != 0)
-    {
-        // Adding return variable also to bitfit
-        if(!Vector_append(&resultVars, &returnVar))
-        {
-            Log_e(TAG, "Failed to append to result variables");
-            return ERROR;
-        }
-    }
     
     MethodObject_t tempMethodObj;
 
@@ -757,6 +746,7 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
         Log_e(TAG, "Failed to generate method call header");
         return ERROR;
     }
+
 
     if(method->caller == NULL)
     {
@@ -776,6 +766,16 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
 
     }
 
+    // void case not needed to pack
+    if (returnSizeBits != 0)
+    {
+        // Adding return variable also to bitfit
+        if(!Vector_append(&resultVars, &returnVar))
+        {
+            Log_e(TAG, "Failed to append to result variables");
+            return ERROR;
+        }
+    }
     // TODO: for now lets put print only, in future need mechanism to handle special functions
     // Like the print function and other functions
 
