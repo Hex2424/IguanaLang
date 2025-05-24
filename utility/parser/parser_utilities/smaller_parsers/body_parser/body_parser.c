@@ -716,10 +716,21 @@ static inline bool handleMethodCallParameterization_(LocalScopeObjectHandle_t lo
 
             while(true)
             {
-                if((cTokenType == COMMA) || (*currentTokenHandle) == endExpressionFunctionPtr)
+                if(cTokenType == BRACKET_ROUND_END)
+                {
+                    unclosedRoundBracketsCount--;
+                }
+
+                if(cTokenType == BRACKET_ROUND_START)
+                {
+                    unclosedRoundBracketsCount++;
+                }
+
+                if(((unclosedRoundBracketsCount == 0) && (cTokenType == COMMA)) || (*currentTokenHandle) == endExpressionFunctionPtr)
                 {
                     endExpressionPtr = (*currentTokenHandle);
                     (*currentTokenHandle) = startExpressionPtr;
+
 
                     VectorHandler_t expressionVector = Vector_createDynamic(NULL);
 
