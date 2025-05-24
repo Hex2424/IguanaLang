@@ -31,7 +31,7 @@
 #define MAX_RETRIES_ID                  15
 #define OBJECT_RANDOM_SEED              0
 
-#define MAIN_PROCESS_FILE_NAME          "_ZN9bit0_main4mainEv"
+#define MAIN_PROCESS_FILE_NAME          "_ZN9bit0_main9bit0_mainEv"
 
 #define PARAMS_VAR_REGION_NAME          "params"
 #define CLASS_VAR_REGION_NAME           "object"
