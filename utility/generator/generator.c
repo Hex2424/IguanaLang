@@ -105,6 +105,7 @@ static bool fileWriteNameMangleParams_(const VectorHandler_t params);
 static bool generateCodeForOneOperand_(const ExpressionHandle_t symbol, VariableObjectHandle_t resultVariable);
 static AssignValue_t calculateConstantResultValue_(const AssignValue_t leftConst, const AssignValue_t rightConst, const OperatorType_t operator);
 static inline uint8_t getBitCountU64_(uint64_t number);
+static bool generatePrintFunction_(const VectorHandler_t params);
 
 ////////////////////////////////
 // IMPLEMENTATION
@@ -323,7 +324,6 @@ static inline bool fileWriteMethodBody_(const MethodObjectHandle_t method)
             return ERROR;
         }
 
-
         if(!fileWriteExpression_(expression, &resultVar, "_"))
         {
             Log_e(TAG, "Failed to write expression");
@@ -344,8 +344,8 @@ static bool fileWriteExpression_(const VectorHandler_t expression, VariableObjec
     DynamicStack_t symbolStack;
     uint64_t tmpIncrement = 0;
 
-    ExpressionHandle_t resultExpression;
-    VariableObjectHandle_t tmpVar;
+    ExpressionHandle_t resultExpression = NULL;
+    VariableObjectHandle_t tmpVar = NULL;
     char* currSufix;
 
     if(!Stack_create(&symbolStack))
@@ -757,13 +757,7 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
         Log_e(TAG, "Failed to generate method call header");
         return ERROR;
     }
-    // if(method->caller == NULL)
-    // {
-    //     VariableObjectHandle_t caller = malloc(sizeof(VariableObject_t));
-    //     caller->objectName = currentAst_->iguanaObjectName;
 
-    //     method->caller = caller;
-    // }
     if(method->caller == NULL)
     {
         if(!fileWriteNameMangleMethod_(currentAst_->iguanaObjectName, &tempMethodObj, true))
@@ -782,101 +776,136 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
 
     }
 
-    BitpackSize_t sizeNeededForFunctionParams;
+    // TODO: for now lets put print only, in future need mechanism to handle special functions
+    // Like the print function and other functions
 
-    if(!Bitfit_assignGroupsAndPositionForVariableVector_(&resultVars, FIRST_FIT, &sizeNeededForFunctionParams))
+    if (strcmp("print", method->name) == 0)
     {
-        Log_e(TAG, "Failed to fit params bits");
-        return ERROR;
-    }
-
-
-    if(resultVars.currentSize > 0)
-    {
-        fprintf(currentCfile_, READABILITY_ENDLINE BITPACK_TYPE_NAME " %spset[%lu]" SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, BITSCNT_TO_BYTESCNT(sizeNeededForFunctionParams));
-
-        for(uint32_t paramIdx = 0; paramIdx < resultVars.currentSize; paramIdx++)
+        if(!generatePrintFunction_(&resultVars))
         {
-            VariableObjectHandle_t param = (VariableObjectHandle_t) resultVars.expandable[paramIdx];
-            
-            // Checking if its not return variable, if it is just ignore, it dont need any insertion
-            // Return variable should be filled from function which being called
-            if(param == &returnVar)
-            {
-                Log_d(TAG, "Detected return variable in params");
-                continue;
-            }
-
-            if(param->bitpack < BIT_SIZE_BITPACK)
-            {
-                fprintf(currentCfile_,STRINGIFY(%spset[%u] = AFIT_RESET(%spset[%u], %u, %lu)) READABILITY_SPACE C_OPERATOR_BIN_OR_DEF READABILITY_SPACE,
-                    assignedTmpVar->objectName,
-                    param->belongToGroup, assignedTmpVar->objectName,
-                    param->belongToGroup,
-                    param->bitpack, param->posBit, param->bitpack);
-
-            }else if (param->bitpack == BIT_SIZE_BITPACK)
-            {
-                fprintf(currentCfile_, STRINGIFY(%spset[%u]) READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE, 
-                assignedTmpVar->objectName, param->belongToGroup);
-            }else
-            {
-                Log_e(TAG, "Unhandled case vars cant be now bigger than %u", BIT_SIZE_BITPACK);
-                return ERROR;
-            }
-
-            fprintf(currentCfile_, STRINGIFY(((%s) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, param->objectName, param->posBit, param->bitpack);
+            Log_e(TAG, "Failed to generate print function");
+            return ERROR;
         }
-
+        FWRITE_STRING(SEMICOLON_DEF READABILITY_ENDLINE);
     }else
     {
-        FWRITE_STRING(READABILITY_ENDLINE)
-    }
+        BitpackSize_t sizeNeededForFunctionParams;
 
-    fprintf(currentCfile_, "%s%s" BRACKET_ROUND_START_DEF, functionPrefix, method->name);
-    
-    if(Hashmap_size(&currentAst_->classVariables) != 0)
-    {
-
-        if( method->caller != NULL)
+        if(!Bitfit_assignGroupsAndPositionForVariableVector_(&resultVars, FIRST_FIT, &sizeNeededForFunctionParams))
         {
-            fprintf(currentCfile_, "%s[%u]", method->caller->scopeName, method->caller->belongToGroup);
+            Log_e(TAG, "Failed to fit params bits");
+            return ERROR;
+        }
+
+
+        if(resultVars.currentSize > 0)
+        {
+            fprintf(currentCfile_, READABILITY_ENDLINE BITPACK_TYPE_NAME " %spset[%lu]" SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, BITSCNT_TO_BYTESCNT(sizeNeededForFunctionParams));
+
+            for(uint32_t paramIdx = 0; paramIdx < resultVars.currentSize; paramIdx++)
+            {
+                VariableObjectHandle_t param = (VariableObjectHandle_t) resultVars.expandable[paramIdx];
+                
+                // Checking if its not return variable, if it is just ignore, it dont need any insertion
+                // Return variable should be filled from function which being called
+                if(param == &returnVar)
+                {
+                    Log_d(TAG, "Detected return variable in params");
+                    continue;
+                }
+
+                if(param->bitpack < BIT_SIZE_BITPACK)
+                {
+                    fprintf(currentCfile_,STRINGIFY(%spset[%u] = AFIT_RESET(%spset[%u], %u, %lu)) READABILITY_SPACE C_OPERATOR_BIN_OR_DEF READABILITY_SPACE,
+                        assignedTmpVar->objectName,
+                        param->belongToGroup, assignedTmpVar->objectName,
+                        param->belongToGroup,
+                        param->bitpack, param->posBit, param->bitpack);
+
+                }else if (param->bitpack == BIT_SIZE_BITPACK)
+                {
+                    fprintf(currentCfile_, STRINGIFY(%spset[%u]) READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE, 
+                    assignedTmpVar->objectName, param->belongToGroup);
+                }else
+                {
+                    Log_e(TAG, "Unhandled case vars cant be now bigger than %u", BIT_SIZE_BITPACK);
+                    return ERROR;
+                }
+
+                fprintf(currentCfile_, STRINGIFY(((%s) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, param->objectName, param->posBit, param->bitpack);
+            }
+
         }else
         {
-            // If caller is null, it means object tries to call another function in same object
-            // So just pass the caller function object param to another function through
-            FWRITE_STRING(CLASS_VAR_REGION_NAME);
+            FWRITE_STRING(READABILITY_ENDLINE)
+        }
+        fprintf(currentCfile_, "%s%s" BRACKET_ROUND_START_DEF, functionPrefix, method->name);
+            
+        if(Hashmap_size(&currentAst_->classVariables) != 0)
+        {
+
+            if( method->caller != NULL)
+            {
+                fprintf(currentCfile_, "%s[%u]", method->caller->scopeName, method->caller->belongToGroup);
+            }else
+            {
+                // If caller is null, it means object tries to call another function in same object
+                // So just pass the caller function object param to another function through
+                FWRITE_STRING(CLASS_VAR_REGION_NAME);
+            }
+
+            if(resultVars.currentSize > 0)
+            {
+                FWRITE_STRING(COMMA_DEF READABILITY_SPACE);
+            }
         }
 
         if(resultVars.currentSize > 0)
         {
-            FWRITE_STRING(COMMA_DEF READABILITY_SPACE);
+            fprintf(currentCfile_, "%spset" BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName);
+        }else
+        {
+            FWRITE_STRING(BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE);
+        }
+
+        if(returnVar.bitpack != 0)
+        {
+            fprintf(currentCfile_, "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE STRINGIFY(AFIT_READ(%spset[%u], %u, %lu)) SEMICOLON_DEF READABILITY_ENDLINE,
+                assignedTmpVar->objectName, assignedTmpVar->objectName,
+                returnVar.belongToGroup, returnVar.posBit, returnVar.bitpack);
+        }else
+        {
+            fprintf(currentCfile_, "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE "0" SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName);
         }
     }
 
-    if(resultVars.currentSize > 0)
-    {
-        fprintf(currentCfile_, "%spset" BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName);
-    }else
-    {
-        FWRITE_STRING(BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE);
-    }
-
-    if(returnVar.bitpack != 0)
-    {
-        fprintf(currentCfile_, "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE STRINGIFY(AFIT_READ(%spset[%u], %u, %lu)) SEMICOLON_DEF READABILITY_ENDLINE,
-            assignedTmpVar->objectName, assignedTmpVar->objectName,
-            returnVar.belongToGroup, returnVar.posBit, returnVar.bitpack);
-    }else
-    {
-        fprintf(currentCfile_, "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE "0" SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName);
-    }
-
+   
     FWRITE_STRING(BRACKET_END_DEF READABILITY_ENDLINE);
 
     return SUCCESS;
 }
 
+static bool generatePrintFunction_(const VectorHandler_t params)
+{
+    FWRITE_STRING("printf(\"");
+    for(uint16_t paramIdx = 0; paramIdx < params->currentSize; paramIdx++)
+    {
+        FWRITE_STRING("%lu ");
+    }
+    FWRITE_STRING("\\n\"");
+
+    for(uint16_t paramIdx = 0; paramIdx < params->currentSize; paramIdx++)
+    {
+        FWRITE_STRING("," READABILITY_SPACE);
+
+        const VariableObjectHandle_t param = params->expandable[paramIdx];
+
+        fprintf(currentCfile_, "%s", param->objectName);
+    }
+
+    FWRITE_STRING(BRACKET_ROUND_END_DEF);
+    return SUCCESS;
+}
 
 static bool generateCodeForOperation_(const VariableObjectHandle_t assignedTmpVar, ExpressionHandle_t leftOperand, ExpressionHandle_t rightOperand, const OperatorType_t operator)
 {
