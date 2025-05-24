@@ -729,15 +729,36 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
     }
     
     VariableObject_t returnVar;
+    BitpackSize_t sizeNeededForFunctionParams;
     returnVar.bitpack = returnSizeBits;
 
-    
+    // Adding return variable also to bitfit
+    if(!Vector_append(&resultVars, &returnVar))
+    {
+        Log_e(TAG, "Failed to append to result variables");
+        return ERROR;
+    }
+
+    if(!Bitfit_assignGroupsAndPositionForVariableVector_(&resultVars, FIRST_FIT, &sizeNeededForFunctionParams))
+    {
+        Log_e(TAG, "Failed to fit params bits");
+        return ERROR;
+    }
+
+    // Popping result value, but it got assigned, so no matter anymore
+    if(Vector_popLast(&resultVars) == NULL)
+    {
+        Log_e(TAG, "Failed to append to result variables");
+        return ERROR;
+    }
+
     MethodObject_t tempMethodObj;
 
     tempMethodObj.methodName = method->name;
     tempMethodObj.parameters = &resultVars;
     tempMethodObj.containsBody = true;    
     tempMethodObj.returnVariable = &returnVar;
+
 
     FWRITE_STRING(EXTERN_KEYWORD_DEF " ");
 
@@ -766,16 +787,6 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
 
     }
 
-    // void case not needed to pack
-    if (returnSizeBits != 0)
-    {
-        // Adding return variable also to bitfit
-        if(!Vector_append(&resultVars, &returnVar))
-        {
-            Log_e(TAG, "Failed to append to result variables");
-            return ERROR;
-        }
-    }
     // TODO: for now lets put print only, in future need mechanism to handle special functions
     // Like the print function and other functions
 
@@ -789,31 +800,18 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
         FWRITE_STRING(SEMICOLON_DEF READABILITY_ENDLINE);
     }else
     {
-        BitpackSize_t sizeNeededForFunctionParams;
 
-        if(!Bitfit_assignGroupsAndPositionForVariableVector_(&resultVars, FIRST_FIT, &sizeNeededForFunctionParams))
+        if((resultVars.currentSize > 0) || (returnSizeBits > 0))
         {
-            Log_e(TAG, "Failed to fit params bits");
-            return ERROR;
+            fprintf(currentCfile_, READABILITY_ENDLINE BITPACK_TYPE_NAME " %spset[%lu]" SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, BITSCNT_TO_BYTESCNT(sizeNeededForFunctionParams));
         }
-
 
         if(resultVars.currentSize > 0)
         {
-            fprintf(currentCfile_, READABILITY_ENDLINE BITPACK_TYPE_NAME " %spset[%lu]" SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, BITSCNT_TO_BYTESCNT(sizeNeededForFunctionParams));
-
             for(uint32_t paramIdx = 0; paramIdx < resultVars.currentSize; paramIdx++)
             {
                 VariableObjectHandle_t param = (VariableObjectHandle_t) resultVars.expandable[paramIdx];
                 
-                // Checking if its not return variable, if it is just ignore, it dont need any insertion
-                // Return variable should be filled from function which being called
-                if(param == &returnVar)
-                {
-                    Log_d(TAG, "Detected return variable in params");
-                    continue;
-                }
-
                 if(param->bitpack < BIT_SIZE_BITPACK)
                 {
                     fprintf(currentCfile_,STRINGIFY(%spset[%u] = AFIT_RESET(%spset[%u], %u, %lu)) READABILITY_SPACE C_OPERATOR_BIN_OR_DEF READABILITY_SPACE,
@@ -839,6 +837,7 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
         {
             FWRITE_STRING(READABILITY_ENDLINE)
         }
+        
         fprintf(currentCfile_, "%s%s" BRACKET_ROUND_START_DEF, functionPrefix, method->name);
             
         if(Hashmap_size(&currentAst_->classVariables) != 0)
@@ -860,7 +859,7 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
             }
         }
 
-        if(resultVars.currentSize > 0)
+        if((resultVars.currentSize > 0) || (returnSizeBits > 0))
         {
             fprintf(currentCfile_, "%spset" BRACKET_ROUND_END_DEF SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName);
         }else
@@ -1171,7 +1170,7 @@ static bool generateMethodHeader_(const MethodObjectHandle_t method, const char*
         }
     }
 
-    if(method->parameters->currentSize > 0)
+    if((method->parameters->currentSize > 0) || (method->returnVariable->bitpack > 0))
     {
         FWRITE_STRING(PARAM_TYPE_DEF READABILITY_SPACE FUNCTION_PARAM_NAME);
     }
