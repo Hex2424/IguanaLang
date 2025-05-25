@@ -21,6 +21,7 @@
 
 
 #define EXPANDABLE_CONSTANT_DEFAULT     (1.0f / 3.0f)
+#define DEFAULT_TAG                     0
 
 typedef struct
 {

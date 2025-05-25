@@ -63,6 +63,8 @@ bool Vector_create(VectorHandler_t object, const InitialSettingsHandler_t initia
             return ERROR;
         }
     }
+    
+
     if(initialSettings != NULL)
     {
         ALLOC_CHECK(object->expandable, initialSettings->initialSize * sizeof(void*), ERROR);

@@ -19,6 +19,7 @@
 #include <stdbool.h>
 
 
+
 bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
 bool BodyParser_initialize(LocalScopeObjectHandle_t scopeBody);
 

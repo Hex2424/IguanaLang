@@ -24,9 +24,21 @@ typedef enum
     EXP_PARENTHESES_LEFT,
     EXP_PARENTHESES_RIGHT,
 
-    EXP_TMP_VAR
-}ExpressionType_t;
+    EXP_TMP_VAR,
+    EXP_ELEMENT_UNKNOWN_TYPE
+}ExpElementType_t;
 
+
+typedef enum
+{
+    SIMPLE_LINE,
+    REPEAT_LOOP,
+    WHEN_LOOP,
+    GUARD_STATEMENT,
+    RETURN_STATEMENT,
+    
+    EXP_UNKNOWN_TYPE
+}ExpType_t;
 
 typedef enum
 {
@@ -50,15 +62,42 @@ typedef enum
 
 typedef struct
 {
-    ExpressionType_t type;
-    void* expressionObject;
-}Expression_t;
+    ExpElementType_t type;
+    void* expressionElement;
+}ExpElement_t;
 
-typedef Expression_t* ExpressionHandle_t;
+typedef ExpElement_t* ExpElementHandle_t;
 
+typedef struct
+{
+    ExpType_t expType;
+    Vector_t expressionElementVector;
+}Exp_t;
 
-bool Expression_isSymbolOperand(const ExpressionHandle_t symbol);
-bool Expression_isSymbolOperator(const ExpressionHandle_t symbol);
+typedef Exp_t* ExpHandle_t;
+
+typedef ExpElementHandle_t* ExpIterator_t;
+
+bool ExpElement_isSymbolOperand(const ExpElementHandle_t symbol);
+bool ExpElement_isSymbolOperator(const ExpElementHandle_t symbol);
+ExpElementHandle_t ExpElement_createDynamic(void);
+bool ExpElement_setType(ExpElementHandle_t expressionElement, const ExpElementType_t type);
+bool ExpElement_setObject(ExpElementHandle_t expressionElement, const void* objectRef);
+bool ExpElement_set(ExpElementHandle_t expressionElement, const ExpElementType_t type, const void* objectRef);
+
+ExpElementType_t ExpElement_getType(ExpElementHandle_t expressionElement);
+void* ExpElement_getObject(const ExpElementHandle_t expressionElement);
+
+ExpHandle_t Expression_createDynamic(const ExpType_t type);
+bool Expression_setType(ExpHandle_t expression, const ExpType_t type);
+bool Expression_getType(const ExpHandle_t expression);
+bool Expression_create(ExpHandle_t expression, const ExpType_t expressionType);
+bool Expression_addElement(ExpHandle_t expression, const ExpElementHandle_t element);
+
+ExpIterator_t Expression_iteratorFirst(const ExpHandle_t expression);
+ExpIterator_t Expression_iteratorLast(const ExpHandle_t expression);
+
+size_t Expression_size(const ExpHandle_t expression);
 
 
 #endif // UTILITY_PARSER_STRUCTURES_EXPRESSION_EXPRESSIONS_H_
