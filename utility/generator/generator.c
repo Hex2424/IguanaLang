@@ -26,8 +26,6 @@
 #include "first_headers.h"
 #include "../parser/parser_utilities/post_parsing_utility/bitfit.h"
 
-
-
 ////////////////////////////////
 // DEFINES
 #if ENABLE_READABILITY
@@ -804,7 +802,7 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
             Log_e(TAG, "Failed to write parameter expression");
             return ERROR;
         }
-
+        
         if(!Vector_append(&resultVars, resultVar))
         {
             Log_e(TAG, "Failed to append to result variables");
@@ -823,13 +821,14 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
         Log_e(TAG, "Failed to append to result variables");
         return ERROR;
     }
-
+   
+    
     if(!Bitfit_assignGroupsAndPositionForVariableVector_(&resultVars, FIRST_FIT, &sizeNeededForFunctionParams))
     {
         Log_e(TAG, "Failed to fit params bits");
         return ERROR;
     }
-
+    
     // Popping result value, but it got assigned, so no matter anymore
     if(Vector_popLast(&resultVars) == NULL)
     {
@@ -845,33 +844,6 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
     tempMethodObj.returnVariable = &returnVar;
 
 
-    FWRITE_STRING(EXTERN_KEYWORD_DEF " ");
-
-    if(!generateMethodHeader_(&tempMethodObj, functionPrefix))
-    {
-        Log_e(TAG, "Failed to generate method call header");
-        return ERROR;
-    }
-
-
-    if(method->caller == NULL)
-    {
-        if(!fileWriteNameMangleMethod_(currentAst_->iguanaObjectName, &tempMethodObj, true))
-        {
-            Log_e(TAG, "Failed to write mangle self method \'%s\'", method->name);
-            return ERROR;
-        }
-
-    }else
-    {
-        if(!fileWriteNameMangleMethod_(method->caller->castedFile, &tempMethodObj, true))
-        {
-            Log_e(TAG, "Failed to write mangle method \'%s\'", method->name);
-            return ERROR;
-        }
-
-    }
-
     // TODO: for now lets put print only, in future need mechanism to handle special functions
     // Like the print function and other functions
 
@@ -885,6 +857,32 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
         FWRITE_STRING(SEMICOLON_DEF READABILITY_ENDLINE);
     }else
     {
+        FWRITE_STRING(EXTERN_KEYWORD_DEF " ");
+
+        if(!generateMethodHeader_(&tempMethodObj, functionPrefix))
+        {
+            Log_e(TAG, "Failed to generate method call header");
+            return ERROR;
+        }
+
+
+        if(method->caller == NULL)
+        {
+            if(!fileWriteNameMangleMethod_(currentAst_->iguanaObjectName, &tempMethodObj, true))
+            {
+                Log_e(TAG, "Failed to write mangle self method \'%s\'", method->name);
+                return ERROR;
+            }
+
+        }else
+        {
+            if(!fileWriteNameMangleMethod_(method->caller->castedFile, &tempMethodObj, true))
+            {
+                Log_e(TAG, "Failed to write mangle method \'%s\'", method->name);
+                return ERROR;
+            }
+
+        }
 
         if((resultVars.currentSize > 0) || (returnSizeBits > 0))
         {
@@ -901,10 +899,14 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
                 {
                     fprintf(currentCfile_,STRINGIFY(%spset[%u] = AFIT_RESET(%spset[%u], %u, %lu)) READABILITY_SPACE C_OPERATOR_BIN_OR_DEF READABILITY_SPACE,
                         assignedTmpVar->objectName,
-                        param->belongToGroup, assignedTmpVar->objectName,
                         param->belongToGroup,
-                        param->bitpack, param->posBit, param->bitpack);
+                        assignedTmpVar->objectName,
+                        param->belongToGroup,
+                        param->bitpack,
+                        param->posBit,
+                        param->bitpack);
 
+                printf("%s %lu %u\n",param->objectName, param->bitpack, param->posBit);
                 }else if (param->bitpack == BIT_SIZE_BITPACK)
                 {
                     fprintf(currentCfile_, STRINGIFY(%spset[%u]) READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE, 
