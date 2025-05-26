@@ -4,6 +4,7 @@
 #include <arch_specific.h>
 #include <logger.h>
 
+
 static const char* TAG = "BITFIT";
 
 #define MAX_GROUPS_POSSIBLE         1024
@@ -54,6 +55,7 @@ bool Bitfit_assignGroupsAndPositionForVariableVector_(const VectorHandler_t vari
     return bitFitFunction(variablesVector, ARCHITECTURE_DEFAULT_BITS, sizeNeededForVariables);
 }
 
+
 static bool firstFitMethodFunction_(VectorHandler_t vector, const uint8_t groupSizeMax, BitpackSize_t* sizeNeededForVariables)
 {
     // TODO: change this number later
@@ -67,7 +69,7 @@ static bool firstFitMethodFunction_(VectorHandler_t vector, const uint8_t groupS
     // Sort fields by bitsize (largest first)
     qsort (tempSortedVector->expandable, tempSortedVector->currentSize, sizeof(VariableObjectHandle_t), comp);
 
-    for (uint32_t varIdx = 0; varIdx < tempSortedVector->currentSize; ++varIdx) {
+    for (uint32_t varIdx = 0; varIdx < tempSortedVector->currentSize; varIdx++) {
 
         VariableObjectHandle_t variable;
         bool placed;
@@ -110,7 +112,7 @@ static bool firstFitMethodFunction_(VectorHandler_t vector, const uint8_t groupS
     }
 
     *sizeNeededForVariables = (highestGroupIdxReached * groupSizeMax) + used[highestGroupIdxReached];
-    
+
     return SUCCESS;
 }
 
@@ -123,8 +125,8 @@ static int variableIteratorCallback_(void *key, int count, void* value, void *us
 
 int comp (const void * elem1, const void * elem2) 
 {
-    VariableObjectHandle_t a = (VariableObjectHandle_t) elem1;
-    VariableObjectHandle_t b = (VariableObjectHandle_t) elem2;
+    VariableObjectHandle_t a = *((VariableObjectHandle_t*) elem1);
+    VariableObjectHandle_t b = *((VariableObjectHandle_t*) elem2);
     
     if (a->bitpack < b->bitpack)
     {
