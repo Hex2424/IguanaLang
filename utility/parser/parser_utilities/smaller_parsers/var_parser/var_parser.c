@@ -128,3 +128,24 @@ VariableObjectHandle_t VarParser_searchVariableInVectorByName(const VectorHandle
 
     return NULL;
 }
+
+
+void VarParser_printVarsInVector(const VectorHandler_t vectorHandle, const char* name)
+{
+    Log_i(TAG, "Variables Vector: %s", name);
+    Log_i(TAG, "==============================");
+    
+    for(uint32_t vectorIndex = 0; vectorIndex < vectorHandle->currentSize; vectorIndex++)
+    {
+        VariableObjectHandle_t varHandle = (VariableObjectHandle_t) vectorHandle->expandable[vectorIndex];
+
+        if (varHandle == NULL)
+        {
+            Log_i(TAG, "NULL variable at index:%u", vectorIndex);
+        }else
+        {
+            Log_i(TAG, "bit:%lu, pos:%u group:%lu", varHandle->bitpack, varHandle->posBit, varHandle->belongToGroup);
+        }
+    }
+    Log_i(TAG, "==============================");
+}
