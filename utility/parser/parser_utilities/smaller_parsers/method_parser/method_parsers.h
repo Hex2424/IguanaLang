@@ -19,17 +19,6 @@
 #include "../../../../tokenizer/token/token.h"
 #include "../../../../parser/parser.h"
 
-typedef struct
-{
-    BitpackSize_t paramBitSize;
-    char* paramFileCast;
-    VectorHandler_t paramExpression;
-}MethodParam_t;
-
-
-typedef MethodParam_t* MethodParamHandle_t;
-
-
 
 bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, const VariableObjectHandle_t returnVariable, ParserHandle_t parser, MainFrameHandle_t root, const Accessibility_t notation);
 
