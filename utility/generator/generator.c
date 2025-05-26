@@ -93,7 +93,7 @@ static bool fileWriteIncludes_(void);
 static bool fileWriteMainHTypedefs_(void);
 static bool fileWriteMainHeader_(const bool isFirstFile);
 static bool determineResultVariableExpression_(ExpElementHandle_t resultExp, VariableObjectHandle_t tmpVarAllocation, const ExpElementHandle_t left, const ExpElementHandle_t right, const OperatorType_t operator);
-static bool fileWriteExpression_(const ExpHandle_t expression, VariableObjectHandle_t resultVar, const char* tmpSuffix);
+static bool fileWriteSimpleLine_(const ExpHandle_t expression, VariableObjectHandle_t resultVar, const char* tmpSuffix);
 static inline bool fileWriteVariablesAllocation_(const BitpackSize_t bitsize, const char* scopeName);
 static bool printBitVariableReading_(const ExpElementHandle_t operand);
 static bool generateCodeForOperation_(const VariableObjectHandle_t assignedTmpVar, ExpElementHandle_t left, ExpElementHandle_t right, const OperatorType_t operator);
@@ -106,7 +106,8 @@ static bool generateCodeForOneOperand_(const ExpElementHandle_t symbol, Variable
 static AssignValue_t calculateConstantResultValue_(const AssignValue_t leftConst, const AssignValue_t rightConst, const OperatorType_t operator);
 static inline uint8_t getBitCountU64_(uint64_t number);
 static bool generatePrintFunction_(const VectorHandler_t params);
-
+static bool fileWriteReturnStatement_(const ExpHandle_t expression, VariableObjectHandle_t returnVariable, VariableObjectHandle_t resultVar, const uint64_t elementId);
+static bool filewriteExpression_(const ExpHandle_t expression, const  MethodObjectHandle_t methodOfExpression, VariableObjectHandle_t resVar, const uint64_t elementId);
 ////////////////////////////////
 // IMPLEMENTATION
 
@@ -331,10 +332,10 @@ static inline bool fileWriteMethodBody_(const MethodObjectHandle_t method)
         
         NULL_GUARD(expression, ERROR, Log_e(TAG, "From scope elements extracted NULL exppression, need check it"));
 
-        if(!fileWriteExpression_(expression, &resultVar, "_"))
+        if(!filewriteExpression_(expression, method, &resultVar, scopeElementIndex))
         {
-            Log_e(TAG, "Failed to write expression");
-            return ERROR;
+            Log_e(TAG, "Failed to write scope expression");
+            return ERROR;   
         }
         
     }
@@ -345,7 +346,68 @@ static inline bool fileWriteMethodBody_(const MethodObjectHandle_t method)
 }
 
 
-static bool fileWriteExpression_(const ExpHandle_t expression, VariableObjectHandle_t resultVar, const char* tmpSuffix)
+static bool filewriteExpression_(const ExpHandle_t expression, const  MethodObjectHandle_t methodOfExpression, VariableObjectHandle_t resVar, const uint64_t elementId)
+{
+    switch (Expression_getType(expression))
+    {
+        case SIMPLE_LINE:
+        {
+            if(!fileWriteSimpleLine_(expression, resVar, "_"))
+            {
+                Log_e(TAG, "Failed to write expression");
+                return ERROR;
+            }
+        }break;
+
+        case RETURN_STATEMENT:
+        {
+            if(!fileWriteReturnStatement_(expression, methodOfExpression->returnVariable, resVar, elementId))
+            {
+                Log_e(TAG, "Failed to write expression");
+                return ERROR;
+            }
+        }break;
+        
+        default:
+        {
+            Log_e(TAG, "Unrecognized expression type");
+        }return ERROR;
+    }
+
+    return SUCCESS;
+}
+
+static bool fileWriteReturnStatement_(const ExpHandle_t expression, VariableObjectHandle_t returnVariable, VariableObjectHandle_t resultVar, const uint64_t elementId)
+{
+    VariableObject_t returnVar;
+    returnVar.objectName = alloca(strlen(resultVar->objectName) + 32 + SIZEOF_NOTERM("ret"));
+
+    sprintf(returnVar.objectName, "%sret%lu", resultVar->objectName, elementId);
+
+    if(!fileWriteSimpleLine_(expression, &returnVar, "_"))
+    {
+        Log_e(TAG, "Failed to generate return statement expression");
+        return ERROR;
+    }
+
+    ExpElement_t leftOperand;
+    ExpElement_t rightOperand;
+
+    ExpElement_set(&leftOperand, EXP_VARIABLE, returnVariable);
+    ExpElement_set(&rightOperand, EXP_TMP_VAR, &returnVar);
+
+    if(!fileWriteBitVariableSet_(NULL, &leftOperand, &rightOperand))
+    {
+        Log_e(TAG, "Failed to file write return variable set");
+        return ERROR;
+    }
+
+    FWRITE_STRING(RETURN_DEF SEMICOLON_DEF READABILITY_ENDLINE);
+
+    return SUCCESS;
+}
+
+static bool fileWriteSimpleLine_(const ExpHandle_t expression, VariableObjectHandle_t resultVar, const char* tmpSuffix)
 {
     DynamicStack_t symbolStack;
     uint64_t tmpIncrement = 0;
@@ -737,7 +799,7 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
 
         resultVar->objectName = paramName;
 
-        if(!fileWriteExpression_(method->parameters.expandable[paramIdx], resultVar, assignedTmpVar->objectName))
+        if(!fileWriteSimpleLine_(method->parameters.expandable[paramIdx], resultVar, assignedTmpVar->objectName))
         {
             Log_e(TAG, "Failed to write parameter expression");
             return ERROR;
@@ -1133,18 +1195,28 @@ static bool fileWriteBitVariableSet_(const VariableObjectHandle_t assignedTmpVar
         NULL_GUARD(var, ERROR, Log_e(TAG, "Variable is NULL"));
 
         status = fprintf(currentCfile_, STRINGIFY(((%s) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, var->objectName, leftVar->posBit, leftVar->bitpack);
-        status = fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE "%s" SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, var->objectName);
+        if (assignedTmpVar != NULL)
+        {
+            status = fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE "%s" SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, var->objectName);
+        }
 
     }else if (ExpElement_getType(right) == EXP_VARIABLE)
     {
         if(rightVar->bitpack < BIT_SIZE_BITPACK)
         {
             status = fprintf(currentCfile_, STRINGIFY(((AFIT_READ(%s[%u], %u, %lu) & MASK(%lu)) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, rightVar->scopeName, rightVar->belongToGroup, rightVar->posBit, rightVar->bitpack, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
-            status = fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE STRINGIFY(AFIT_READ(%s[%u], %u, %lu) & MASK(%lu)) SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, rightVar->scopeName, rightVar->belongToGroup, rightVar->posBit, rightVar->bitpack, leftVar->bitpack);
+            if(assignedTmpVar != NULL)
+            {
+                status = fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE STRINGIFY(AFIT_READ(%s[%u], %u, %lu) & MASK(%lu)) SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, rightVar->scopeName, rightVar->belongToGroup, rightVar->posBit, rightVar->bitpack, leftVar->bitpack);
+            }
         }else if (rightVar->bitpack == BIT_SIZE_BITPACK)
         {
             status = fprintf(currentCfile_, STRINGIFY(((%s[%u] & MASK(%lu)) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, rightVar->scopeName, rightVar->belongToGroup, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
-            status = fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE STRINGIFY(%s[%u] & MASK(%lu)) SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, rightVar->scopeName, rightVar->belongToGroup, leftVar->bitpack);
+            
+            if(assignedTmpVar != NULL)
+            {
+                status = fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE STRINGIFY(%s[%u] & MASK(%lu)) SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, rightVar->scopeName, rightVar->belongToGroup, leftVar->bitpack);
+            }
         }else
         {   
             Log_e(TAG, "Unhandled case vars cant be now bigger than %u", BIT_SIZE_BITPACK);
@@ -1155,7 +1227,10 @@ static bool fileWriteBitVariableSet_(const VariableObjectHandle_t assignedTmpVar
         const AssignValue_t constValue = (AssignValue_t) ExpElement_getObject(right);
 
         status = fprintf(currentCfile_, STRINGIFY(((%ld & MASK(%lu)) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, constValue, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
-        status = fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE "%lu" SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, constValue);
+        if(assignedTmpVar != NULL)
+        {
+            status = fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE "%lu" SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, constValue);
+        }
     }
    
     return (status > 0);

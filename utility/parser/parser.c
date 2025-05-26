@@ -194,6 +194,8 @@ static inline bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_
     }else if(cTokenType == BRACKET_ROUND_START)   // identified method
     {
         currentToken++;
+        // Return type changes scope to params packing
+        variable->scopeName = PARAMS_VAR_REGION_NAME;
         MethodParser_parseMethod(&currentToken, variable, parser, rootHandle, notation);
     }else
     {

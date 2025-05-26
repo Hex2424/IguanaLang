@@ -123,7 +123,7 @@ bool Expression_setType(ExpHandle_t expression, const ExpType_t type)
 }
 
 
-bool Expression_getType(const ExpHandle_t expression)
+ExpType_t Expression_getType(const ExpHandle_t expression)
 {
     NULL_GUARD(expression, EXP_UNKNOWN_TYPE, Log_e(TAG, "Expression_getType Failed to get type since expression is NULL for some reason"));
 

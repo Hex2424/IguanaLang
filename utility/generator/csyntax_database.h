@@ -29,6 +29,8 @@
 #define STRUCT_KEYWORD_DEF          "struct"
 #define UNSIGNED_KEYWORD_DEF        "unsigned"
 #define EXTERN_KEYWORD_DEF          "extern"
+#define RETURN_DEF                  "return"
+
 
 #define INCLUDE_WRAP(lib) INCLUDE_KEYWORD_DEF "<" lib ".h>" END_LINE_DEF
 #define TYPEDEF_WRAP(from, to) TYPEDEF_KEYWORD_DEF " " from " " to SEMICOLON_DEF

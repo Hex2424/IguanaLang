@@ -59,6 +59,8 @@ static bool handleNumeric_(LocalScopeObjectHandle_t scopeBody, ExpElementHandle_
 static bool handlePostASTMethodCall_(ExMethodCallHandle_t methodCall);
 static VariableObjectHandle_t searchVariableNameAcrossScopes(LocalScopeObjectHandle_t localScopeBody, const char* varName);
 static VariableObjectHandle_t createUnknownVar_(char* notFoundVarName);
+static bool parseReturnStatement_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
+static bool parseSimpleLine_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle);
 ////////////////////////////////
 // IMPLEMENTATION
 
@@ -124,8 +126,33 @@ bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** 
 
         switch (cTokenType)
         {
-            // TODO: handling ERRORS
-            case BIT_TYPE: parseVariableInstance_(scopeBody, currentTokenHandle); break;
+            case BIT_TYPE:
+            {
+                if(!parseVariableInstance_(scopeBody, currentTokenHandle))
+                {
+                    Log_e(TAG, "Failed to parse variable instance");
+                    return ERROR;
+                }
+
+                
+                if(!parseSimpleLine_(scopeBody, currentTokenHandle))
+                {
+                    Log_e(TAG, "Failed to parse at variable intialization simple line expression");
+                    return ERROR;
+                }
+
+            }break;
+
+            case RETURN:
+            {
+                (*currentTokenHandle)++;
+
+                if(!parseReturnStatement_(scopeBody, currentTokenHandle))
+                {
+                    Log_e(TAG, "Failed to parse return value");
+                    return ERROR;
+                }
+            }break;
 
             case NAMING:
             case NUMBER_VALUE:
@@ -133,33 +160,10 @@ bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** 
             // case THIS:
             case OPERATOR_NOT:
             {
-                ExpHandle_t expression = Expression_createDynamic(SIMPLE_LINE);
-
-                NULL_GUARD(expression, ERROR, Log_e(TAG, "Failed to create / allocate expression Vector"));
-
-                TokenHandler_t* startExpressionPtr = (*currentTokenHandle);
-                ParserUtils_skipUntil(currentTokenHandle, (TokenType_t[]){SEMICOLON, BRACKET_END, BRACKET_START}, 3);
-                TokenHandler_t* endExpressionPtr = (*currentTokenHandle);
-                
-                (*currentTokenHandle) = startExpressionPtr;
-
-                if(!parseExpressionLine_(scopeBody, expression, currentTokenHandle, endExpressionPtr))
+                if(!parseSimpleLine_(scopeBody, currentTokenHandle))
                 {
-                    Log_e(TAG, "Failed to parse expression line");
+                    Log_e(TAG, "Failed to parse simple line");
                     return ERROR;
-                }
-
-                if(cTokenType != SEMICOLON)
-                {
-                    Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
-                    (*currentTokenHandle)--;
-                }else
-                {
-                    if(!Vector_append(&scopeBody->scopeElementsList, expression))
-                    {
-                        Log_e(TAG, "Failed to append expression line to expression lines list");
-                        return ERROR;
-                    }
                 }
 
             }break;
@@ -177,6 +181,85 @@ bool BodyParser_parseScope(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** 
     return SUCCESS;
 }
 
+
+static bool parseReturnStatement_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle)
+{
+    ExpHandle_t expression = Expression_createDynamic(RETURN_STATEMENT);
+
+    NULL_GUARD(expression, ERROR, Log_e(TAG, "Failed to create / allocate expression Vector"));
+
+    TokenHandler_t* startExpressionPtr = (*currentTokenHandle);
+    ParserUtils_skipUntil(currentTokenHandle, (TokenType_t[]){SEMICOLON, BRACKET_END, BRACKET_START}, 3);
+    TokenHandler_t* endExpressionPtr = (*currentTokenHandle);
+    
+    if(startExpressionPtr == endExpressionPtr)
+    {
+        return SUCCESS;
+    }
+
+    (*currentTokenHandle) = startExpressionPtr;
+
+    if(!parseExpressionLine_(scopeBody, expression, currentTokenHandle, endExpressionPtr))
+    {
+        Log_e(TAG, "Failed to parse expression line");
+        return ERROR;
+    }
+
+    if(cTokenType != SEMICOLON)
+    {
+        Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
+        (*currentTokenHandle)--;
+    }else
+    {
+        if(!Vector_append(&scopeBody->scopeElementsList, expression))
+        {
+            Log_e(TAG, "Failed to append expression line to expression lines list");
+            return ERROR;
+        }
+    }
+
+    return SUCCESS;
+}
+
+
+static bool parseSimpleLine_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle)
+{
+    TokenHandler_t* startExpressionPtr = (*currentTokenHandle);
+    ParserUtils_skipUntil(currentTokenHandle, (TokenType_t[]){SEMICOLON, BRACKET_END, BRACKET_START}, 3);
+    TokenHandler_t* endExpressionPtr = (*currentTokenHandle);
+    
+    if(startExpressionPtr == endExpressionPtr)
+    {
+        return SUCCESS;
+    }
+
+    ExpHandle_t expression = Expression_createDynamic(SIMPLE_LINE);
+
+    NULL_GUARD(expression, ERROR, Log_e(TAG, "Failed to create / allocate expression Vector"));
+
+    (*currentTokenHandle) = startExpressionPtr;
+
+    if(!parseExpressionLine_(scopeBody, expression, currentTokenHandle, endExpressionPtr))
+    {
+        Log_e(TAG, "Failed to parse expression line");
+        return ERROR;
+    }
+
+    if(cTokenType != SEMICOLON)
+    {
+        Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
+        (*currentTokenHandle)--;
+    }else
+    {
+        if(!Vector_append(&scopeBody->scopeElementsList, expression))
+        {
+            Log_e(TAG, "Failed to append expression line to expression lines list");
+            return ERROR;
+        }
+    }
+
+    return SUCCESS;
+}
 
 static inline bool parseVariableInstance_(LocalScopeObjectHandle_t scopeBody, TokenHandler_t** currentTokenHandle)
 {
@@ -214,7 +297,7 @@ static inline bool parseVariableInstance_(LocalScopeObjectHandle_t scopeBody, To
             return ERROR;
         }
 
-        (*currentTokenHandle) -= 2;
+        (*currentTokenHandle) -= 1;
         
     }else
     {
