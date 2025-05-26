@@ -90,7 +90,7 @@ void* ExpElement_getObject(const ExpElementHandle_t expressionElement);
 
 ExpHandle_t Expression_createDynamic(const ExpType_t type);
 bool Expression_setType(ExpHandle_t expression, const ExpType_t type);
-bool Expression_getType(const ExpHandle_t expression);
+ExpType_t Expression_getType(const ExpHandle_t expression);
 bool Expression_create(ExpHandle_t expression, const ExpType_t expressionType);
 bool Expression_addElement(ExpHandle_t expression, const ExpElementHandle_t element);
 
