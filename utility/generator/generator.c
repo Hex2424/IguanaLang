@@ -86,7 +86,7 @@ static bool fileWriteMethodBody_(const MethodObjectHandle_t method);
 static bool generateMethodHeader_(const MethodObjectHandle_t method, const char* prefixFunc);
 
 static inline uint8_t getDigitCountU64_(uint64_t number);
-static bool fileWriteNameMangleMethod_(const char* const className, const MethodObjectHandle_t method, const bool isPublic);
+static bool fileWriteNameMangleMethod_(const char* const className, const MethodObjectHandle_t method, const bool isPublic, const BitpackSize_t callerObjectSizeBits);
 static bool fileWriteIncludes_(void);
 static bool fileWriteMainHTypedefs_(void);
 static bool fileWriteMainHeader_(const bool isFirstFile);
@@ -248,7 +248,7 @@ static bool fileWriteNameMangleParams_(const VectorHandler_t params)
     return SUCCESS;
 }
 
-static bool fileWriteNameMangleMethod_(const char* const className, const MethodObjectHandle_t method, const bool isPublic)
+static bool fileWriteNameMangleMethod_(const char* const className, const MethodObjectHandle_t method, const bool isPublic, const BitpackSize_t callerObjectSizeBits)
 {
     int writeStatus;
     // TODO: optimize this so length will be somewhere stored entire generator
@@ -258,8 +258,8 @@ static bool fileWriteNameMangleMethod_(const char* const className, const Method
     writeStatus = fprintf(currentCfile_,
         //ex: asm("_ZN9wikipedia3fooEv");
         READABILITY_SPACE ASM_HEADER_MANGLE MANGLE_MAGIC_BYTE_DEF MANGLE_NEST_ID_DEF "%lu" BIT_DEF "%lu_%s%ld" BIT_DEF "%lu_%s" MANGLE_END_DEF,
-        objectNameLen + ((uint8_t) SIZEOF_NOTERM(BIT_DEF)) + ((uint8_t) SIZEOF_NOTERM("_")) + getDigitCountU64_((uint64_t) currentAst_->objectSizeBits),
-        currentAst_->objectSizeBits,
+        objectNameLen + ((uint8_t) SIZEOF_NOTERM(BIT_DEF)) + ((uint8_t) SIZEOF_NOTERM("_")) + getDigitCountU64_((uint64_t) callerObjectSizeBits),
+        callerObjectSizeBits,
         className,
         methodNameLen + SIZEOF_NOTERM("_") + getDigitCountU64_((uint64_t) method->returnVariable->bitpack) + ((uint8_t) SIZEOF_NOTERM(BIT_DEF)),
         method->returnVariable->bitpack,
@@ -868,7 +868,7 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
 
         if(method->caller == NULL)
         {
-            if(!fileWriteNameMangleMethod_(currentAst_->iguanaObjectName, &tempMethodObj, true))
+            if(!fileWriteNameMangleMethod_(currentAst_->iguanaObjectName, &tempMethodObj, true, currentAst_->objectSizeBits))
             {
                 Log_e(TAG, "Failed to write mangle self method \'%s\'", method->name);
                 return ERROR;
@@ -876,7 +876,7 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
 
         }else
         {
-            if(!fileWriteNameMangleMethod_(method->caller->castedFile, &tempMethodObj, true))
+            if(!fileWriteNameMangleMethod_(method->caller->castedFile, &tempMethodObj, true, method->caller->bitpack))
             {
                 Log_e(TAG, "Failed to write mangle method \'%s\'", method->name);
                 return ERROR;
@@ -1249,7 +1249,7 @@ static int methodDefinitionIteratorCallback_(void *key, int count, void* value, 
         return ERROR;
     }
 
-    if(!fileWriteNameMangleMethod_(currentAst_->iguanaObjectName, method, true))
+    if(!fileWriteNameMangleMethod_(currentAst_->iguanaObjectName, method, true, currentAst_->objectSizeBits))
     {
         Log_e(TAG, "Failed to write name mangling for method %s", method->methodName);
         return ERROR;
