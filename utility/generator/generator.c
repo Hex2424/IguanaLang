@@ -940,7 +940,7 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
                 FWRITE_STRING(CLASS_VAR_REGION_NAME);
             }
 
-            if(resultVars.currentSize > 0)
+            if((resultVars.currentSize > 0) || (returnSizeBits > 0))
             {
                 FWRITE_STRING(COMMA_DEF READABILITY_SPACE);
             }
