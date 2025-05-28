@@ -83,7 +83,7 @@ static bool fileWriteMethods_();
 static bool fileWriteMethodBody_(const MethodObjectHandle_t method);
 // static bool handleExpressionWriting_(const ExpressionHandle_t expression);
 // static void handleOperatorWritingByType_(const TokenType_t type);
-static bool generateMethodHeader_(const MethodObjectHandle_t method, const char* prefixFunc);
+static bool generateMethodHeader_(const MethodObjectHandle_t method, const char* prefixFunc, const BitpackSize_t callerObjectBitsize);
 
 static inline uint8_t getDigitCountU64_(uint64_t number);
 static bool fileWriteNameMangleMethod_(const char* const className, const MethodObjectHandle_t method, const bool isPublic, const BitpackSize_t callerObjectSizeBits);
@@ -859,30 +859,32 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
     {
         FWRITE_STRING(EXTERN_KEYWORD_DEF " ");
 
-        if(!generateMethodHeader_(&tempMethodObj, functionPrefix))
+        char* callerObjectName;
+        BitpackSize_t callerObjectSizeBits;
+
+        if(method->caller == NULL)
+        {
+            callerObjectName = currentAst_->iguanaObjectName;
+            callerObjectSizeBits = currentAst_->objectSizeBits;
+
+        }else
+        {
+            callerObjectName = method->caller->castedFile;
+            callerObjectSizeBits = method->caller->bitpack;
+        }
+
+        if(!generateMethodHeader_(&tempMethodObj, functionPrefix, callerObjectSizeBits))
         {
             Log_e(TAG, "Failed to generate method call header");
             return ERROR;
         }
 
-
-        if(method->caller == NULL)
+        if(!fileWriteNameMangleMethod_(callerObjectName, &tempMethodObj, true, callerObjectSizeBits))
         {
-            if(!fileWriteNameMangleMethod_(currentAst_->iguanaObjectName, &tempMethodObj, true, currentAst_->objectSizeBits))
-            {
-                Log_e(TAG, "Failed to write mangle self method \'%s\'", method->name);
-                return ERROR;
-            }
-
-        }else
-        {
-            if(!fileWriteNameMangleMethod_(method->caller->castedFile, &tempMethodObj, true, method->caller->bitpack))
-            {
-                Log_e(TAG, "Failed to write mangle method \'%s\'", method->name);
-                return ERROR;
-            }
-
+            Log_e(TAG, "Failed to write mangle self method \'%s\'", method->name);
+            return ERROR;
         }
+
 
         if((resultVars.currentSize > 0) || (returnSizeBits > 0))
         {
@@ -927,7 +929,7 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
         
         fprintf(currentCfile_, "%s%s" BRACKET_ROUND_START_DEF, functionPrefix, method->name);
             
-        if(Hashmap_size(&currentAst_->classVariables) != 0)
+        if(callerObjectSizeBits > 0)
         {
 
             if( method->caller != NULL)
@@ -940,7 +942,7 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
                 FWRITE_STRING(CLASS_VAR_REGION_NAME);
             }
 
-            if(resultVars.currentSize > 0)
+            if((resultVars.currentSize > 0) || returnSizeBits)
             {
                 FWRITE_STRING(COMMA_DEF READABILITY_SPACE);
             }
@@ -1243,7 +1245,7 @@ static int methodDefinitionIteratorCallback_(void *key, int count, void* value, 
 {
     MethodObjectHandle_t method;
     method = value;
-    if(!generateMethodHeader_(method, ""))
+    if(!generateMethodHeader_(method, "", currentAst_->objectSizeBits))
     {
         Log_e(TAG, "Failed to write method %s header", method->methodName);
         return ERROR;
@@ -1261,7 +1263,7 @@ static int methodDefinitionIteratorCallback_(void *key, int count, void* value, 
 }
 
 
-static bool generateMethodHeader_(const MethodObjectHandle_t method, const char* prefixFunc)
+static bool generateMethodHeader_(const MethodObjectHandle_t method, const char* prefixFunc, const BitpackSize_t callerObjectBitsize)
 {
     
     if(method->containsBody)
@@ -1269,7 +1271,7 @@ static bool generateMethodHeader_(const MethodObjectHandle_t method, const char*
         fprintf(currentCfile_, "void %s%s" BRACKET_ROUND_START_DEF, prefixFunc, method->methodName);
     }
 
-    if(Hashmap_size(&currentAst_->classVariables) != 0)
+    if(callerObjectBitsize > 0)
     {
             // TODO later change this hardcoded 
         FWRITE_STRING(PARAM_TYPE_DEF READABILITY_SPACE FUNCTION_OBJ_NAME);
@@ -1285,7 +1287,7 @@ static bool generateMethodHeader_(const MethodObjectHandle_t method, const char*
         FWRITE_STRING(PARAM_TYPE_DEF READABILITY_SPACE FUNCTION_PARAM_NAME);
     }
     
-    if((Hashmap_size(&currentAst_->classVariables) == 0) && (method->parameters->currentSize == 0))
+    if((callerObjectBitsize == 0) && (method->parameters->currentSize == 0))
     {
         FWRITE_STRING(TYPE_BIT0_DEF);
     }
@@ -1308,7 +1310,7 @@ static int methodDeclarationIteratorCallback_(void *key, int count, void* value,
         return SUCCESS;
     }
     
-    if(!generateMethodHeader_(method, " "))
+    if(!generateMethodHeader_(method, " ", currentAst_->objectSizeBits))
     {
         Log_e(TAG, "Failed to generate method %s header", method->methodName);
         return ERROR;
