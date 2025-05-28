@@ -932,7 +932,7 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
 
             if( method->caller != NULL)
             {
-                fprintf(currentCfile_, "%s[%u]", method->caller->scopeName, method->caller->belongToGroup);
+                fprintf(currentCfile_, "&%s[%u]", method->caller->scopeName, method->caller->belongToGroup);
             }else
             {
                 // If caller is null, it means object tries to call another function in same object
@@ -940,7 +940,7 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
                 FWRITE_STRING(CLASS_VAR_REGION_NAME);
             }
 
-            if((resultVars.currentSize > 0) || (returnSizeBits > 0))
+            if(resultVars.currentSize > 0)
             {
                 FWRITE_STRING(COMMA_DEF READABILITY_SPACE);
             }
@@ -1274,7 +1274,7 @@ static bool generateMethodHeader_(const MethodObjectHandle_t method, const char*
             // TODO later change this hardcoded 
         FWRITE_STRING(PARAM_TYPE_DEF READABILITY_SPACE FUNCTION_OBJ_NAME);
 
-        if(method->parameters->currentSize > 0)
+        if((method->parameters->currentSize > 0) || (method->returnVariable->bitpack > 0))
         {
             FWRITE_STRING(COMMA_DEF READABILITY_SPACE);
         }
