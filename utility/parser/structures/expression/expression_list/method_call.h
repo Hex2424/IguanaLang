@@ -17,8 +17,11 @@
 
 typedef struct
 {
-    bool isMethodSelf;
-    MethodObject_t method;
+    char* name;
+    VariableObjectHandle_t caller;
+    BitpackSize_t castBitSize;
+    char* castFile;
+    Vector_t parameters;    
 }ExMethodCall_t;
 
 typedef ExMethodCall_t* ExMethodCallHandle_t;

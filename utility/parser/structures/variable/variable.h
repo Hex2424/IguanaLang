@@ -22,6 +22,7 @@ typedef struct
 {
     char* objectName;
     char* castedFile;
+    char* scopeName;
     BitpackSize_t bitpack;
     GroupID_t belongToGroup;
     BitpackPos_t posBit;

@@ -28,6 +28,8 @@
 #define TYPEDEF_KEYWORD_DEF         "typedef"
 #define STRUCT_KEYWORD_DEF          "struct"
 #define UNSIGNED_KEYWORD_DEF        "unsigned"
+#define EXTERN_KEYWORD_DEF          "extern"
+#define RETURN_DEF                  "return"
 
 
 #define INCLUDE_WRAP(lib) INCLUDE_KEYWORD_DEF "<" lib ".h>" END_LINE_DEF
@@ -129,7 +131,7 @@ CONST_STRING TYPE_BINDS[] =
 #define BIT_TYPE_DEF              STRINGIFY(BIT_TYPE_EXP)
 
 
-#define PARAM_TYPE_DEF            TYPE_BIT0_DEF POINTER_SIGN_DEF
+#define PARAM_TYPE_DEF            BITPACK_TYPE_NAME POINTER_SIGN_DEF
 #define BITPACK_TYPE_TYPEDEF_DEF  TYPEDEF_WRAP(BIT_TYPE_DEF, BITPACK_TYPE_NAME)
 
 

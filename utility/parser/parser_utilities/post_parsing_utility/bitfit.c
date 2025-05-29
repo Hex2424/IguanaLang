@@ -1,9 +1,9 @@
 #include "bitfit.h"
-#include <vector.h>
 #include <stdlib.h>
 #include "../../structures/variable/variable.h"
 #include <arch_specific.h>
 #include <logger.h>
+
 
 static const char* TAG = "BITFIT";
 
@@ -20,7 +20,6 @@ int comp (const void* elem1, const void* elem2);
 
 bool Bitfit_assignGroupsAndPositionForVariableHashmap_(const HashmapHandle_t variablesHashmap, const BitFitMethod_t fitType, BitpackSize_t* sizeNeededForVariables)
 {
-    fitAssignFunction_t bitFitFunction;
     Vector_t vector;
     InitialSettings_t settingVector;
 
@@ -34,6 +33,17 @@ bool Bitfit_assignGroupsAndPositionForVariableHashmap_(const HashmapHandle_t var
         return ERROR;
     }
 
+    // Put links to variables from hashmap to vector
+    Hashmap_forEach(variablesHashmap, variableIteratorCallback_, &vector);
+
+    return Bitfit_assignGroupsAndPositionForVariableVector_(&vector, fitType, sizeNeededForVariables);
+}
+
+
+bool Bitfit_assignGroupsAndPositionForVariableVector_(const VectorHandler_t variablesVector, const BitFitMethod_t fitType, BitpackSize_t* sizeNeededForVariables)
+{
+    fitAssignFunction_t bitFitFunction;
+
     switch (fitType)
     {
         case FIRST_FIT: bitFitFunction = firstFitMethodFunction_; break;
@@ -42,11 +52,9 @@ bool Bitfit_assignGroupsAndPositionForVariableHashmap_(const HashmapHandle_t var
         default: return ERROR;
     }
 
-    // Put links to variables from hashmap to vector
-    Hashmap_forEach(variablesHashmap, variableIteratorCallback_, &vector);
-
-    return bitFitFunction(&vector, ARCHITECTURE_DEFAULT_BITS, sizeNeededForVariables);
+    return bitFitFunction(variablesVector, ARCHITECTURE_DEFAULT_BITS, sizeNeededForVariables);
 }
+
 
 static bool firstFitMethodFunction_(VectorHandler_t vector, const uint8_t groupSizeMax, BitpackSize_t* sizeNeededForVariables)
 {
@@ -55,15 +63,18 @@ static bool firstFitMethodFunction_(VectorHandler_t vector, const uint8_t groupS
 
     uint32_t highestGroupIdxReached = 0;
 
+    // It wont sort original vector but variables get their assigning
+    VectorHandler_t tempSortedVector = Vector_duplicate(vector);
+    
     // Sort fields by bitsize (largest first)
-    qsort (vector->expandable, vector->currentSize, sizeof(VariableObjectHandle_t), comp);
+    qsort (tempSortedVector->expandable, tempSortedVector->currentSize, sizeof(VariableObjectHandle_t), comp);
 
-    for (uint32_t varIdx = 0; varIdx < vector->currentSize; ++varIdx) {
+    for (uint32_t varIdx = 0; varIdx < tempSortedVector->currentSize; varIdx++) {
 
         VariableObjectHandle_t variable;
         bool placed;
 
-        variable = (VariableObjectHandle_t) vector->expandable[varIdx];
+        variable = (VariableObjectHandle_t) tempSortedVector->expandable[varIdx];
         placed = false;
 
         for (int groupIdx = 0; groupIdx < MAX_GROUPS_POSSIBLE; ++groupIdx) 
@@ -101,7 +112,7 @@ static bool firstFitMethodFunction_(VectorHandler_t vector, const uint8_t groupS
     }
 
     *sizeNeededForVariables = (highestGroupIdxReached * groupSizeMax) + used[highestGroupIdxReached];
-    
+
     return SUCCESS;
 }
 
@@ -114,8 +125,18 @@ static int variableIteratorCallback_(void *key, int count, void* value, void *us
 
 int comp (const void * elem1, const void * elem2) 
 {
-    VariableObjectHandle_t a = (VariableObjectHandle_t) elem1;
-    VariableObjectHandle_t b = (VariableObjectHandle_t) elem2;
+    VariableObjectHandle_t a = *((VariableObjectHandle_t*) elem1);
+    VariableObjectHandle_t b = *((VariableObjectHandle_t*) elem2);
     
-    return (b->bitpack - a->bitpack);
+    if (a->bitpack < b->bitpack)
+    {
+        return 1;
+    }
+
+    if (a->bitpack > b->bitpack)
+    {
+        return -1;
+    }
+
+    return 1;
 }

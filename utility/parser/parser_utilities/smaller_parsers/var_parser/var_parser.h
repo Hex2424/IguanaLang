@@ -19,7 +19,7 @@
 #include "../../../../tokenizer/token/token.h"
 #include "../../../../parser/parser.h"
 
-
+void VarParser_printVarsInVector(const VectorHandler_t vectorHandle, const char* name);
 bool VarParser_parseVariable(TokenHandler_t** currentToken, VariableObjectHandle_t variableHolder);
-
+VariableObjectHandle_t VarParser_searchVariableInVectorByName(const VectorHandler_t vectorHandle, const char* name);
 #endif // UTILITY_PARSER_PARSER_UTILITIES_SMALLER_PARSERS_VAR_PARSER_H_

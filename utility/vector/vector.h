@@ -21,6 +21,7 @@
 
 
 #define EXPANDABLE_CONSTANT_DEFAULT     (1.0f / 3.0f)
+#define DEFAULT_TAG                     0
 
 typedef struct
 {
@@ -49,5 +50,7 @@ bool Vector_create(VectorHandler_t object, const InitialSettingsHandler_t initia
 bool Vector_append(VectorHandler_t object, const void* dataObject);
 bool Vector_fit(VectorHandler_t object);
 bool Vector_destroy(VectorHandler_t object);
+void* Vector_popLast(VectorHandler_t object);
+VectorHandler_t Vector_duplicate(const VectorHandler_t from);
 void Vector_print(VectorHandler_t object);
 #endif // UTILITY_VECTOR_VECTOR_H_

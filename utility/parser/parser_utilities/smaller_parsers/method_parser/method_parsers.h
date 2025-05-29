@@ -20,7 +20,6 @@
 #include "../../../../parser/parser.h"
 
 
-
 bool MethodParser_parseMethod(TokenHandler_t** currentTokenHandle, const VariableObjectHandle_t returnVariable, ParserHandle_t parser, MainFrameHandle_t root, const Accessibility_t notation);
 
 #endif // UTILITY_PARSER_PARSER_UTILITIES_SMALLER_PARSERS_METHOD_PARSERS_H_

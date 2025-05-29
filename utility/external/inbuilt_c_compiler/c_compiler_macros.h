@@ -14,7 +14,7 @@
 #define UTILITY_EXTERNAL_INBUILT_C_COMPILER_C_COMPILER_MACROS_H_
 #include "../../global_config/global_config.h"
 
-#define ADD_WARNING(warningID) "-Wno-"warningID" "
+#define ADD_WARNING(warningID) "-Wno-" warningID" "
 
 
 

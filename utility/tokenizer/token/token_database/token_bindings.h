@@ -61,6 +61,7 @@ static const BindingType_t bindingsTable_[] =
         [ALLOC_STATIC_STACK] = DECLARE_TYPE("ss", ALLOC_STATIC_STACK),
         [ALLOC_DYNAMIC_STACK] = DECLARE_TYPE("ds", ALLOC_DYNAMIC_STACK),
         [ALLOC_DYNAMIC_HEAP] = DECLARE_TYPE("dh", ALLOC_DYNAMIC_HEAP),
+        [RETURN] = DECLARE_TYPE("ret", RETURN),
         [NONE] = DECLARE_TYPE("none", NONE)
     };
 

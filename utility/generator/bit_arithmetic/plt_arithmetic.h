@@ -25,15 +25,15 @@
 // Otherwise other arithmetic should be used
 
 // VALUE RESET
-#define APLT_RESET(platform_var) (platform_var = (BIT_TYPE_EXP) 0)
+#define APLT_RESET(platform_var) (platform_var = (BITPACK_TYPE_EXP) 0)
 
 // VALUE READING
-#define APLT_READ(platform_var) ((BIT_TYPE_EXP) platform_var)
+#define APLT_READ(platform_var) ((BITPACK_TYPE_EXP) platform_var)
 
 // VALUE SET
 #define APLT_SET_VAR(src, dest) (dest = src)
 
-#define APLT_SET_CONST(dest, constvar) (dest = ((BIT_TYPE_EXP) constvar))
+#define APLT_SET_CONST(dest, constvar) (dest = ((BITPACK_TYPE_EXP) constvar))
 
 
 #endif // UTILITY_MISC_PLT_ARITHMETIC_H_

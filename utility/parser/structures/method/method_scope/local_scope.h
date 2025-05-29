@@ -21,8 +21,13 @@ typedef struct
 {
     Hashmap_t localVariables;
     BitpackSize_t sizeBits; 
-    Vector_t expressionList;
+    Vector_t scopeElementsList;
+
+    // TODO: make this more flexible accross scopes in future and not fixed refs
+    HashmapHandle_t objectVarsRef;
+    VectorHandler_t paramsVarsRef;
 }LocalScopeObject_t;
+
 
 typedef LocalScopeObject_t* LocalScopeObjectHandle_t;
 

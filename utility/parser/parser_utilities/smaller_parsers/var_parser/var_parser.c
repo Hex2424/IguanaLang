@@ -53,11 +53,11 @@ bool VarParser_parseVariable(TokenHandler_t** currentTokenHandle, VariableObject
     {
         variableHolder->objectName = cTokenP->valueString;
         return SUCCESS;
-    }else if(cTokenType == BRACKET_ROUND_START)
+    }else if(cTokenType == ARROW_LEFT)
     {
         cTokenIncrement;
 
-        if(cTokenType == BRACKET_ROUND_END)
+        if(cTokenType == ARROW_RIGHT)
         {
             variableHolder->castedFile = NULL;
         }else if(cTokenType == NONE)
@@ -65,9 +65,9 @@ bool VarParser_parseVariable(TokenHandler_t** currentTokenHandle, VariableObject
             variableHolder->castedFile = NULL;
             cTokenIncrement;
 
-            if (cTokenType != BRACKET_ROUND_END)
+            if (cTokenType != ARROW_RIGHT)
             {
-                Shouter_shoutExpectedToken(cTokenP, BRACKET_ROUND_END);
+                Shouter_shoutExpectedToken(cTokenP, ARROW_RIGHT);
                 return SUCCESS;
             }
         }else if(cTokenType == NAMING)
@@ -75,9 +75,9 @@ bool VarParser_parseVariable(TokenHandler_t** currentTokenHandle, VariableObject
             variableHolder->castedFile = cTokenP->valueString;
             cTokenIncrement;
 
-            if (cTokenType != BRACKET_ROUND_END)
+            if (cTokenType != ARROW_RIGHT)
             {
-                Shouter_shoutExpectedToken(cTokenP, BRACKET_ROUND_END);
+                Shouter_shoutExpectedToken(cTokenP, ARROW_RIGHT);
                 return SUCCESS;
             }
             
@@ -111,4 +111,41 @@ bool VarParser_parseVariable(TokenHandler_t** currentTokenHandle, VariableObject
     }
 
     return SUCCESS;
+}
+
+
+VariableObjectHandle_t VarParser_searchVariableInVectorByName(const VectorHandler_t vectorHandle, const char* name)
+{
+    for(uint32_t variableIndex = 0; variableIndex < vectorHandle->currentSize; variableIndex++)
+    {
+        const VariableObjectHandle_t variableCurrent = vectorHandle->expandable[variableIndex];
+        
+        if(strcmp(variableCurrent->objectName, name) == 0)
+        {
+            return variableCurrent;
+        }
+    }
+
+    return NULL;
+}
+
+
+void VarParser_printVarsInVector(const VectorHandler_t vectorHandle, const char* name)
+{
+    Log_i(TAG, "Variables Vector: %s", name);
+    Log_i(TAG, "==============================");
+    
+    for(uint32_t vectorIndex = 0; vectorIndex < vectorHandle->currentSize; vectorIndex++)
+    {
+        VariableObjectHandle_t varHandle = (VariableObjectHandle_t) vectorHandle->expandable[vectorIndex];
+
+        if (varHandle == NULL)
+        {
+            Log_i(TAG, "NULL variable at index:%u", vectorIndex);
+        }else
+        {
+            Log_i(TAG, "bit:%lu, pos:%u group:%lu", varHandle->bitpack, varHandle->posBit, varHandle->belongToGroup);
+        }
+    }
+    Log_i(TAG, "==============================");
 }

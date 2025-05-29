@@ -16,11 +16,11 @@
 
 #define ENABLE_READABILITY          1
 
-#define BITPACK_TYPE_NAME           "Bitpack_t"
-#define ALLOCATION_ARRAY_PREFIX     s_
-#define FUNCTION_OBJ_NAME           "o"
-#define FUNCTION_PARAM_NAME         "p"
+#define BITPACK_TYPE_EXP            Bitpack_t
+#define BITPACK_TYPE_NAME           STRINGIFY(BITPACK_TYPE_EXP)
+#define FUNCTION_OBJ_NAME           CLASS_VAR_REGION_NAME
+#define FUNCTION_PARAM_NAME         PARAMS_VAR_REGION_NAME
 
 #define TMP_VAR                     tmp
-
+#define TMP_FUNC                    f
 #endif // UTILITY_MISC_CONFIG_GENERATOR_H_

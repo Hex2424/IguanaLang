@@ -169,6 +169,8 @@ static inline bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_
         return ERROR;
     }
 
+    // assigning object / class global variables array scope
+    variable->scopeName = CLASS_VAR_REGION_NAME;
     
     currentToken++;
 
@@ -184,7 +186,7 @@ static inline bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_
     {
         Shouter_shoutError(cTokenP, "Variables can be manipulated or assigned only in function scopes");
 
-        if(!ParserUtils_skipUntil(&currentToken, SEMICOLON))
+        if(!ParserUtils_skipUntil(&currentToken, (TokenType_t[]){SEMICOLON}, 1))
         {
             return ERROR;
         }
@@ -192,11 +194,14 @@ static inline bool handleKeywordInteger_(ParserHandle_t parser, MainFrameHandle_
     }else if(cTokenType == BRACKET_ROUND_START)   // identified method
     {
         currentToken++;
+        // Return type changes scope to params packing
+        variable->scopeName = PARAMS_VAR_REGION_NAME;
         MethodParser_parseMethod(&currentToken, variable, parser, rootHandle, notation);
     }else
     {
         Shouter_shoutExpectedToken(cTokenP, SEMICOLON);
-        if(!ParserUtils_skipUntil(&currentToken, SEMICOLON))
+
+        if(!ParserUtils_skipUntil(&currentToken, (TokenType_t[]){SEMICOLON}, 1))
         {
             return ERROR;
         }

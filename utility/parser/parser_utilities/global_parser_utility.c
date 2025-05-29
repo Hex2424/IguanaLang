@@ -57,13 +57,16 @@ bool ParserUtils_tryParseSequence(TokenHandler_t** currentTokenHandle, const Tok
 }
 
 
-bool ParserUtils_skipUntil(TokenHandler_t** currentTokenHandle, const TokenType_t untilTokenType)
+bool ParserUtils_skipUntil(TokenHandler_t** currentTokenHandle, const TokenType_t* untilTokenTypeList, const uint8_t tokensLength)
 {
     while((**currentTokenHandle)->tokenType != END_FILE)
     {
-        if((**currentTokenHandle)->tokenType == untilTokenType)
+        for(uint8_t testIdx = 0; testIdx < tokensLength; testIdx++)
         {
-            return true;
+            if((**currentTokenHandle)->tokenType == untilTokenTypeList[testIdx])
+            {
+                return true;
+            }
         }
 
         (*currentTokenHandle)++;

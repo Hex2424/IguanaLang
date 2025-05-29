@@ -12,7 +12,7 @@
  */
 #include <vector.h>
 #include <logger.h>
-
+#include <string.h>
 
 ////////////////////////////////
 // DEFINES
@@ -63,6 +63,8 @@ bool Vector_create(VectorHandler_t object, const InitialSettingsHandler_t initia
             return ERROR;
         }
     }
+    
+
     if(initialSettings != NULL)
     {
         ALLOC_CHECK(object->expandable, initialSettings->initialSize * sizeof(void*), ERROR);
@@ -168,6 +170,56 @@ bool Vector_fit(VectorHandler_t object)
 
 
 /**
+ * @brief Public method for handling shrink to actual size
+ * 
+ * It doesnt care about deallocating poped object
+ * @param[out] object pointer to vector structure 
+ */
+void* Vector_popLast(VectorHandler_t object)
+{
+    NULL_GUARD(object, ERROR, VECTOR_NULL_PRINT);
+
+    if(object->currentSize == 0)
+    {
+        return NULL;   
+    }
+
+    void* item = object->expandable[object->currentSize - 1];
+
+    object->expandable[object->currentSize - 1] = NULL;
+    object->currentSize--;
+
+    return item;
+}
+
+
+/**
+ * @brief Public method for handling shrink to actual size
+ * 
+ * It doesnt care about duplicating items itself, just their references
+ * @param[out] from pointer source vector
+ */
+VectorHandler_t Vector_duplicate(const VectorHandler_t from)
+{
+    VectorHandler_t duplicateVector = malloc(sizeof(Vector_t));
+
+    NULL_GUARD(from, NULL, VECTOR_NULL_PRINT);
+    NULL_GUARD(duplicateVector, NULL, VECTOR_NULL_PRINT);
+
+    duplicateVector->expandableConstant = from->expandableConstant;
+    duplicateVector->availableSize = from->availableSize;
+    duplicateVector->containsVectors = from->containsVectors;
+    duplicateVector->currentSize = from->currentSize;
+
+    duplicateVector->expandable = malloc(sizeof(void*) * (duplicateVector->availableSize + duplicateVector->currentSize));
+    NULL_GUARD(duplicateVector, NULL, VECTOR_NULL_PRINT);
+
+    memcpy(duplicateVector->expandable, from->expandable, sizeof(void*) * duplicateVector->currentSize);
+    
+    return duplicateVector;
+}
+
+/**
  * @brief Public method for destroying vector object(deallocating resources)
  * 
  * @param[out] object        pointer to vector structure
@@ -177,7 +229,7 @@ bool Vector_fit(VectorHandler_t object)
 bool Vector_destroy(VectorHandler_t vector)
 {
     size_t idx;
-    NULL_GUARD(vector, ERROR, VECTOR_NULL_PRINT);
+    NULL_GUARD(vector, NULL, VECTOR_NULL_PRINT);
 
     if(vector->expandable == NULL)
     {

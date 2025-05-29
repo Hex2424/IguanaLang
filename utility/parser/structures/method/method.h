@@ -28,6 +28,7 @@ typedef struct
     LocalScopeObject_t body;
     bool containsBody : 1;
     bool hasInfinityParams : 1;
+    BitpackSize_t parametersSizeBits;
 }MethodObject_t;
 
 typedef MethodObject_t* MethodObjectHandle_t;
