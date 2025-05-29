@@ -908,7 +908,7 @@ static bool generateMethodCallScope_(const BitpackSize_t returnSizeBits, const V
                         param->posBit,
                         param->bitpack);
 
-                printf("%s %lu %u\n",param->objectName, param->bitpack, param->posBit);
+
                 }else if (param->bitpack == BIT_SIZE_BITPACK)
                 {
                     fprintf(currentCfile_, STRINGIFY(%spset[%u]) READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE, 
