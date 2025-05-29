@@ -422,7 +422,7 @@ static bool fileWriteSimpleLine_(const ExpHandle_t expression, VariableObjectHan
 
     if(resultVar->objectName[0] != '\0')
     {
-        fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" SEMICOLON_DEF READABILITY_ENDLINE, resultVar->objectName);
+        fprintf(currentCfile_, BITPACK_TYPE_NAME " %s" SEMICOLON_DEF READABILITY_ENDLINE, resultVar->objectName);
     }
 
     FWRITE_STRING(BRACKET_START_DEF READABILITY_ENDLINE);
@@ -1201,7 +1201,7 @@ static bool fileWriteBitVariableSet_(const VariableObjectHandle_t assignedTmpVar
         status = fprintf(currentCfile_, STRINGIFY(((%s) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, var->objectName, leftVar->posBit, leftVar->bitpack);
         if (assignedTmpVar != NULL)
         {
-            status = fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE "%s" SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, var->objectName);
+            status = fprintf(currentCfile_, BITPACK_TYPE_NAME " %s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE "%s" SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, var->objectName);
         }
 
     }else if (ExpElement_getType(right) == EXP_VARIABLE)
@@ -1211,7 +1211,7 @@ static bool fileWriteBitVariableSet_(const VariableObjectHandle_t assignedTmpVar
             status = fprintf(currentCfile_, STRINGIFY(((AFIT_READ(%s[%u], %u, %lu) & MASK(%lu)) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, rightVar->scopeName, rightVar->belongToGroup, rightVar->posBit, rightVar->bitpack, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
             if(assignedTmpVar != NULL)
             {
-                status = fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE STRINGIFY(AFIT_READ(%s[%u], %u, %lu) & MASK(%lu)) SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, rightVar->scopeName, rightVar->belongToGroup, rightVar->posBit, rightVar->bitpack, leftVar->bitpack);
+                status = fprintf(currentCfile_, BITPACK_TYPE_NAME " %s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE STRINGIFY(AFIT_READ(%s[%u], %u, %lu) & MASK(%lu)) SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, rightVar->scopeName, rightVar->belongToGroup, rightVar->posBit, rightVar->bitpack, leftVar->bitpack);
             }
         }else if (rightVar->bitpack == BIT_SIZE_BITPACK)
         {
@@ -1219,7 +1219,7 @@ static bool fileWriteBitVariableSet_(const VariableObjectHandle_t assignedTmpVar
             
             if(assignedTmpVar != NULL)
             {
-                status = fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE STRINGIFY(%s[%u] & MASK(%lu)) SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, rightVar->scopeName, rightVar->belongToGroup, leftVar->bitpack);
+                status = fprintf(currentCfile_, BITPACK_TYPE_NAME " %s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE STRINGIFY(%s[%u] & MASK(%lu)) SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, rightVar->scopeName, rightVar->belongToGroup, leftVar->bitpack);
             }
         }else
         {   
@@ -1233,7 +1233,7 @@ static bool fileWriteBitVariableSet_(const VariableObjectHandle_t assignedTmpVar
         status = fprintf(currentCfile_, STRINGIFY(((%ld & MASK(%lu)) << (BIT_SIZE_BITPACK - (%u + %lu)))) SEMICOLON_DEF READABILITY_ENDLINE, constValue, leftVar->bitpack, leftVar->posBit, leftVar->bitpack);
         if(assignedTmpVar != NULL)
         {
-            status = fprintf(currentCfile_, BITPACK_TYPE_NAME READABILITY_SPACE "%s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE "%lu" SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, constValue);
+            status = fprintf(currentCfile_, BITPACK_TYPE_NAME " %s" READABILITY_SPACE C_OPERATOR_EQUAL_DEF READABILITY_SPACE "%lu" SEMICOLON_DEF READABILITY_ENDLINE, assignedTmpVar->objectName, constValue);
         }
     }
    
@@ -1257,7 +1257,10 @@ static int methodDefinitionIteratorCallback_(void *key, int count, void* value, 
         return ERROR;
     }
 
-    fwrite(END_LINE_DEF, BYTE_SIZE, 1, currentCfile_);    
+    #if ENABLE_READABILITY
+        fwrite(END_LINE_DEF, BYTE_SIZE, 1, currentCfile_);  
+    #endif
+      
 
     return SUCCESS;
 }
